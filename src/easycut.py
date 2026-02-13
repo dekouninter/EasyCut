@@ -548,7 +548,7 @@ class EasyCutApp:
         log_container = ttk.Frame(log_card)
         log_container.pack(fill=tk.BOTH, expand=True)
         
-        self.download_log = LogWidget(log_container, theme=self.theme, height=8)
+        self.download_log = LogWidget(log_container, theme=self.design, height=8)
         log_scrollbar = ttk.Scrollbar(log_container, orient=tk.VERTICAL, command=self.download_log.yview)
         self.download_log.config(yscrollcommand=log_scrollbar.set)
         self.download_log.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -659,7 +659,7 @@ class EasyCutApp:
         log_container = ttk.Frame(log_card)
         log_container.pack(fill=tk.BOTH, expand=True)
         
-        self.batch_log = LogWidget(log_container, theme=self.theme, height=6)
+        self.batch_log = LogWidget(log_container, theme=self.design, height=6)
         log_scrollbar = ttk.Scrollbar(log_container, orient=tk.VERTICAL, command=self.batch_log.yview)
         self.batch_log.config(yscrollcommand=log_scrollbar.set)
         self.batch_log.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -802,7 +802,7 @@ class EasyCutApp:
         log_container = ttk.Frame(log_card)
         log_container.pack(fill=tk.BOTH, expand=True)
         
-        self.live_log = LogWidget(log_container, theme=self.theme, height=6)
+        self.live_log = LogWidget(log_container, theme=self.design, height=6)
         log_scrollbar = ttk.Scrollbar(log_container, orient=tk.VERTICAL, command=self.live_log.yview)
         self.live_log.config(yscrollcommand=log_scrollbar.set)
         self.live_log.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -909,7 +909,7 @@ class EasyCutApp:
         log_container = ttk.Frame(log_card)
         log_container.pack(fill=tk.BOTH, expand=True)
         
-        self.audio_log = LogWidget(log_container, theme=self.theme, height=8)
+        self.audio_log = LogWidget(log_container, theme=self.design, height=8)
         log_scrollbar = ttk.Scrollbar(log_container, orient=tk.VERTICAL, command=self.audio_log.yview)
         self.audio_log.config(yscrollcommand=log_scrollbar.set)
         self.audio_log.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)

@@ -446,10 +446,24 @@ class LogWidget(tk.Text):
     def configure_colors(self):
         """Configure widget colors based on current theme"""
         if self.theme:
+            # Support both old Theme and new DesignTokens
+            if hasattr(self.theme, 'get'):
+                # Old Theme interface
+                bg_color = self.theme.get("bg_entry")
+                fg_color = self.theme.get("fg_entry")
+            elif hasattr(self.theme, 'get_color'):
+                # New DesignTokens interface
+                bg_color = self.theme.get_color("bg_secondary")
+                fg_color = self.theme.get_color("fg_primary")
+            else:
+                # Fallback
+                bg_color = "#1A1D2E"
+                fg_color = "#E8EAED"
+            
             self.config(
-                bg=self.theme.get("bg_entry"),
-                fg=self.theme.get("fg_entry"),
-                insertbackground=self.theme.get("fg_entry")
+                bg=bg_color,
+                fg=fg_color,
+                insertbackground=fg_color
             )
     
     def add_log(self, message, level="INFO"):
