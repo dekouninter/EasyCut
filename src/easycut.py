@@ -33,9 +33,14 @@ from datetime import datetime
 # Import local modules
 sys.path.insert(0, os.path.dirname(__file__))
 from i18n import translator as t, Translator
-from ui_enhanced import Theme, ConfigManager, LogWidget, StatusBar, LoginPopup
+from ui_enhanced import ConfigManager, LogWidget, StatusBar, LoginPopup
 from donation_system import DonationButton
 from icon_manager import icon_manager, get_ui_icon
+from design_system import ModernTheme, DesignTokens, Typography, Spacing, Icons
+from modern_components import (
+    ModernButton, ModernCard, ModernInput, ModernAlert,
+    ModernDialog, ModernIconButton, ModernTabHeader
+)
 
 # Import external libraries
 try:
@@ -61,8 +66,9 @@ class EasyCutApp:
         self.config_manager = ConfigManager()
         self.load_config()
         
-        # Theme & Language
-        self.theme = Theme(dark_mode=self.dark_mode)
+        # Modern Theme & Design System
+        self.theme = ModernTheme(dark_mode=self.dark_mode)
+        self.design = DesignTokens(dark_mode=self.dark_mode)
         self.translator = Translator(self.language)
         
         # Icon Manager
@@ -160,81 +166,156 @@ class EasyCutApp:
         donation_btn.create_floating_button(main_frame)
     
     def create_header(self, parent):
-        """Create professional header with controls"""
+        """Create modern professional header with controls"""
         tr = self.translator.get
-        header = ttk.Frame(parent)
-        header.pack(fill=tk.X, padx=5, pady=5)
         
-        # Logo/Title
-        title_lbl = ttk.Label(header, text=tr("about_title", "EasyCut"), font=("Segoe UI", 16, "bold"))
-        title_lbl.pack(side=tk.LEFT, padx=10)
+        # Main header container with elevated background
+        header_container = ttk.Frame(parent)
+        header_container.pack(fill=tk.X, padx=0, pady=0)
         
-        ttk.Separator(header, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
+        header = ttk.Frame(header_container, padding=(Spacing.LG, Spacing.MD))
+        header.pack(fill=tk.X)
         
-        # Theme toggle with icon
+        # Left side: Logo + App name
+        left_frame = ttk.Frame(header)
+        left_frame.pack(side=tk.LEFT, fill=tk.Y)
+        
+        # App icon and title
+        app_title_frame = ttk.Frame(left_frame)
+        app_title_frame.pack(side=tk.LEFT, padx=(0, Spacing.XL))
+        
+        # Try to load app icon
+        app_icon = get_ui_icon("video", size=Icons.SIZE_LG)
+        if app_icon:
+            icon_label = ttk.Label(app_title_frame, image=app_icon)
+            icon_label.image = app_icon
+            icon_label.pack(side=tk.LEFT, padx=(0, Spacing.MD))
+        
+        # Title with gradient effect (simulated with label)
+        title_frame = ttk.Frame(app_title_frame)
+        title_frame.pack(side=tk.LEFT)
+        
+        title_lbl = ttk.Label(
+            title_frame,
+            text=tr("about_title", "EasyCut"),
+            style="Title.TLabel"
+        )
+        title_lbl.pack(anchor="w")
+        
+        subtitle_lbl = ttk.Label(
+            title_frame,
+            text="YouTube Downloader Pro",
+            style="Caption.TLabel"
+        )
+        subtitle_lbl.pack(anchor="w")
+        
+        # Separator
+        ttk.Separator(left_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=Spacing.MD)
+        
+        # Theme toggle with modern button
         theme_icon_key = "theme_dark" if self.dark_mode else "theme_light"
-        theme_icon = get_ui_icon(theme_icon_key, size=16)
-        theme_btn = ttk.Button(header, text=" " + tr("header_theme", "Theme"), command=self.toggle_theme, width=10)
-        if theme_icon:
-            theme_btn.configure(image=theme_icon, compound="left")
-            theme_btn.image = theme_icon
-        theme_btn.pack(side=tk.LEFT, padx=2)
+        theme_btn = ModernButton(
+            left_frame,
+            text=tr("header_theme", "Theme"),
+            icon_name=theme_icon_key,
+            command=self.toggle_theme,
+            variant="secondary",
+            width=10
+        )
+        theme_btn.pack(side=tk.LEFT, padx=Spacing.XS)
         
-        # Language selector
+        # Language selector with flag icon
+        lang_frame = ttk.Frame(left_frame)
+        lang_frame.pack(side=tk.LEFT, padx=Spacing.XS)
+        
+        lang_icon = get_ui_icon("language", size=Icons.SIZE_SM)
+        if lang_icon:
+            lang_icon_label = ttk.Label(lang_frame, image=lang_icon)
+            lang_icon_label.image = lang_icon
+            lang_icon_label.pack(side=tk.LEFT, padx=(Spacing.SM, Spacing.XS))
+        
         lang_options = [
-            ("pt", tr("lang_pt", "Portugues")),
+            ("pt", tr("lang_pt", "Português")),
             ("en", tr("lang_en", "English"))
         ]
         lang_codes = [code for code, _ in lang_options]
         lang_labels = [label for _, label in lang_options]
-        lang_combo = ttk.Combobox(header, values=lang_labels, state="readonly", width=12)
+        
+        lang_combo = ttk.Combobox(
+            lang_frame,
+            values=lang_labels,
+            state="readonly",
+            width=12
+        )
         current_index = lang_codes.index(self.language) if self.language in lang_codes else 0
         lang_combo.set(lang_labels[current_index])
         lang_combo.bind("<<ComboboxSelected>>", lambda e: self.change_language(lang_codes[lang_combo.current()]))
-        lang_combo.pack(side=tk.LEFT, padx=2)
+        lang_combo.pack(side=tk.LEFT)
         
-        # Login button with icon
-        login_icon = get_ui_icon("login", size=16)
-        login_btn = ttk.Button(header, text=" " + tr("header_login", "YouTube Login"), command=self.open_login_popup, width=16)
-        if login_icon:
-            login_btn.configure(image=login_icon, compound="left")
-            login_btn.image = login_icon
-        login_btn.pack(side=tk.LEFT, padx=2)
+        # Right side: Actions
+        right_frame = ttk.Frame(header)
+        right_frame.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Open folder button with icon
-        folder_icon = get_ui_icon("folder", size=16)
-        folder_btn = ttk.Button(header, text=" " + tr("header_open_folder", "Open Folder"), command=self.open_output_folder, width=14)
-        if folder_icon:
-            folder_btn.configure(image=folder_icon, compound="left")
-            folder_btn.image = folder_icon
-        folder_btn.pack(side=tk.LEFT, padx=2)
+        # Open folder button
+        folder_btn = ModernButton(
+            right_frame,
+            text=tr("header_open_folder", "Open Folder"),
+            icon_name="folder",
+            command=self.open_output_folder,
+            variant="secondary",
+            width=14
+        )
+        folder_btn.pack(side=tk.RIGHT, padx=Spacing.XS)
         
-        # Stretch
-        ttk.Label(header, text="").pack(side=tk.LEFT, expand=True)
+        # Login button (primary action)
+        login_btn = ModernButton(
+            right_frame,
+            text=tr("header_login", "YouTube Login"),
+            icon_name="login",
+            command=self.open_login_popup,
+            variant="primary",
+            width=16
+        )
+        login_btn.pack(side=tk.RIGHT, padx=Spacing.XS)
         
-        # Version
-        ttk.Label(header, text="v1.0.0", font=("Segoe UI", 9), foreground="gray").pack(side=tk.RIGHT, padx=10)
+        # Version badge
+        version_label = ttk.Label(
+            right_frame,
+            text="v1.0.0",
+            style="Caption.TLabel"
+        )
+        version_label.pack(side=tk.RIGHT, padx=Spacing.MD)
+        
+        # Bottom border for header
+        ttk.Separator(header_container, orient=tk.HORIZONTAL).pack(fill=tk.X)
     
     def create_login_banner(self, parent):
-        """Create login status banner (when not logged in)"""
+        """Create modern login status banner (when not logged in)"""
         tr = self.translator.get
-        banner = ttk.Frame(parent)
-        banner.pack(fill=tk.X, padx=5, pady=5)
         
-        # Warning icon + message
-        msg_frame = ttk.Frame(banner)
-        msg_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        # Create alert banner
+        banner_frame = ttk.Frame(parent, padding=(Spacing.LG, Spacing.MD))
+        banner_frame.pack(fill=tk.X)
         
-        ttk.Label(msg_frame, text=tr("login_banner_title", "Not connected"), font=("Segoe UI", 10, "bold"), foreground="#FF9800").pack(side=tk.LEFT, padx=5)
-        ttk.Label(
-            msg_frame,
-            text=tr("login_banner_note", "Login is only used by yt-dlp."),
-            font=("Segoe UI", 9),
-            foreground="#777"
-        ).pack(side=tk.LEFT, padx=5)
+        # Use ModernAlert for the banner
+        alert = ModernAlert(
+            banner_frame,
+            message=f"{tr('login_banner_title', 'Not connected')} - {tr('login_banner_note', 'Login is only used by yt-dlp. Credentials are not stored.')}",
+            variant="warning",
+            dismissible=False
+        )
+        alert.pack(fill=tk.X, side=tk.LEFT, expand=True)
         
-        # Login button
-        ttk.Button(banner, text=tr("login_banner_button", "YouTube Login"), command=self.open_login_popup, width=15).pack(side=tk.RIGHT, padx=5)
+        # Login button on the right
+        login_btn = ModernButton(
+            banner_frame,
+            text=tr("login_banner_button", "YouTube Login"),
+            icon_name="login",
+            command=self.open_login_popup,
+            variant="primary",
+            width=16
+        )
+        login_btn.pack(side=tk.RIGHT, padx=(Spacing.MD, 0))
     
     def create_login_tab(self):
         """Create login tab with popup-only interface"""
@@ -756,15 +837,19 @@ class EasyCutApp:
         footer.pack(pady=20)
     
     def apply_theme(self):
-        """Apply theme to window"""
-        style = self.theme.get_ttk_style()
+        """Apply modern theme to window"""
+        style = ttk.Style()
+        self.theme.apply_to_style(style)
         
         # Configure root colors
-        self.root.config(bg=self.theme.get("bg"))
+        bg_color = self.design.get_color("bg_primary")
+        self.root.config(bg=bg_color)
     
     def toggle_theme(self):
         """Toggle theme with instant reload"""
-        self.dark_mode = self.theme.toggle()
+        self.theme.toggle()
+        self.design.toggle_mode()
+        self.dark_mode = not self.dark_mode
         self.config_manager.set("dark_mode", self.dark_mode)
         self.apply_theme()
         self.setup_ui()
