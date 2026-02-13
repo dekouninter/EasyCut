@@ -1,5 +1,5 @@
 {
-  "dark_mode": true,
+  "dark_mode": false,
   "language": "en",
   "output_folder": "downloads",
   "log_level": "INFO"

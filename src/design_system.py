@@ -10,6 +10,14 @@ from pathlib import Path
 from typing import Dict, Tuple
 import tkinter.font as tkfont
 
+# Import icon colors for theme integration
+try:
+    from color_extractor import extract_vibrant_colors, get_icon_path
+    _ICON_COLORS = extract_vibrant_colors(get_icon_path())
+    ICON_PRIMARY = _ICON_COLORS.get("primary", "#f85451")
+except:
+    ICON_PRIMARY = "#f85451"  # Fallback coral red from icon
+
 
 class ColorPalette:
     """Modern color palette with accessibility in mind"""
@@ -29,10 +37,10 @@ class ColorPalette:
         "fg_tertiary": "#6B7AA8",         # Tertiary text
         "fg_disabled": "#4A5578",         # Disabled text
         
-        # Accents & Semantics
-        "accent_primary": "#5B8CFF",      # Primary blue
-        "accent_secondary": "#7B9FFF",    # Lighter blue
-        "accent_hover": "#4A7AEE",        # Hover blue
+        # Accents & Semantics (derived from app icon colors)
+        "accent_primary": ICON_PRIMARY,     # Primary accent from icon (coral red)
+        "accent_secondary": "#FF9A9A",     # Lighter variant
+        "accent_hover": "#E83E3A",         # Darker hover state
         
         "success": "#10B981",             # Green
         "success_bg": "#064E3B",          # Success background
@@ -45,7 +53,7 @@ class ColorPalette:
         
         # UI Elements
         "border": "#2D3555",              # Default border
-        "border_focus": "#5B8CFF",        # Focused border
+        "border_focus": ICON_PRIMARY,      # Focused border (icon color)
         "border_hover": "#384071",        # Hover border
         
         "shadow": "rgba(0, 0, 0, 0.5)",   # Shadow color
@@ -67,10 +75,10 @@ class ColorPalette:
         "fg_tertiary": "#6C757D",         # Light gray
         "fg_disabled": "#ADB5BD",         # Disabled gray
         
-        # Accents & Semantics
-        "accent_primary": "#2F6BFF",      # Primary blue
-        "accent_secondary": "#4B82FF",    # Lighter blue
-        "accent_hover": "#1E5AEE",        # Hover blue
+        # Accents & Semantics (derived from app icon colors)  
+        "accent_primary": ICON_PRIMARY,     # Primary accent from icon (coral red)
+        "accent_secondary": "#FF9A9A",     # Lighter variant
+        "accent_hover": "#E83E3A",         # Darker hover state
         
         "success": "#10B981",             # Green
         "success_bg": "#D1FAE5",          # Success background
@@ -83,7 +91,7 @@ class ColorPalette:
         
         # UI Elements
         "border": "#DEE2E6",              # Default border
-        "border_focus": "#2F6BFF",        # Focused border
+        "border_focus": ICON_PRIMARY,      # Focused border (icon color)
         "border_hover": "#ADB5BD",        # Hover border
         
         "shadow": "rgba(0, 0, 0, 0.1)",   # Shadow color
