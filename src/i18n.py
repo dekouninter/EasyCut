@@ -34,6 +34,10 @@ TRANSLATIONS = {
         "menu_donations": "Donations",
         "menu_about": "About",
         "menu_exit": "Exit",
+
+        # Language Names
+        "lang_en": "English",
+        "lang_pt": "Portuguese",
         
         # Application Tabs
         "tab_login": "Login",
@@ -43,6 +47,16 @@ TRANSLATIONS = {
         "tab_audio": "Audio",
         "tab_history": "History",
         "tab_about": "About",
+
+        # Header Actions
+        "header_theme": "Theme",
+        "header_login": "YouTube Login",
+        "header_open_folder": "Open Folder",
+
+        # Login Banner
+        "login_banner_title": "Not connected to YouTube",
+        "login_banner_note": "Login is only used by yt-dlp. Credentials are not stored.",
+        "login_banner_button": "YouTube Login",
         
         # Status Messages
         "status_logged_in": "Logged in as",
@@ -73,10 +87,12 @@ TRANSLATIONS = {
         "download_title": "Video Title",
         "download_duration": "Duration",
         "download_is_live": "Is Live",
+        "download_info": "Video Information",
         "download_mode": "Download Mode",
         "download_mode_full": "Complete Video",
         "download_mode_range": "Time Range",
         "download_mode_until": "Until Time",
+        "download_mode_audio": "Audio Only",
         "download_start_time": "Start Time (MM:SS)",
         "download_end_time": "End Time (MM:SS)",
         "download_until_time": "Until Time (MM:SS)",
@@ -87,6 +103,7 @@ TRANSLATIONS = {
         "download_btn": "Download",
         "download_stop": "Stop",
         "download_clear_log": "Clear Log",
+        "download_log": "Download Log",
         "download_progress": "Downloading...",
         "download_success": "Download completed successfully!",
         "download_error": "Download failed.",
@@ -94,6 +111,7 @@ TRANSLATIONS = {
         "download_invalid_url": "Please enter a valid YouTube URL",
         "download_invalid_time": "Invalid time format. Use MM:SS",
         "download_range_error": "End time must be greater than start time",
+        "download_time_help": "Use start/end for range. Use only end for until mode.",
         
         # Batch Download Operations
         "batch_urls": "URLs (one per line)",
@@ -104,6 +122,7 @@ TRANSLATIONS = {
         "batch_success": "Batch download completed!",
         "batch_error": "Batch download had some errors.",
         "batch_empty": "Please add at least one URL",
+        "batch_log": "Batch Log",
         
         # Live Stream Recording
         "live_title": "Live Stream Recorder",
@@ -124,6 +143,7 @@ TRANSLATIONS = {
         "live_quality_1080": "1080p",
         "live_quality_720": "720p",
         "live_quality_480": "480p",
+        "live_log": "Recording Log",
         "live_start_recording": "Start Recording",
         "live_stop_recording": "Stop Recording",
         "live_recording_started": "Live stream recording started...",
@@ -164,6 +184,16 @@ TRANSLATIONS = {
         "about_tab_about": "About",
         "about_tab_credits": "Credits",
         "about_tab_features": "Features",
+        "about_subtitle": "Professional YouTube Downloader & Audio Converter",
+        "about_section_info": "Application Info",
+        "about_section_links": "Connect & Support",
+        "about_section_features": "Features",
+        "about_section_tech": "Technologies & Credits",
+        "about_section_thanks": "Special Thanks",
+        "about_footer": "Made with Python | MIT License | © 2026 Deko Costa",
+        "about_link_github": "GitHub Repository",
+        "about_link_coffee": "Buy Me a Coffee",
+        "about_link_livepix": "Livepix Donate",
         "about_description": "EasyCut is a simple and secure YouTube video downloader with support for batch downloads and audio extraction.",
         "about_author": "Author: Deko Costa",
         "about_version_info": "Version 1.0.0 - Professional Edition",
@@ -172,6 +202,8 @@ TRANSLATIONS = {
         "about_license": "License: MIT",
         "about_credits_libs": "Libraries: yt-dlp, FFmpeg, keyring",
         "about_credits_tools": "Tools: Python, Tkinter",
+        "about_tech_text": "Core: Python, Tkinter, yt-dlp, FFmpeg, keyring",
+        "about_thanks_text": "Thanks to the open-source community and creators.",
         "about_features_list": [
             "Single and batch video downloads",
             "Secure credential storage with keyring",
@@ -236,6 +268,10 @@ TRANSLATIONS = {
         "menu_donations": "Doações",
         "menu_about": "Sobre",
         "menu_exit": "Sair",
+
+        # Idiomas
+        "lang_en": "English",
+        "lang_pt": "Portugues",
         
         # Abas
         "tab_login": "Entrar",
@@ -245,6 +281,16 @@ TRANSLATIONS = {
         "tab_audio": "Áudio",
         "tab_history": "Histórico",
         "tab_about": "Sobre",
+
+        # Acoes do cabecalho
+        "header_theme": "Tema",
+        "header_login": "Login YouTube",
+        "header_open_folder": "Abrir pasta",
+
+        # Banner de login
+        "login_banner_title": "Nao conectado ao YouTube",
+        "login_banner_note": "Login usado apenas pelo yt-dlp. Credenciais nao sao armazenadas.",
+        "login_banner_button": "Login YouTube",
         
         # Status
         "status_logged_in": "Conectado como",
@@ -275,10 +321,12 @@ TRANSLATIONS = {
         "download_title": "Título do Vídeo",
         "download_duration": "Duração",
         "download_is_live": "É Live",
+        "download_info": "Informacoes do video",
         "download_mode": "Modo de Download",
         "download_mode_full": "Vídeo Completo",
         "download_mode_range": "Intervalo de Tempo",
         "download_mode_until": "Até um Tempo",
+        "download_mode_audio": "Apenas audio",
         "download_start_time": "Tempo de Início (MM:SS)",
         "download_end_time": "Tempo Final (MM:SS)",
         "download_until_time": "Até o Tempo (MM:SS)",
@@ -289,6 +337,7 @@ TRANSLATIONS = {
         "download_btn": "Baixar",
         "download_stop": "Parar",
         "download_clear_log": "Limpar Log",
+        "download_log": "Log do download",
         "download_progress": "Baixando...",
         "download_success": "Download concluído com sucesso!",
         "download_error": "Falha no download.",
@@ -296,6 +345,7 @@ TRANSLATIONS = {
         "download_invalid_url": "Digite uma URL válida do YouTube",
         "download_invalid_time": "Formato de tempo inválido. Use MM:SS",
         "download_range_error": "Tempo final deve ser maior que tempo inicial",
+        "download_time_help": "Use inicio/fim para intervalo. Use apenas fim para modo ate o tempo.",
         
         # Lote (Batch)
         "batch_urls": "URLs (uma por linha)",
@@ -306,6 +356,7 @@ TRANSLATIONS = {
         "batch_success": "Download em lote concluído!",
         "batch_error": "Download em lote teve alguns erros.",
         "batch_empty": "Adicione pelo menos uma URL",
+        "batch_log": "Log do lote",
         
         # Transmissão Ao Vivo
         "live_title": "Gravador de Transmissão Ao Vivo",
@@ -326,6 +377,7 @@ TRANSLATIONS = {
         "live_quality_1080": "1080p",
         "live_quality_720": "720p",
         "live_quality_480": "480p",
+        "live_log": "Log da gravacao",
         "live_start_recording": "Iniciar Gravação",
         "live_stop_recording": "Parar Gravação",
         "live_recording_started": "Gravação de transmissão ao vivo iniciada...",
@@ -366,6 +418,16 @@ TRANSLATIONS = {
         "about_tab_about": "Sobre",
         "about_tab_credits": "Créditos",
         "about_tab_features": "Recursos",
+        "about_subtitle": "Downloader profissional do YouTube e conversor de audio",
+        "about_section_info": "Informacoes do aplicativo",
+        "about_section_links": "Conectar e apoiar",
+        "about_section_features": "Recursos",
+        "about_section_tech": "Tecnologias e creditos",
+        "about_section_thanks": "Agradecimentos",
+        "about_footer": "Feito com Python | Licenca MIT | © 2026 Deko Costa",
+        "about_link_github": "Repositorio GitHub",
+        "about_link_coffee": "Buy Me a Coffee",
+        "about_link_livepix": "Doar via Livepix",
         "about_description": "EasyCut é um simples e seguro baixador de vídeos YouTube com suporte a downloads em lote e extração de áudio.",
         "about_author": "Autor: Equipe EasyCut",
         "about_version_info": "Versão 1.0.0",
@@ -373,6 +435,8 @@ TRANSLATIONS = {
         "about_license": "Licença: MIT",
         "about_credits_libs": "Bibliotecas: yt-dlp, FFmpeg, keyring",
         "about_credits_tools": "Ferramentas: Python, Tkinter",
+        "about_tech_text": "Base: Python, Tkinter, yt-dlp, FFmpeg, keyring",
+        "about_thanks_text": "Obrigado a comunidade open-source e criadores.",
         "about_features_list": [
             "Download de vídeos único e em lote",
             "Armazenamento seguro de credenciais com keyring",

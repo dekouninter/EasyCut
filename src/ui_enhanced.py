@@ -133,7 +133,7 @@ class LoginPopup:
     storage option. Supports callback on successful authentication.
     """
     
-    def __init__(self, parent, title="Login do YouTube", callback=None):
+    def __init__(self, parent, title="Login", callback=None, labels=None):
         """Initialize login popup
         
         Args:
@@ -144,6 +144,15 @@ class LoginPopup:
         self.parent = parent
         self.title = title
         self.callback = callback
+        self.labels = labels or {
+            "email_label": "Email/Usuario do YouTube:",
+            "password_label": "Senha:",
+            "notice": "Login usado apenas pelo yt-dlp. Credenciais nao sao armazenadas.",
+            "button_ok": "Entrar",
+            "button_cancel": "Cancelar",
+            "warning_title": "Aviso",
+            "warning_message": "Preencha todos os campos.",
+        }
         self.result = None
     
     def show(self):
@@ -164,20 +173,17 @@ class LoginPopup:
         main_frame.pack(fill=tk.BOTH, expand=True)
         
         # Email/Username field
-        ttk.Label(main_frame, text="Email/Usuario do YouTube:").grid(row=0, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text=self.labels.get("email_label", "Email/Username:")).grid(row=0, column=0, sticky=tk.W, pady=5)
         email_entry = ttk.Entry(main_frame, width=30)
         email_entry.grid(row=0, column=1, sticky=tk.EW, pady=5, padx=10)
         
         # Password field
-        ttk.Label(main_frame, text="Senha:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text=self.labels.get("password_label", "Password:")).grid(row=1, column=0, sticky=tk.W, pady=5)
         password_entry = ttk.Entry(main_frame, width=30, show="*")
         password_entry.grid(row=1, column=1, sticky=tk.EW, pady=5, padx=10)
 
         # YouTube login notice
-        notice = (
-            "Este login e usado somente pelo yt-dlp para melhorar o acesso.\n"
-            "Nao armazenamos suas credenciais e nada e gravado localmente."
-        )
+        notice = self.labels.get("notice", "Login is only used by yt-dlp. Credentials are not stored.")
         ttk.Label(main_frame, text=notice, justify=tk.LEFT, wraplength=360).grid(
             row=2, column=0, columnspan=2, sticky=tk.W, pady=10
         )
@@ -192,7 +198,10 @@ class LoginPopup:
             remember = False
             
             if not email or not password:
-                messagebox.showwarning("Aviso", "Preencha todos os campos.")
+                messagebox.showwarning(
+                    self.labels.get("warning_title", "Warning"),
+                    self.labels.get("warning_message", "Please fill all fields.")
+                )
                 return
             
             self.result = {
@@ -209,8 +218,8 @@ class LoginPopup:
         def on_cancel():
             dialog.destroy()
         
-        ttk.Button(button_frame, text="Entrar", command=on_ok).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Cancelar", command=on_cancel).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text=self.labels.get("button_ok", "OK"), command=on_ok).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text=self.labels.get("button_cancel", "Cancel"), command=on_cancel).pack(side=tk.LEFT, padx=5)
         
         # Configure grid weights
         main_frame.columnconfigure(1, weight=1)
@@ -473,7 +482,7 @@ class StatusBar(ttk.Frame):
     Auto-updates with theme changes.
     """
     
-    def __init__(self, parent, theme=None, **kwargs):
+    def __init__(self, parent, theme=None, labels=None, **kwargs):
         """Initialize status bar
         
         Args:
@@ -483,23 +492,29 @@ class StatusBar(ttk.Frame):
         """
         super().__init__(parent, **kwargs)
         self.theme = theme
+        self.labels = labels or {
+            "status_ready": "Ready",
+            "login_not_logged": "Not logged in",
+            "login_logged_prefix": "Logged in as",
+            "version_label": "v1.0.0 Professional",
+        }
         
         # Status label
-        self.status_label = ttk.Label(self, text="Ready")
+        self.status_label = ttk.Label(self, text=self.labels.get("status_ready", "Ready"))
         self.status_label.pack(side=tk.LEFT, padx=5)
         
         # Vertical separator
         ttk.Separator(self, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
         
         # Login status label
-        self.login_label = ttk.Label(self, text="Not logged in")
+        self.login_label = ttk.Label(self, text=self.labels.get("login_not_logged", "Not logged in"))
         self.login_label.pack(side=tk.LEFT, padx=5)
         
         # Spacer
         ttk.Frame(self).pack(side=tk.LEFT, expand=True)
         
         # Version label
-        version_label = ttk.Label(self, text="v1.0.0 Professional")
+        version_label = ttk.Label(self, text=self.labels.get("version_label", "v1.0.0 Professional"))
         version_label.pack(side=tk.RIGHT, padx=5)
     
     def set_status(self, message):
@@ -518,6 +533,7 @@ class StatusBar(ttk.Frame):
             email (str): User email if logged in
         """
         if logged_in:
-            self.login_label.config(text=f"Logged in as: {email}")
+            prefix = self.labels.get("login_logged_prefix", "Logged in as")
+            self.login_label.config(text=f"{prefix}: {email}")
         else:
-            self.login_label.config(text="Not logged in")
+            self.login_label.config(text=self.labels.get("login_not_logged", "Not logged in"))

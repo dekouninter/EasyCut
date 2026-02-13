@@ -103,7 +103,7 @@ class EasyCutApp:
     
     def setup_window(self):
         """Setup main window"""
-        self.root.title("EasyCut - Downloader do YouTube")
+        self.root.title(self.translator.get("app_title", "EasyCut"))
         self.root.geometry("1100x750")
         self.root.minsize(900, 600)
         
@@ -139,7 +139,14 @@ class EasyCutApp:
         self.create_about_tab()
         
         # Status bar
-        self.status_bar = StatusBar(main_frame, theme=self.theme)
+        tr = self.translator.get
+        status_labels = {
+            "status_ready": tr("status_ready", "Ready"),
+            "login_not_logged": tr("status_not_logged_in", "Not logged in"),
+            "login_logged_prefix": tr("status_logged_in", "Logged in as"),
+            "version_label": f"v{tr('version', '1.0.0')}",
+        }
+        self.status_bar = StatusBar(main_frame, theme=self.theme, labels=status_labels)
         self.status_bar.pack(fill=tk.X)
         self.update_login_status()
         
@@ -149,30 +156,37 @@ class EasyCutApp:
     
     def create_header(self, parent):
         """Create professional header with controls"""
+        tr = self.translator.get
         header = ttk.Frame(parent)
         header.pack(fill=tk.X, padx=5, pady=5)
         
         # Logo/Title
-        title_lbl = ttk.Label(header, text="EasyCut", font=("Segoe UI", 16, "bold"))
+        title_lbl = ttk.Label(header, text=tr("about_title", "EasyCut"), font=("Segoe UI", 16, "bold"))
         title_lbl.pack(side=tk.LEFT, padx=10)
         
         ttk.Separator(header, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
         
         # Theme toggle
-        ttk.Button(header, text="Tema", command=self.toggle_theme, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Button(header, text=tr("header_theme", "Theme"), command=self.toggle_theme, width=8).pack(side=tk.LEFT, padx=2)
         
         # Language selector
-        lang_var = tk.StringVar(value="English" if self.language == "en" else "Portugues")
-        lang_combo = ttk.Combobox(header, values=["Portugues", "English"], state="readonly", width=12)
-        lang_combo.set(lang_var.get())
-        lang_combo.bind("<<ComboboxSelected>>", lambda e: self.change_language("en" if lang_combo.get() == "English" else "pt"))
+        lang_options = [
+            ("pt", tr("lang_pt", "Portugues")),
+            ("en", tr("lang_en", "English"))
+        ]
+        lang_codes = [code for code, _ in lang_options]
+        lang_labels = [label for _, label in lang_options]
+        lang_combo = ttk.Combobox(header, values=lang_labels, state="readonly", width=12)
+        current_index = lang_codes.index(self.language) if self.language in lang_codes else 0
+        lang_combo.set(lang_labels[current_index])
+        lang_combo.bind("<<ComboboxSelected>>", lambda e: self.change_language(lang_codes[lang_combo.current()]))
         lang_combo.pack(side=tk.LEFT, padx=2)
         
         # Login button
-        ttk.Button(header, text="Login YouTube", command=self.open_login_popup, width=14).pack(side=tk.LEFT, padx=2)
+        ttk.Button(header, text=tr("header_login", "YouTube Login"), command=self.open_login_popup, width=14).pack(side=tk.LEFT, padx=2)
         
         # Logout button
-        ttk.Button(header, text="Abrir pasta", command=self.open_output_folder, width=12).pack(side=tk.LEFT, padx=2)
+        ttk.Button(header, text=tr("header_open_folder", "Open Folder"), command=self.open_output_folder, width=12).pack(side=tk.LEFT, padx=2)
         
         # Stretch
         ttk.Label(header, text="").pack(side=tk.LEFT, expand=True)
@@ -182,6 +196,7 @@ class EasyCutApp:
     
     def create_login_banner(self, parent):
         """Create login status banner (when not logged in)"""
+        tr = self.translator.get
         banner = ttk.Frame(parent)
         banner.pack(fill=tk.X, padx=5, pady=5)
         
@@ -189,16 +204,16 @@ class EasyCutApp:
         msg_frame = ttk.Frame(banner)
         msg_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
-        ttk.Label(msg_frame, text="Nao conectado ao YouTube", font=("Segoe UI", 10, "bold"), foreground="#FF9800").pack(side=tk.LEFT, padx=5)
+        ttk.Label(msg_frame, text=tr("login_banner_title", "Not connected"), font=("Segoe UI", 10, "bold"), foreground="#FF9800").pack(side=tk.LEFT, padx=5)
         ttk.Label(
             msg_frame,
-            text="Login usado apenas pelo yt-dlp. Credenciais nao sao armazenadas.",
+            text=tr("login_banner_note", "Login is only used by yt-dlp."),
             font=("Segoe UI", 9),
             foreground="#777"
         ).pack(side=tk.LEFT, padx=5)
         
         # Login button
-        ttk.Button(banner, text="Login YouTube", command=self.open_login_popup, width=15).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(banner, text=tr("login_banner_button", "YouTube Login"), command=self.open_login_popup, width=15).pack(side=tk.RIGHT, padx=5)
     
     def create_login_tab(self):
         """Create login tab with popup-only interface"""
@@ -226,71 +241,72 @@ class EasyCutApp:
     
     def create_download_tab(self):
         """Create video download tab with integrated audio options"""
+        tr = self.translator.get
         frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text="Download")
+        self.notebook.add(frame, text=tr("tab_download", "Download"))
         
         main = ttk.Frame(frame, padding=10)
         main.pack(fill=tk.BOTH, expand=True)
         
         # URL Input
-        url_frame = ttk.LabelFrame(main, text="URL do YouTube", padding=10)
+        url_frame = ttk.LabelFrame(main, text=tr("download_url", "YouTube URL"), padding=10)
         url_frame.pack(fill=tk.X, pady=5)
         
         self.download_url_entry = ttk.Entry(url_frame, width=80)
         self.download_url_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
         
-        ttk.Button(url_frame, text="Verificar", command=self.verify_video).pack(side=tk.LEFT, padx=5)
+        ttk.Button(url_frame, text=tr("download_verify", "Verify"), command=self.verify_video).pack(side=tk.LEFT, padx=5)
         
         # Video Info
-        info_frame = ttk.LabelFrame(main, text="Informacoes do video", padding=10)
+        info_frame = ttk.LabelFrame(main, text=tr("download_info", "Video Information"), padding=10)
         info_frame.pack(fill=tk.X, pady=5)
         
-        ttk.Label(info_frame, text="Titulo:", font=("Segoe UI", 10, "bold")).grid(row=0, column=0, sticky=tk.W, padx=5)
+        ttk.Label(info_frame, text=f"{tr('download_title', 'Title')}:", font=("Segoe UI", 10, "bold")).grid(row=0, column=0, sticky=tk.W, padx=5)
         self.download_title_label = ttk.Label(info_frame, text="-", foreground="gray")
         self.download_title_label.grid(row=0, column=1, sticky=tk.W, padx=5)
         
-        ttk.Label(info_frame, text="Duracao:", font=("Segoe UI", 10, "bold")).grid(row=1, column=0, sticky=tk.W, padx=5)
+        ttk.Label(info_frame, text=f"{tr('download_duration', 'Duration')}:", font=("Segoe UI", 10, "bold")).grid(row=1, column=0, sticky=tk.W, padx=5)
         self.download_duration_label = ttk.Label(info_frame, text="-", foreground="gray")
         self.download_duration_label.grid(row=1, column=1, sticky=tk.W, padx=5)
         
         # Download Mode Section
-        mode_frame = ttk.LabelFrame(main, text="Modo de download", padding=10)
+        mode_frame = ttk.LabelFrame(main, text=tr("download_mode", "Download Mode"), padding=10)
         mode_frame.pack(fill=tk.X, pady=5)
         
         self.download_mode_var = tk.StringVar(value="full")
-        ttk.Radiobutton(mode_frame, text="Video completo", variable=self.download_mode_var, value="full").pack(anchor=tk.W, pady=3)
-        ttk.Radiobutton(mode_frame, text="Corte por intervalo", variable=self.download_mode_var, value="range").pack(anchor=tk.W, pady=3)
-        ttk.Radiobutton(mode_frame, text="Corte ate o tempo", variable=self.download_mode_var, value="until").pack(anchor=tk.W, pady=3)
-        ttk.Radiobutton(mode_frame, text="Apenas audio", variable=self.download_mode_var, value="audio").pack(anchor=tk.W, pady=3)
+        ttk.Radiobutton(mode_frame, text=tr("download_mode_full", "Complete Video"), variable=self.download_mode_var, value="full").pack(anchor=tk.W, pady=3)
+        ttk.Radiobutton(mode_frame, text=tr("download_mode_range", "Time Range"), variable=self.download_mode_var, value="range").pack(anchor=tk.W, pady=3)
+        ttk.Radiobutton(mode_frame, text=tr("download_mode_until", "Until Time"), variable=self.download_mode_var, value="until").pack(anchor=tk.W, pady=3)
+        ttk.Radiobutton(mode_frame, text=tr("download_mode_audio", "Audio Only"), variable=self.download_mode_var, value="audio").pack(anchor=tk.W, pady=3)
         
         # Time Range Inputs (shown when mode changes)
-        time_frame = ttk.LabelFrame(main, text="Corte de tempo (MM:SS)", padding=10)
+        time_frame = ttk.LabelFrame(main, text=f"{tr('download_start_time', 'Start Time')} / {tr('download_end_time', 'End Time')}", padding=10)
         time_frame.pack(fill=tk.X, pady=5)
         
-        ttk.Label(time_frame, text="Inicio:", font=("Segoe UI", 9)).grid(row=0, column=0, sticky=tk.W, padx=5)
+        ttk.Label(time_frame, text=f"{tr('download_start_time', 'Start Time')}:", font=("Segoe UI", 9)).grid(row=0, column=0, sticky=tk.W, padx=5)
         self.time_start_entry = ttk.Entry(time_frame, width=15)
         self.time_start_entry.insert(0, "00:00")
         self.time_start_entry.grid(row=0, column=1, sticky=tk.W, padx=5)
         
-        ttk.Label(time_frame, text="Fim/Ate:", font=("Segoe UI", 9)).grid(row=0, column=2, sticky=tk.W, padx=5)
+        ttk.Label(time_frame, text=f"{tr('download_end_time', 'End Time')}:", font=("Segoe UI", 9)).grid(row=0, column=2, sticky=tk.W, padx=5)
         self.time_end_entry = ttk.Entry(time_frame, width=15)
         self.time_end_entry.insert(0, "00:00")
         self.time_end_entry.grid(row=0, column=3, sticky=tk.W, padx=5)
         
-        ttk.Label(time_frame, text="Use inicio/fim para intervalo. Use apenas fim para modo ate o tempo.", font=("Segoe UI", 8), foreground="gray").grid(row=1, column=0, columnspan=4, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(time_frame, text=tr("download_time_help", "Use start/end for range."), font=("Segoe UI", 8), foreground="gray").grid(row=1, column=0, columnspan=4, sticky=tk.W, padx=5, pady=5)
         
         # Quality Section
-        quality_frame = ttk.LabelFrame(main, text="Qualidade", padding=10)
+        quality_frame = ttk.LabelFrame(main, text=tr("download_quality", "Quality"), padding=10)
         quality_frame.pack(fill=tk.X, pady=5)
         
         self.download_quality_var = tk.StringVar(value="best")
-        ttk.Radiobutton(quality_frame, text="Melhor disponivel", variable=self.download_quality_var, value="best").pack(anchor=tk.W, pady=2)
-        ttk.Radiobutton(quality_frame, text="MP4 (compatibilidade)", variable=self.download_quality_var, value="mp4").pack(anchor=tk.W, pady=2)
+        ttk.Radiobutton(quality_frame, text=tr("download_quality_best", "Best Quality"), variable=self.download_quality_var, value="best").pack(anchor=tk.W, pady=2)
+        ttk.Radiobutton(quality_frame, text=tr("download_quality_mp4", "MP4 (Best)"), variable=self.download_quality_var, value="mp4").pack(anchor=tk.W, pady=2)
         ttk.Radiobutton(quality_frame, text="1080p", variable=self.download_quality_var, value="1080").pack(anchor=tk.W, pady=2)
         ttk.Radiobutton(quality_frame, text="720p", variable=self.download_quality_var, value="720").pack(anchor=tk.W, pady=2)
         
         # Audio Format Options (shown when Audio mode is selected)
-        audio_frame = ttk.LabelFrame(main, text="Formato de audio", padding=10)
+        audio_frame = ttk.LabelFrame(main, text=tr("audio_format", "Audio Format"), padding=10)
         audio_frame.pack(fill=tk.X, pady=5)
         
         self.audio_format_var = tk.StringVar(value="mp3")
@@ -301,7 +317,7 @@ class EasyCutApp:
         ttk.Radiobutton(fmt_sub_frame1, text="M4A", variable=self.audio_format_var, value="m4a").pack(side=tk.LEFT, padx=5)
         ttk.Radiobutton(fmt_sub_frame1, text="OPUS", variable=self.audio_format_var, value="opus").pack(side=tk.LEFT, padx=5)
         
-        ttk.Label(audio_frame, text="Bitrate (kbps):", font=("Segoe UI", 9)).pack(anchor=tk.W, pady=5)
+        ttk.Label(audio_frame, text=f"{tr('audio_bitrate', 'Bitrate')} (kbps):", font=("Segoe UI", 9)).pack(anchor=tk.W, pady=5)
         self.audio_bitrate_var = tk.StringVar(value="320")
         fmt_sub_frame2 = ttk.Frame(audio_frame)
         fmt_sub_frame2.pack(anchor=tk.W, pady=3)
@@ -309,7 +325,7 @@ class EasyCutApp:
             ttk.Radiobutton(fmt_sub_frame2, text=f"{br} kbps", variable=self.audio_bitrate_var, value=br).pack(side=tk.LEFT, padx=5)
         
         # Log
-        log_frame = ttk.LabelFrame(main, text="Log do download", padding=5)
+        log_frame = ttk.LabelFrame(main, text=tr("download_log", "Download Log"), padding=5)
         log_frame.pack(fill=tk.BOTH, expand=True, pady=5)
         
         self.download_log = LogWidget(log_frame, theme=self.theme, height=8)
@@ -322,20 +338,21 @@ class EasyCutApp:
         btn_frame = ttk.Frame(main)
         btn_frame.pack(fill=tk.X, pady=10)
         
-        ttk.Button(btn_frame, text="Baixar", command=self.start_download, width=12).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text="Parar", command=self.stop_download, width=12).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text="Limpar log", command=lambda: self.download_log.clear(), width=12).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text=tr("download_btn", "Download"), command=self.start_download, width=12).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text=tr("download_stop", "Stop"), command=self.stop_download, width=12).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text=tr("download_clear_log", "Clear Log"), command=lambda: self.download_log.clear(), width=12).pack(side=tk.LEFT, padx=5)
     
     def create_batch_tab(self):
         """Create batch download tab"""
+        tr = self.translator.get
         frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text="Lote")
+        self.notebook.add(frame, text=tr("tab_batch", "Batch"))
         
         main = ttk.Frame(frame, padding=10)
         main.pack(fill=tk.BOTH, expand=True)
         
         # URLs Input
-        urls_frame = ttk.LabelFrame(main, text="URLs (uma por linha)", padding=10)
+        urls_frame = ttk.LabelFrame(main, text=tr("batch_urls", "URLs (one per line)"), padding=10)
         urls_frame.pack(fill=tk.BOTH, expand=True, pady=5)
         
         scrollbar = ttk.Scrollbar(urls_frame, orient=tk.VERTICAL)
@@ -348,12 +365,12 @@ class EasyCutApp:
         btn_frame = ttk.Frame(main)
         btn_frame.pack(fill=tk.X, pady=10)
         
-        ttk.Button(btn_frame, text="Baixar tudo", command=self.start_batch_download).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text="Colar", command=self.batch_paste).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text="Limpar", command=lambda: self.batch_text.delete(1.0, tk.END)).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text=tr("batch_download_all", "Download All"), command=self.start_batch_download).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text=tr("batch_paste", "Paste"), command=self.batch_paste).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text=tr("batch_clear", "Clear"), command=lambda: self.batch_text.delete(1.0, tk.END)).pack(side=tk.LEFT, padx=5)
         
         # Log
-        log_frame = ttk.LabelFrame(main, text="Log do lote", padding=5)
+        log_frame = ttk.LabelFrame(main, text=tr("batch_log", "Batch Log"), padding=5)
         log_frame.pack(fill=tk.BOTH, expand=True, pady=5)
         
         self.batch_log = LogWidget(log_frame, theme=self.theme, height=6)
@@ -364,77 +381,78 @@ class EasyCutApp:
     
     def create_live_tab(self):
         """Create live stream download tab with dynamic features"""
+        tr = self.translator.get
         frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text="Live")
+        self.notebook.add(frame, text=tr("tab_live", "Live"))
         
         main = ttk.Frame(frame, padding=10)
         main.pack(fill=tk.BOTH, expand=True)
         
         # Title
-        title = ttk.Label(main, text="Gravador de transmissao ao vivo", font=("Segoe UI", 14, "bold"))
+        title = ttk.Label(main, text=tr("live_title", "Live Stream Recorder"), font=("Segoe UI", 14, "bold"))
         title.pack(pady=10)
         
         # URL Input
-        url_frame = ttk.LabelFrame(main, text="URL da transmissao", padding=10)
+        url_frame = ttk.LabelFrame(main, text=tr("live_url", "Live Stream URL"), padding=10)
         url_frame.pack(fill=tk.X, pady=5)
         
         self.live_url_entry = ttk.Entry(url_frame, width=80)
         self.live_url_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
         
-        ttk.Button(url_frame, text="Verificar", command=self.verify_live_stream).pack(side=tk.LEFT, padx=5)
+        ttk.Button(url_frame, text=tr("live_check_stream", "Check Stream"), command=self.verify_live_stream).pack(side=tk.LEFT, padx=5)
         
         # Stream Info
-        info_frame = ttk.LabelFrame(main, text="Informacoes da transmissao", padding=10)
+        info_frame = ttk.LabelFrame(main, text=tr("live_status", "Stream Status"), padding=10)
         info_frame.pack(fill=tk.X, pady=5)
         
-        ttk.Label(info_frame, text="Status:", font=("Segoe UI", 10, "bold")).grid(row=0, column=0, sticky=tk.W, padx=5)
-        self.live_status_label = ttk.Label(info_frame, text="DESCONHECIDO", foreground="#FF0000")
+        ttk.Label(info_frame, text=f"{tr('live_status', 'Status')}:", font=("Segoe UI", 10, "bold")).grid(row=0, column=0, sticky=tk.W, padx=5)
+        self.live_status_label = ttk.Label(info_frame, text=tr("live_status_unknown", "UNKNOWN"), foreground="#FF0000")
         self.live_status_label.grid(row=0, column=1, sticky=tk.W, padx=5)
         
-        ttk.Label(info_frame, text="Duracao (hh:mm:ss):", font=("Segoe UI", 10, "bold")).grid(row=1, column=0, sticky=tk.W, padx=5)
+        ttk.Label(info_frame, text=f"{tr('live_duration', 'Duration')} (hh:mm:ss):", font=("Segoe UI", 10, "bold")).grid(row=1, column=0, sticky=tk.W, padx=5)
         self.live_duration_label = ttk.Label(info_frame, text="-", foreground="gray")
         self.live_duration_label.grid(row=1, column=1, sticky=tk.W, padx=5)
         
         # Recording Mode
-        mode_frame = ttk.LabelFrame(main, text="Modo de gravacao", padding=10)
+        mode_frame = ttk.LabelFrame(main, text=tr("live_mode", "Recording Mode"), padding=10)
         mode_frame.pack(fill=tk.X, pady=5)
         
         self.live_mode_var = tk.StringVar(value="continuous")
-        ttk.Radiobutton(mode_frame, text="Gravacao continua", variable=self.live_mode_var, value="continuous").pack(anchor=tk.W, pady=3)
-        ttk.Radiobutton(mode_frame, text="Gravar ate um tempo", variable=self.live_mode_var, value="until").pack(anchor=tk.W, pady=3)
-        ttk.Radiobutton(mode_frame, text="Gravar por duracao", variable=self.live_mode_var, value="duration").pack(anchor=tk.W, pady=3)
+        ttk.Radiobutton(mode_frame, text=tr("live_mode_continuous", "Continuous Recording"), variable=self.live_mode_var, value="continuous").pack(anchor=tk.W, pady=3)
+        ttk.Radiobutton(mode_frame, text=tr("live_mode_until", "Record Until Time"), variable=self.live_mode_var, value="until").pack(anchor=tk.W, pady=3)
+        ttk.Radiobutton(mode_frame, text=tr("live_mode_duration", "Record Duration"), variable=self.live_mode_var, value="duration").pack(anchor=tk.W, pady=3)
         
         # Duration/Until inputs
-        duration_frame = ttk.LabelFrame(main, text="Parametros de gravacao", padding=10)
+        duration_frame = ttk.LabelFrame(main, text=tr("live_mode", "Recording Mode"), padding=10)
         duration_frame.pack(fill=tk.X, pady=5)
         
-        ttk.Label(duration_frame, text="Horas:", font=("Segoe UI", 9)).grid(row=0, column=0, sticky=tk.W, padx=5)
+        ttk.Label(duration_frame, text=f"{tr('live_hours', 'Hours')}:", font=("Segoe UI", 9)).grid(row=0, column=0, sticky=tk.W, padx=5)
         self.live_hours_entry = ttk.Entry(duration_frame, width=6)
         self.live_hours_entry.insert(0, "01")
         self.live_hours_entry.grid(row=0, column=1, sticky=tk.W, padx=5)
         
-        ttk.Label(duration_frame, text="Minutos:", font=("Segoe UI", 9)).grid(row=0, column=2, sticky=tk.W, padx=5)
+        ttk.Label(duration_frame, text=f"{tr('live_minutes', 'Minutes')}:", font=("Segoe UI", 9)).grid(row=0, column=2, sticky=tk.W, padx=5)
         self.live_minutes_entry = ttk.Entry(duration_frame, width=6)
         self.live_minutes_entry.insert(0, "00")
         self.live_minutes_entry.grid(row=0, column=3, sticky=tk.W, padx=5)
         
-        ttk.Label(duration_frame, text="Segundos:", font=("Segoe UI", 9)).grid(row=0, column=4, sticky=tk.W, padx=5)
+        ttk.Label(duration_frame, text=f"{tr('live_seconds', 'Seconds')}:", font=("Segoe UI", 9)).grid(row=0, column=4, sticky=tk.W, padx=5)
         self.live_seconds_entry = ttk.Entry(duration_frame, width=6)
         self.live_seconds_entry.insert(0, "00")
         self.live_seconds_entry.grid(row=0, column=5, sticky=tk.W, padx=5)
         
         # Quality Section
-        quality_frame = ttk.LabelFrame(main, text="Qualidade", padding=10)
+        quality_frame = ttk.LabelFrame(main, text=tr("live_quality", "Quality"), padding=10)
         quality_frame.pack(fill=tk.X, pady=5)
         
         self.live_quality_var = tk.StringVar(value="best")
-        ttk.Radiobutton(quality_frame, text="Melhor disponivel", variable=self.live_quality_var, value="best").pack(anchor=tk.W, pady=2)
+        ttk.Radiobutton(quality_frame, text=tr("live_quality_best", "Best Available"), variable=self.live_quality_var, value="best").pack(anchor=tk.W, pady=2)
         ttk.Radiobutton(quality_frame, text="1080p", variable=self.live_quality_var, value="1080").pack(anchor=tk.W, pady=2)
         ttk.Radiobutton(quality_frame, text="720p", variable=self.live_quality_var, value="720").pack(anchor=tk.W, pady=2)
         ttk.Radiobutton(quality_frame, text="480p", variable=self.live_quality_var, value="480").pack(anchor=tk.W, pady=2)
         
         # Log
-        log_frame = ttk.LabelFrame(main, text="Log da gravacao", padding=5)
+        log_frame = ttk.LabelFrame(main, text=tr("live_log", "Recording Log"), padding=5)
         log_frame.pack(fill=tk.BOTH, expand=True, pady=5)
         
         self.live_log = LogWidget(log_frame, theme=self.theme, height=8)
@@ -447,9 +465,9 @@ class EasyCutApp:
         btn_frame = ttk.Frame(main)
         btn_frame.pack(fill=tk.X, pady=10)
         
-        ttk.Button(btn_frame, text="Iniciar", command=self.start_live_recording, width=12).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text="Parar", command=self.stop_live_recording, width=12).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text="Limpar log", command=lambda: self.live_log.clear(), width=12).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text=tr("live_start_recording", "Start Recording"), command=self.start_live_recording, width=12).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text=tr("live_stop_recording", "Stop Recording"), command=self.stop_live_recording, width=12).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text=tr("download_clear_log", "Clear Log"), command=lambda: self.live_log.clear(), width=12).pack(side=tk.LEFT, padx=5)
     
     def create_audio_tab(self):
         """Create audio conversion tab"""
@@ -497,8 +515,9 @@ class EasyCutApp:
     
     def create_history_tab(self):
         """Create download history tab"""
+        tr = self.translator.get
         frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text="Historico")
+        self.notebook.add(frame, text=tr("tab_history", "History"))
         
         main = ttk.Frame(frame, padding=10)
         main.pack(fill=tk.BOTH, expand=True)
@@ -507,8 +526,8 @@ class EasyCutApp:
         btn_frame = ttk.Frame(main)
         btn_frame.pack(fill=tk.X, pady=5)
         
-        ttk.Button(btn_frame, text="Atualizar", command=self.refresh_history).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text="Limpar", command=self.clear_history).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text=tr("history_update", "Update"), command=self.refresh_history).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text=tr("history_clear", "Clear History"), command=self.clear_history).pack(side=tk.LEFT, padx=5)
         
         # Tree
         tree_frame = ttk.Frame(main)
@@ -517,8 +536,13 @@ class EasyCutApp:
         columns = ("Date", "Filename", "Status")
         self.history_tree = ttk.Treeview(tree_frame, columns=columns, height=20, show="tree headings")
         
+        col_labels = {
+            "Date": tr("history_date", "Date"),
+            "Filename": tr("history_filename", "Filename"),
+            "Status": tr("history_status", "Status"),
+        }
         for col in columns:
-            self.history_tree.heading(col, text=col)
+            self.history_tree.heading(col, text=col_labels.get(col, col))
             self.history_tree.column(col, width=250)
         
         scrollbar = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.history_tree.yview)
@@ -531,8 +555,9 @@ class EasyCutApp:
     
     def create_about_tab(self):
         """Create professional about tab with credits and information"""
+        tr = self.translator.get
         frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text="Sobre")
+        self.notebook.add(frame, text=tr("tab_about", "About"))
         
         # Main container with scroll
         canvas = tk.Canvas(frame, bg=self.theme.get("bg"), highlightthickness=0)
@@ -555,32 +580,26 @@ class EasyCutApp:
         main.pack(fill=tk.BOTH, expand=True)
         
         # Title Section
-        ttk.Label(main, text="🎬 EasyCut", font=("Arial", 24, "bold")).pack(pady=5)
-        ttk.Label(main, text="Professional YouTube Downloader & Audio Converter", font=("Arial", 12, "italic"), foreground="gray").pack(pady=10)
+        ttk.Label(main, text=tr("about_title", "EasyCut"), font=("Segoe UI", 22, "bold")).pack(pady=5)
+        ttk.Label(main, text=tr("about_subtitle", "Professional YouTube Downloader & Audio Converter"), font=("Segoe UI", 11), foreground="gray").pack(pady=6)
         
         ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=15)
         
         # Application Info
-        info_frame = ttk.LabelFrame(main, text="📋 Application Info", padding=15)
+        info_frame = ttk.LabelFrame(main, text=tr("about_section_info", "Application Info"), padding=15)
         info_frame.pack(fill=tk.X, pady=10)
         
-        app_info = [
-            ("Version", "1.0.0"),
-            ("License", "MIT"),
-            ("Author", "Deko Costa"),
-            ("Release Date", "February 2026"),
-        ]
-        
-        for label, value in app_info:
-            lbl = ttk.Label(info_frame, text=f"{label}:", font=("Arial", 10, "bold"))
-            lbl.grid(row=app_info.index((label, value)), column=0, sticky=tk.W, padx=10, pady=5)
-            val = ttk.Label(info_frame, text=value, foreground="gray")
-            val.grid(row=app_info.index((label, value)), column=1, sticky=tk.W, padx=10, pady=5)
+        info_text = "\n".join([
+            tr("about_version_info", "Version 1.0.0"),
+            tr("about_author", "Author: Deko Costa"),
+            tr("about_license", "License: MIT"),
+        ])
+        ttk.Label(info_frame, text=info_text, justify=tk.LEFT, font=("Segoe UI", 9)).pack(anchor=tk.W)
         
         ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=15)
         
         # Social Links
-        social_frame = ttk.LabelFrame(main, text="🔗 Connect & Support", padding=15)
+        social_frame = ttk.LabelFrame(main, text=tr("about_section_links", "Connect & Support"), padding=15)
         social_frame.pack(fill=tk.X, pady=10)
         
         def open_link(url):
@@ -588,9 +607,9 @@ class EasyCutApp:
             webbrowser.open(url)
         
         links = [
-            ("🐙 GitHub Repository", "https://github.com/dekouninter/EasyCut"),
-            ("☕ Buy Me a Coffee", "https://buymeacoffee.com/dekocosta"),
-            ("💰 Livepix Donate", "https://livepix.gg/dekocosta"),
+            (tr("about_link_github", "GitHub Repository"), "https://github.com/dekouninter/EasyCut"),
+            (tr("about_link_coffee", "Buy Me a Coffee"), "https://buymeacoffee.com/dekocosta"),
+            (tr("about_link_livepix", "Livepix Donate"), "https://livepix.gg/dekocosta"),
         ]
         
         for i, (label, url) in enumerate(links):
@@ -604,21 +623,12 @@ class EasyCutApp:
         ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=15)
         
         # Features
-        features_frame = ttk.LabelFrame(main, text="✨ Features", padding=15)
+        features_frame = ttk.LabelFrame(main, text=tr("about_section_features", "Features"), padding=15)
         features_frame.pack(fill=tk.X, pady=10)
         
-        features = [
-            "✓ Single & Batch Video Downloads",
-            "✓ Integrated Audio Conversion (MP3, WAV, M4A, OPUS)",
-            "✓ Live Stream Recording with Dynamic Controls",
-            "✓ Time Range & Custom Cutting",
-            "✓ Multiple Quality Selections",
-            "✓ Real-time Logging & Progress Tracking",
-            "✓ Dark/Light Theme with Instant Reload",
-            "✓ Multi-language Support (EN, PT)",
-            "✓ Secure Credential Storage (Windows Keyring)",
-            "✓ Download History",
-        ]
+        features = tr("about_features_list", [])
+        if not isinstance(features, list):
+            features = []
         
         for feature in features:
             ttk.Label(features_frame, text=feature, font=("Arial", 9)).pack(anchor=tk.W, pady=3)
@@ -626,54 +636,30 @@ class EasyCutApp:
         ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=15)
         
         # Technologies & Credits
-        tech_frame = ttk.LabelFrame(main, text="🛠️ Technologies & Credits", padding=15)
+        tech_frame = ttk.LabelFrame(main, text=tr("about_section_tech", "Technologies & Credits"), padding=15)
         tech_frame.pack(fill=tk.X, pady=10)
         
-        tech_text = """
-Core Technologies:
-• Python 3.8+ - Programming Language
-• Tkinter - GUI Framework
-• yt-dlp - YouTube Video Downloading (GPL-3.0)
-• FFmpeg - Audio/Video Processing (GPL-2.0)
-• keyring - Secure Credential Storage (MIT)
-
-Additional Libraries:
-• threading - Concurrent Operations
-• logging - Application Logging
-• json - Configuration Management
-• pathlib - File System Operations
-
-Design & Inspiration:
-• Microsoft Fluent Design System
-• Modern UI/UX Principles
-• Professional Python Development Standards
-        """
+        tech_text = "\n".join([
+            tr("about_credits_libs", "Libraries: yt-dlp, FFmpeg, keyring"),
+            tr("about_credits_tools", "Tools: Python, Tkinter"),
+            tr("about_tech_text", "Core: Python, Tkinter, yt-dlp, FFmpeg, keyring"),
+        ])
         
-        ttk.Label(tech_frame, text=tech_text, justify=tk.LEFT, font=("Arial", 9)).pack(anchor=tk.W)
+        ttk.Label(tech_frame, text=tech_text, justify=tk.LEFT, font=("Segoe UI", 9)).pack(anchor=tk.W)
         
         ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=15)
         
         # Credits
-        credits_frame = ttk.LabelFrame(main, text="🙏 Special Thanks", padding=15)
+        credits_frame = ttk.LabelFrame(main, text=tr("about_section_thanks", "Special Thanks"), padding=15)
         credits_frame.pack(fill=tk.X, pady=10)
         
-        credits_text = """
-Special thanks to:
-
-• yt-dlp Community - For maintaining the best YouTube downloader
-• FFmpeg Project - For powerful multimedia processing
-• Python Community - For excellent open-source tools
-• Tkinter Community - For GUI framework support
-
-This application is built with ❤️ for video enthusiasts and content creators.
-"""
-        
-        ttk.Label(credits_frame, text=credits_text, justify=tk.LEFT, font=("Arial", 9)).pack(anchor=tk.W)
+        credits_text = tr("about_thanks_text", "Thanks to the open-source community and creators.")
+        ttk.Label(credits_frame, text=credits_text, justify=tk.LEFT, font=("Segoe UI", 9)).pack(anchor=tk.W)
         
         ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=15)
         
         # Footer
-        footer = ttk.Label(main, text="Made with Python 🐍 | MIT License | © 2026 Deko Costa", font=("Arial", 8), foreground="gray")
+        footer = ttk.Label(main, text=tr("about_footer", "Made with Python | MIT License | © 2026 Deko Costa"), font=("Segoe UI", 8), foreground="gray")
         footer.pack(pady=20)
     
     def apply_theme(self):
@@ -700,6 +686,7 @@ This application is built with ❤️ for video enthusiasts and content creators
     
     def open_login_popup(self):
         """Open login popup"""
+        tr = self.translator.get
         def handle_login(creds):
             email = creds["email"]
             password = creds["password"]
@@ -718,12 +705,22 @@ This application is built with ❤️ for video enthusiasts and content creators
             self.update_login_status()
             self.log_app(f"✓ Logged in as {email}")
         
-        popup = LoginPopup(self.root, title="Login do YouTube", callback=handle_login)
+        labels = {
+            "email_label": tr("login_email", "Email/Username") + " (YouTube):",
+            "password_label": tr("login_password", "Password") + ":",
+            "notice": tr("login_banner_note", "Login is only used by yt-dlp."),
+            "button_ok": tr("login_btn", "Login"),
+            "button_cancel": tr("msg_cancel", "Cancel"),
+            "warning_title": tr("msg_warning", "Warning"),
+            "warning_message": tr("login_validation_error", "Please fill all fields."),
+        }
+        popup = LoginPopup(self.root, title=tr("header_login", "YouTube Login"), callback=handle_login, labels=labels)
         popup.show()
     
     def do_logout(self):
         """Logout user"""
-        if messagebox.askyesno("Confirm", "Do you want to disconnect?"):
+        tr = self.translator.get
+        if messagebox.askyesno(tr("msg_confirm", "Confirm"), tr("login_logout", "Logout") + "?"):
             self.logged_in = False
             self.current_email = ""
             
@@ -762,23 +759,25 @@ This application is built with ❤️ for video enthusiasts and content creators
     
     def get_login_status(self):
         """Get login status text"""
+        tr = self.translator.get
         if self.logged_in:
-            return f"Logged in as: {self.current_email}"
-        return "Not logged in"
+            return f"{tr('status_logged_in', 'Logged in as')}: {self.current_email}"
+        return tr("status_not_logged_in", "Not logged in")
     
     def verify_video(self):
         """Verify video URL"""
+        tr = self.translator.get
         url = self.download_url_entry.get().strip()
         
         if not url or not self.is_valid_youtube_url(url):
-            messagebox.showerror("Erro", "URL do YouTube invalida")
+            messagebox.showerror(tr("msg_error", "Error"), tr("download_invalid_url", "Invalid YouTube URL"))
             return
         
-        self.download_log.add_log("Verificando URL...")
+        self.download_log.add_log(tr("log_verifying_url", "Verifying URL..."))
         
         def verify_thread():
             if not YT_DLP_AVAILABLE:
-                self.download_log.add_log("yt-dlp nao esta instalado", "ERROR")
+                self.download_log.add_log(tr("msg_error", "Error") + ": yt-dlp", "ERROR")
                 return
             
             try:
@@ -791,33 +790,34 @@ This application is built with ❤️ for video enthusiasts and content creators
                     mins, secs = divmod(duration, 60)
                     self.download_duration_label.config(text=f"{int(mins)}:{int(secs):02d}")
                     
-                    self.download_log.add_log("Informacoes do video obtidas")
+                    self.download_log.add_log(tr("log_video_info", "Video info retrieved successfully"))
             except Exception as e:
-                self.download_log.add_log(f"Erro: {str(e)}", "ERROR")
+                self.download_log.add_log(f"{tr('msg_error', 'Error')}: {str(e)}", "ERROR")
         
         thread = threading.Thread(target=verify_thread, daemon=True)
         thread.start()
     
     def start_download(self):
         """Start downloading video"""
+        tr = self.translator.get
         url = self.download_url_entry.get().strip()
         
         if not url or not self.is_valid_youtube_url(url):
-            messagebox.showerror("Error", "Invalid YouTube URL")
+            messagebox.showerror(tr("msg_error", "Error"), tr("download_invalid_url", "Invalid YouTube URL"))
             return
         
         if self.is_downloading:
-            messagebox.showwarning("Warning", "Download already in progress")
+            messagebox.showwarning(tr("msg_warning", "Warning"), tr("download_progress", "Downloading..."))
             return
         
         self.is_downloading = True
-        self.download_log.add_log(f"Downloading: {url}")
+        self.download_log.add_log(f"{tr('log_downloading', 'Downloading video from')} {url}")
         
         quality = self.download_quality_var.get()
         
         def download_thread():
             if not YT_DLP_AVAILABLE:
-                self.download_log.add_log("yt-dlp not installed", "ERROR")
+                self.download_log.add_log(tr("msg_error", "Error") + ": yt-dlp", "ERROR")
                 self.is_downloading = False
                 return
             
@@ -846,11 +846,11 @@ This application is built with ❤️ for video enthusiasts and content creators
                     }
                     self.config_manager.add_to_history(entry)
                     
-                    self.download_log.add_log("✓ Download completed")
+                    self.download_log.add_log(tr("download_success", "Download completed successfully!"))
                     self.refresh_history()
             
             except Exception as e:
-                self.download_log.add_log(f"✗ Error: {str(e)}", "ERROR")
+                self.download_log.add_log(f"{tr('msg_error', 'Error')}: {str(e)}", "ERROR")
             
             finally:
                 self.is_downloading = False
@@ -860,30 +860,32 @@ This application is built with ❤️ for video enthusiasts and content creators
     
     def stop_download(self):
         """Stop current download"""
+        tr = self.translator.get
         self.is_downloading = False
-        self.download_log.add_log("Download stopped")
+        self.download_log.add_log(tr("download_stop", "Stop"))
     
     def start_batch_download(self):
         """Start batch download"""
+        tr = self.translator.get
         urls_text = self.batch_text.get(1.0, tk.END).strip()
         
         if not urls_text:
-            messagebox.showwarning("Warning", "Add at least one URL")
+            messagebox.showwarning(tr("msg_warning", "Warning"), tr("batch_empty", "Add at least one URL"))
             return
         
         urls = [url.strip() for url in urls_text.split('\n') if url.strip()]
         
-        self.batch_log.add_log(f"Downloading {len(urls)} videos...")
+        self.batch_log.add_log(f"{tr('batch_progress', 'Downloading batch')} ({len(urls)})")
         
         def batch_thread():
             success = 0
             for i, url in enumerate(urls, 1):
                 if not self.is_valid_youtube_url(url):
-                    self.batch_log.add_log(f"[{i}/{len(urls)}] Invalid URL", "WARNING")
+                    self.batch_log.add_log(f"[{i}/{len(urls)}] {tr('download_invalid_url', 'Invalid URL')}", "WARNING")
                     continue
                 
                 if not YT_DLP_AVAILABLE:
-                    self.batch_log.add_log("yt-dlp not installed", "ERROR")
+                    self.batch_log.add_log(tr("msg_error", "Error") + ": yt-dlp", "ERROR")
                     break
                 
                 try:
@@ -897,7 +899,7 @@ This application is built with ❤️ for video enthusiasts and content creators
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         info = ydl.extract_info(url, download=True)
                         success += 1
-                        self.batch_log.add_log(f"[{i}/{len(urls)}] ✓ Downloaded: {info.get('title', 'Video')[:30]}")
+                        self.batch_log.add_log(f"[{i}/{len(urls)}] {info.get('title', 'Video')[:30]}")
                 
                 except Exception as e:
                     self.batch_log.add_log(f"[{i}/{len(urls)}] ✗ Error: {str(e)[:50]}", "ERROR")
@@ -910,28 +912,30 @@ This application is built with ❤️ for video enthusiasts and content creators
     
     def batch_paste(self):
         """Paste from clipboard"""
+        tr = self.translator.get
         try:
             data = self.root.clipboard_get()
             self.batch_text.insert(tk.END, data)
         except Exception as e:
-            messagebox.showerror("Error", f"Could not paste: {e}")
+            messagebox.showerror(tr("msg_error", "Error"), f"{tr('msg_error', 'Error')}: {e}")
     
     def start_audio_conversion(self):
         """Start audio conversion"""
+        tr = self.translator.get
         url = self.audio_url_entry.get().strip()
         
         if not url or not self.is_valid_youtube_url(url):
-            messagebox.showerror("Error", "Invalid YouTube URL")
+            messagebox.showerror(tr("msg_error", "Error"), tr("download_invalid_url", "Invalid YouTube URL"))
             return
         
         fmt = self.audio_format_var.get()
         bitrate = self.audio_bitrate_var.get()
         
-        self.audio_log.add_log(f"Converting to {fmt.upper()} ({bitrate}kbps)...")
+        self.audio_log.add_log(f"{tr('audio_convert', 'Convert')}: {fmt.upper()} ({bitrate}kbps)")
         
         def audio_thread():
             if not YT_DLP_AVAILABLE:
-                self.audio_log.add_log("yt-dlp not installed", "ERROR")
+                self.audio_log.add_log(tr("msg_error", "Error") + ": yt-dlp", "ERROR")
                 return
             
             try:
@@ -959,24 +963,25 @@ This application is built with ❤️ for video enthusiasts and content creators
                     }
                     self.config_manager.add_to_history(entry)
                     
-                    self.audio_log.add_log("✓ Conversion completed")
+                    self.audio_log.add_log(tr("audio_success", "Audio conversion completed!"))
                     self.refresh_history()
             
             except Exception as e:
-                self.audio_log.add_log(f"✗ Error: {str(e)}", "ERROR")
+                self.audio_log.add_log(f"{tr('msg_error', 'Error')}: {str(e)}", "ERROR")
         
         thread = threading.Thread(target=audio_thread, daemon=True)
         thread.start()
     
     def refresh_history(self):
         """Refresh download history"""
+        tr = self.translator.get
         for item in self.history_tree.get_children():
             self.history_tree.delete(item)
         
         history = self.config_manager.load_history()
         
         if not history:
-            self.history_tree.insert("", tk.END, values=("No downloads yet", "-", "-"))
+            self.history_tree.insert("", tk.END, values=(tr("history_empty", "No downloads yet"), "-", "-"))
             return
         
         for item in reversed(history):
@@ -989,17 +994,19 @@ This application is built with ❤️ for video enthusiasts and content creators
     
     def clear_history(self):
         """Clear download history"""
-        if messagebox.askyesno("Confirm", "Clear all history?"):
+        tr = self.translator.get
+        if messagebox.askyesno(tr("msg_confirm", "Confirm"), tr("history_clear", "Clear History") + "?"):
             self.config_manager.save_history([])
             self.refresh_history()
     
     def open_output_folder(self):
         """Open output folder"""
+        tr = self.translator.get
         try:
             import subprocess
             subprocess.Popen(f'explorer "{self.output_dir}"')
         except Exception as e:
-            messagebox.showerror("Error", f"Could not open folder: {e}")
+            messagebox.showerror(tr("msg_error", "Error"), f"{tr('msg_error', 'Error')}: {e}")
     
     def log_app(self, message):
         """Log application message"""
@@ -1013,19 +1020,20 @@ This application is built with ❤️ for video enthusiasts and content creators
     
     def verify_live_stream(self):
         """Verify live stream availability and status"""
+        tr = self.translator.get
         url = self.live_url_entry.get().strip()
         
         if not url or not self.is_valid_youtube_url(url):
-            messagebox.showerror("Erro", "URL do YouTube invalida")
-            self.live_status_label.config(text="INVALIDA", foreground="#FF0000")
+            messagebox.showerror(tr("msg_error", "Error"), tr("download_invalid_url", "Invalid YouTube URL"))
+            self.live_status_label.config(text=tr("live_status_error", "ERROR"), foreground="#FF0000")
             return
         
-        self.live_log.add_log("Verificando status da transmissao...")
+        self.live_log.add_log(tr("live_check_stream", "Check Stream"))
         
         def verify_thread():
             if not YT_DLP_AVAILABLE:
-                self.live_log.add_log("yt-dlp not installed", "ERROR")
-                self.live_status_label.config(text="❌ ERROR", foreground="#FF0000")
+                self.live_log.add_log(tr("msg_error", "Error") + ": yt-dlp", "ERROR")
+                self.live_status_label.config(text=tr("live_status_error", "ERROR"), foreground="#FF0000")
                 return
             
             try:
@@ -1034,11 +1042,11 @@ This application is built with ❤️ for video enthusiasts and content creators
                     is_live = info.get('is_live', False)
                     
                     if is_live:
-                        self.live_status_label.config(text="AO VIVO", foreground="#FF0000")
-                        self.live_log.add_log("Transmissao AO VIVO e pronta para gravar")
+                        self.live_status_label.config(text=tr("live_status_live", "LIVE"), foreground="#FF0000")
+                        self.live_log.add_log(tr("live_recording_started", "Live stream recording started..."))
                     else:
-                        self.live_status_label.config(text="OFFLINE", foreground="#FF9800")
-                        self.live_log.add_log("Transmissao offline no momento")
+                        self.live_status_label.config(text=tr("live_status_offline", "OFFLINE"), foreground="#FF9800")
+                        self.live_log.add_log(tr("live_status_offline", "OFFLINE"))
                     
                     duration = info.get('duration')
                     if duration:
@@ -1047,26 +1055,27 @@ This application is built with ❤️ for video enthusiasts and content creators
                         self.live_duration_label.config(text=f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}")
                     
             except Exception as e:
-                self.live_log.add_log(f"Erro: {str(e)}", "ERROR")
-                self.live_status_label.config(text="ERRO", foreground="#FF0000")
+                self.live_log.add_log(f"{tr('msg_error', 'Error')}: {str(e)}", "ERROR")
+                self.live_status_label.config(text=tr("live_status_error", "ERROR"), foreground="#FF0000")
         
         thread = threading.Thread(target=verify_thread, daemon=True)
         thread.start()
     
     def start_live_recording(self):
         """Start recording live stream"""
+        tr = self.translator.get
         url = self.live_url_entry.get().strip()
         
         if not url or not self.is_valid_youtube_url(url):
-            messagebox.showerror("Erro", "URL do YouTube invalida")
+            messagebox.showerror(tr("msg_error", "Error"), tr("download_invalid_url", "Invalid YouTube URL"))
             return
         
         if not YT_DLP_AVAILABLE:
-            messagebox.showerror("Erro", "yt-dlp nao esta instalado")
+            messagebox.showerror(tr("msg_error", "Error"), "yt-dlp")
             return
         
         self.is_downloading = True
-        self.live_log.add_log("Iniciando gravacao da transmissao...")
+        self.live_log.add_log(tr("live_recording_started", "Live stream recording started..."))
         
         def record_thread():
             try:
@@ -1104,7 +1113,7 @@ This application is built with ❤️ for video enthusiasts and content creators
                     ydl_opts['max_filesize'] = max_duration * 100000  # Approximate
                 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    self.live_log.add_log("Baixando transmissao ao vivo...")
+                    self.live_log.add_log(tr("download_progress", "Downloading..."))
                     info = ydl.extract_info(url, download=True)
                     filename = ydl.prepare_filename(info)
                     
@@ -1116,11 +1125,11 @@ This application is built with ❤️ for video enthusiasts and content creators
                     }
                     self.config_manager.add_to_history(entry)
                     
-                    self.live_log.add_log("Gravacao concluida com sucesso")
+                    self.live_log.add_log(tr("live_recording_completed", "Recording completed successfully!"))
                     self.refresh_history()
             
             except Exception as e:
-                self.live_log.add_log(f"Erro: {str(e)}", "ERROR")
+                self.live_log.add_log(f"{tr('msg_error', 'Error')}: {str(e)}", "ERROR")
             
             finally:
                 self.is_downloading = False
@@ -1130,11 +1139,12 @@ This application is built with ❤️ for video enthusiasts and content creators
     
     def stop_live_recording(self):
         """Stop live stream recording"""
+        tr = self.translator.get
         if self.is_downloading:
             self.is_downloading = False
-            self.live_log.add_log("Gravacao interrompida pelo usuario")
+            self.live_log.add_log(tr("live_recording_stopped", "Recording stopped by user"))
         else:
-            messagebox.showinfo("Info", "Nenhuma gravacao em andamento")
+            messagebox.showinfo(tr("msg_info", "Information"), tr("status_ready", "Ready"))
     
     def live_progress_hook(self, d):
         """Progress hook for live recording"""
