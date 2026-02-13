@@ -123,17 +123,7 @@ class EasyCutApp:
         self.root.geometry("1100x750")
         self.root.minsize(900, 600)
         
-        # Set window icon (use .ico for Windows)
-        try:
-            icon_path = Path(__file__).parent.parent / "assets" / "app_icon.ico"
-            if icon_path.exists():
-                self.root.iconbitmap(str(icon_path))
-            else:
-                self.logger.warning(f"Window icon not found: {icon_path}")
-        except Exception as e:
-            self.logger.warning(f"Could not set window icon: {e}")
-        
-        # Apply style
+        # Apply style (icon already set in main.py)
         self.apply_theme()
     
     def setup_ui(self):
@@ -205,7 +195,7 @@ class EasyCutApp:
             icon_path = Path(__file__).parent.parent / "assets" / "app_icon.png"
             if icon_path.exists():
                 img = Image.open(icon_path)
-                img = img.resize((32, 32), Image.Resampling.LANCZOS)
+                img = img.resize((64, 64), Image.Resampling.LANCZOS)
                 app_icon = ImageTk.PhotoImage(img)
                 icon_label = ttk.Label(app_title_frame, image=app_icon)
                 icon_label.image = app_icon
@@ -373,6 +363,9 @@ class EasyCutApp:
         
         main_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Enable mouse wheel scroll for download tab
+        self.enable_mousewheel_scroll(main_canvas)
         
         # === TAB HEADER ===
         ModernTabHeader(
@@ -1009,6 +1002,9 @@ class EasyCutApp:
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
+        # Enable mouse wheel scroll for history tab
+        self.enable_mousewheel_scroll(canvas)
+        
         self.refresh_history()
     
     def create_about_tab(self):
@@ -1033,13 +1029,12 @@ class EasyCutApp:
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Centralized content container
-        center_container = ttk.Frame(scrollable_frame)
-        center_container.pack(fill=tk.BOTH, expand=True)
+        # Enable mouse wheel scroll for about tab
+        self.enable_mousewheel_scroll(canvas)
         
-        # Content with max width for better readability
-        main = ttk.Frame(center_container, padding=Spacing.XXL)
-        main.place(relx=0.5, anchor=tk.N, relwidth=0.8, y=20)
+        # Content frame (no centering - just pack normally for visibility)
+        main = ttk.Frame(scrollable_frame, padding=Spacing.XXL)
+        main.pack(fill=tk.BOTH, expand=True, pady=Spacing.LG)
         
         # === APP TITLE (CENTERED) ===
         title_frame = ttk.Frame(main)
@@ -1769,6 +1764,21 @@ class EasyCutApp:
             speed = d.get('_speed_str', '0 B/s')
             eta = d.get('_eta_str', 'Unknown')
             self.live_log.add_log(f"{percent} | Velocidade: {speed} | ETA: {eta}")
+    
+    def _on_mousewheel(self, event, canvas):
+        """Handle mouse wheel scroll for canvas"""
+        if event.num == 5 or event.delta < 0:  # Scroll down
+            canvas.yview_scroll(3, "units")
+        elif event.num == 4 or event.delta > 0:  # Scroll up
+            canvas.yview_scroll(-3, "units")
+    
+    def enable_mousewheel_scroll(self, canvas):
+        """Enable mouse wheel scrolling for a canvas"""
+        # Linux uses Button-4 and Button-5
+        canvas.bind("<Button-4>", lambda e: self._on_mousewheel(e, canvas))
+        canvas.bind("<Button-5>", lambda e: self._on_mousewheel(e, canvas))
+        # Windows and macOS use MouseWheel
+        canvas.bind("<MouseWheel>", lambda e: self._on_mousewheel(e, canvas))
 
 
 def main():

@@ -22,6 +22,15 @@ from easycut import EasyCutApp
 def main():
     """Main entry point for EasyCut application"""
     root = tk.Tk()
+    
+    # Set window icon BEFORE creating the app
+    try:
+        icon_path = Path(__file__).parent / "assets" / "app_icon.ico"
+        if icon_path.exists():
+            root.iconbitmap(str(icon_path))
+    except Exception as e:
+        print(f"Warning: Could not set window icon: {e}")
+    
     app = EasyCutApp(root)
     root.mainloop()
 

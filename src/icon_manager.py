@@ -58,7 +58,7 @@ class IconManager:
         """Carrega PNG pré-renderizado"""
         # Tentar buscar com cor específica
         if color:
-            theme = "dark" if "E7E9EE" in color or "5B8CFF" in color else "light"
+            theme = "dark" if "E7E9EE" in color or "f85451" in color or "5B8CFF" in color else "light"
             png_path = self.icons_dir / f"{name}_{size}_{theme}.png"
             
             if png_path.exists():
@@ -244,7 +244,7 @@ ICON_MAP = {
     "play": "play-circle",
     
     # Batch Tab
-    "batch": "layers",
+    "batch": "copy",
     "paste": "clipboard",
     "clear": "x-circle",
     
