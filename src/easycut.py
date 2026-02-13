@@ -35,6 +35,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from i18n import translator as t, Translator
 from ui_enhanced import Theme, ConfigManager, LogWidget, StatusBar, LoginPopup
 from donation_system import DonationButton
+from icon_manager import icon_manager, get_ui_icon
 
 # Import external libraries
 try:
@@ -63,6 +64,10 @@ class EasyCutApp:
         # Theme & Language
         self.theme = Theme(dark_mode=self.dark_mode)
         self.translator = Translator(self.language)
+        
+        # Icon Manager
+        self.icon_manager = icon_manager
+        self.icons = {}  # Cache for loaded icons
         
         # UI Components (will be created)
         self.ui_components = {}
@@ -166,8 +171,14 @@ class EasyCutApp:
         
         ttk.Separator(header, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
         
-        # Theme toggle
-        ttk.Button(header, text=tr("header_theme", "Theme"), command=self.toggle_theme, width=8).pack(side=tk.LEFT, padx=2)
+        # Theme toggle with icon
+        theme_icon_key = "theme_dark" if self.dark_mode else "theme_light"
+        theme_icon = get_ui_icon(theme_icon_key, size=16)
+        theme_btn = ttk.Button(header, text=" " + tr("header_theme", "Theme"), command=self.toggle_theme, width=10)
+        if theme_icon:
+            theme_btn.configure(image=theme_icon, compound="left")
+            theme_btn.image = theme_icon
+        theme_btn.pack(side=tk.LEFT, padx=2)
         
         # Language selector
         lang_options = [
@@ -182,11 +193,21 @@ class EasyCutApp:
         lang_combo.bind("<<ComboboxSelected>>", lambda e: self.change_language(lang_codes[lang_combo.current()]))
         lang_combo.pack(side=tk.LEFT, padx=2)
         
-        # Login button
-        ttk.Button(header, text=tr("header_login", "YouTube Login"), command=self.open_login_popup, width=14).pack(side=tk.LEFT, padx=2)
+        # Login button with icon
+        login_icon = get_ui_icon("login", size=16)
+        login_btn = ttk.Button(header, text=" " + tr("header_login", "YouTube Login"), command=self.open_login_popup, width=16)
+        if login_icon:
+            login_btn.configure(image=login_icon, compound="left")
+            login_btn.image = login_icon
+        login_btn.pack(side=tk.LEFT, padx=2)
         
-        # Logout button
-        ttk.Button(header, text=tr("header_open_folder", "Open Folder"), command=self.open_output_folder, width=12).pack(side=tk.LEFT, padx=2)
+        # Open folder button with icon
+        folder_icon = get_ui_icon("folder", size=16)
+        folder_btn = ttk.Button(header, text=" " + tr("header_open_folder", "Open Folder"), command=self.open_output_folder, width=14)
+        if folder_icon:
+            folder_btn.configure(image=folder_icon, compound="left")
+            folder_btn.image = folder_icon
+        folder_btn.pack(side=tk.LEFT, padx=2)
         
         # Stretch
         ttk.Label(header, text="").pack(side=tk.LEFT, expand=True)
@@ -255,7 +276,12 @@ class EasyCutApp:
         self.download_url_entry = ttk.Entry(url_frame, width=80)
         self.download_url_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
         
-        ttk.Button(url_frame, text=tr("download_verify", "Verify"), command=self.verify_video).pack(side=tk.LEFT, padx=5)
+        verify_icon = get_ui_icon("verify", size=16)
+        verify_btn = ttk.Button(url_frame, text=" " + tr("download_verify", "Verify"), command=self.verify_video)
+        if verify_icon:
+            verify_btn.configure(image=verify_icon, compound="left")
+            verify_btn.image = verify_icon
+        verify_btn.pack(side=tk.LEFT, padx=5)
         
         # Video Info
         info_frame = ttk.LabelFrame(main, text=tr("download_info", "Video Information"), padding=10)
@@ -338,9 +364,26 @@ class EasyCutApp:
         btn_frame = ttk.Frame(main)
         btn_frame.pack(fill=tk.X, pady=10)
         
-        ttk.Button(btn_frame, text=tr("download_btn", "Download"), command=self.start_download, width=12).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text=tr("download_stop", "Stop"), command=self.stop_download, width=12).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text=tr("download_clear_log", "Clear Log"), command=lambda: self.download_log.clear(), width=12).pack(side=tk.LEFT, padx=5)
+        download_icon = get_ui_icon("download", size=16)
+        download_btn = ttk.Button(btn_frame, text=" " + tr("download_btn", "Download"), command=self.start_download, width=14)
+        if download_icon:
+            download_btn.configure(image=download_icon, compound="left")
+            download_btn.image = download_icon
+        download_btn.pack(side=tk.LEFT, padx=5)
+        
+        stop_icon = get_ui_icon("stop", size=16)
+        stop_btn = ttk.Button(btn_frame, text=" " + tr("download_stop", "Stop"), command=self.stop_download, width=14)
+        if stop_icon:
+            stop_btn.configure(image=stop_icon, compound="left")
+            stop_btn.image = stop_icon
+        stop_btn.pack(side=tk.LEFT, padx=5)
+        
+        clear_icon = get_ui_icon("clear", size=16)
+        clear_btn = ttk.Button(btn_frame, text=" " + tr("download_clear_log", "Clear Log"), command=lambda: self.download_log.clear(), width=14)
+        if clear_icon:
+            clear_btn.configure(image=clear_icon, compound="left")
+            clear_btn.image = clear_icon
+        clear_btn.pack(side=tk.LEFT, padx=5)
     
     def create_batch_tab(self):
         """Create batch download tab"""
@@ -365,9 +408,26 @@ class EasyCutApp:
         btn_frame = ttk.Frame(main)
         btn_frame.pack(fill=tk.X, pady=10)
         
-        ttk.Button(btn_frame, text=tr("batch_download_all", "Download All"), command=self.start_batch_download).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text=tr("batch_paste", "Paste"), command=self.batch_paste).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text=tr("batch_clear", "Clear"), command=lambda: self.batch_text.delete(1.0, tk.END)).pack(side=tk.LEFT, padx=5)
+        batch_icon = get_ui_icon("batch", size=16)
+        batch_btn = ttk.Button(btn_frame, text=" " + tr("batch_download_all", "Download All"), command=self.start_batch_download)
+        if batch_icon:
+            batch_btn.configure(image=batch_icon, compound="left")
+            batch_btn.image = batch_icon
+        batch_btn.pack(side=tk.LEFT, padx=5)
+        
+        paste_icon = get_ui_icon("paste", size=16)
+        paste_btn = ttk.Button(btn_frame, text=" " + tr("batch_paste", "Paste"), command=self.batch_paste)
+        if paste_icon:
+            paste_btn.configure(image=paste_icon, compound="left")
+            paste_btn.image = paste_icon
+        paste_btn.pack(side=tk.LEFT, padx=5)
+        
+        clear_icon = get_ui_icon("clear", size=16)
+        clear_btn = ttk.Button(btn_frame, text=" " + tr("batch_clear", "Clear"), command=lambda: self.batch_text.delete(1.0, tk.END))
+        if clear_icon:
+            clear_btn.configure(image=clear_icon, compound="left")
+            clear_btn.image = clear_icon
+        clear_btn.pack(side=tk.LEFT, padx=5)
         
         # Log
         log_frame = ttk.LabelFrame(main, text=tr("batch_log", "Batch Log"), padding=5)
@@ -399,7 +459,12 @@ class EasyCutApp:
         self.live_url_entry = ttk.Entry(url_frame, width=80)
         self.live_url_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
         
-        ttk.Button(url_frame, text=tr("live_check_stream", "Check Stream"), command=self.verify_live_stream).pack(side=tk.LEFT, padx=5)
+        check_icon = get_ui_icon("verify", size=16)
+        check_btn = ttk.Button(url_frame, text=" " + tr("live_check_stream", "Check Stream"), command=self.verify_live_stream)
+        if check_icon:
+            check_btn.configure(image=check_icon, compound="left")
+            check_btn.image = check_icon
+        check_btn.pack(side=tk.LEFT, padx=5)
         
         # Stream Info
         info_frame = ttk.LabelFrame(main, text=tr("live_status", "Stream Status"), padding=10)
@@ -465,9 +530,26 @@ class EasyCutApp:
         btn_frame = ttk.Frame(main)
         btn_frame.pack(fill=tk.X, pady=10)
         
-        ttk.Button(btn_frame, text=tr("live_start_recording", "Start Recording"), command=self.start_live_recording, width=12).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text=tr("live_stop_recording", "Stop Recording"), command=self.stop_live_recording, width=12).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text=tr("download_clear_log", "Clear Log"), command=lambda: self.live_log.clear(), width=12).pack(side=tk.LEFT, padx=5)
+        record_icon = get_ui_icon("record", size=16)
+        record_btn = ttk.Button(btn_frame, text=" " + tr("live_start_recording", "Start Recording"), command=self.start_live_recording, width=16)
+        if record_icon:
+            record_btn.configure(image=record_icon, compound="left")
+            record_btn.image = record_icon
+        record_btn.pack(side=tk.LEFT, padx=5)
+        
+        stop_icon = get_ui_icon("stop", size=16)
+        stop_btn = ttk.Button(btn_frame, text=" " + tr("live_stop_recording", "Stop Recording"), command=self.stop_live_recording, width=16)
+        if stop_icon:
+            stop_btn.configure(image=stop_icon, compound="left")
+            stop_btn.image = stop_icon
+        stop_btn.pack(side=tk.LEFT, padx=5)
+        
+        clear_icon = get_ui_icon("clear", size=16)
+        clear_btn = ttk.Button(btn_frame, text=" " + tr("download_clear_log", "Clear Log"), command=lambda: self.live_log.clear(), width=14)
+        if clear_icon:
+            clear_btn.configure(image=clear_icon, compound="left")
+            clear_btn.image = clear_icon
+        clear_btn.pack(side=tk.LEFT, padx=5)
     
     def create_audio_tab(self):
         """Create audio conversion tab"""
@@ -526,8 +608,19 @@ class EasyCutApp:
         btn_frame = ttk.Frame(main)
         btn_frame.pack(fill=tk.X, pady=5)
         
-        ttk.Button(btn_frame, text=tr("history_update", "Update"), command=self.refresh_history).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text=tr("history_clear", "Clear History"), command=self.clear_history).pack(side=tk.LEFT, padx=5)
+        refresh_icon = get_ui_icon("refresh", size=16)
+        refresh_btn = ttk.Button(btn_frame, text=" " + tr("history_update", "Update"), command=self.refresh_history)
+        if refresh_icon:
+            refresh_btn.configure(image=refresh_icon, compound="left")
+            refresh_btn.image = refresh_icon
+        refresh_btn.pack(side=tk.LEFT, padx=5)
+        
+        clear_icon = get_ui_icon("delete", size=16)
+        clear_btn = ttk.Button(btn_frame, text=" " + tr("history_clear", "Clear History"), command=self.clear_history)
+        if clear_icon:
+            clear_btn.configure(image=clear_icon, compound="left")
+            clear_btn.image = clear_icon
+        clear_btn.pack(side=tk.LEFT, padx=5)
         
         # Tree
         tree_frame = ttk.Frame(main)
