@@ -551,6 +551,11 @@ class ModernTabHeader(ttk.Frame):
         super().__init__(parent, **kwargs)
         self.pack(fill="x", padx=Spacing.LG, pady=Spacing.LG)
         
+        # Get colors from design system
+        design = DesignTokens()
+        bg_color = design.get_color("bg_primary")
+        fg_color = design.get_color("fg_primary")
+        
         # Left side (icon + text)
         left_frame = ttk.Frame(self)
         left_frame.pack(side="left", fill="x", expand=True)
@@ -567,18 +572,27 @@ class ModernTabHeader(ttk.Frame):
                 icon_label.image = icon
                 icon_label.pack(side="left", padx=(0, Spacing.MD))
             elif icon_name in EMOJI_ICONS:
-                emoji_label = ttk.Label(left_frame, text=EMOJI_ICONS[icon_name], font=("Segoe UI Emoji", 24))
+                emoji_label = tk.Label(left_frame, text=EMOJI_ICONS[icon_name], 
+                                     font=("Segoe UI Emoji", 24),
+                                     bg=bg_color, fg=fg_color,
+                                     borderwidth=0, highlightthickness=0)
                 emoji_label.pack(side="left", padx=(0, Spacing.MD))
         
         # Text
         text_frame = ttk.Frame(left_frame)
         text_frame.pack(side="left", fill="x", expand=True)
         
-        title_label = ttk.Label(text_frame, text=title, style="Title.TLabel")
+        title_label =tk.Label(text_frame, text=title,
+                              font=("Inter", 24, "bold"),
+                              bg=bg_color, fg=fg_color,
+                              borderwidth=0, highlightthickness=0)
         title_label.pack(anchor="w")
         
         if subtitle:
-            subtitle_label = ttk.Label(text_frame, text=subtitle, style="Caption.TLabel")
+            subtitle_label = tk.Label(text_frame, text=subtitle,
+                                     font=("Inter", 11),
+                                     bg=bg_color, fg=design.get_color("fg_tertiary"),
+                                     borderwidth=0, highlightthickness=0)
             subtitle_label.pack(anchor="w")
         
         # Right side (actions)

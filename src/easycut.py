@@ -90,6 +90,7 @@ class EasyCutApp:
         # Setup
         self.setup_logging()
         self.setup_window()
+        self.apply_theme()  # CRITICAL: Apply theme BEFORE creating UI
         self.setup_ui()
         self.check_saved_credentials()
         self.log_app("✓ EasyCut started successfully")
@@ -334,8 +335,8 @@ class EasyCutApp:
         container.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         
         # Title
-        ttk.Label(container, text="Authentication", font=("Arial", 16, "bold")).pack(pady=10)
-        ttk.Label(container, text=self.get_login_status(), font=("Arial", 11)).pack(pady=20)
+        ttk.Label(container, text="Authentication", font=("Arial", 16, "bold"), style="TLabel").pack(pady=10)
+        ttk.Label(container, text=self.get_login_status(), font=("Arial", 11), style="TLabel").pack(pady=20)
         
         # Buttons
         ttk.Button(container, text="🔓 Login (Popup)", command=self.open_login_popup, width=20).pack(pady=5)
@@ -719,7 +720,7 @@ class EasyCutApp:
         url_row = ttk.Frame(url_card)
         url_row.pack(fill=tk.X)
         
-        url_icon_label = ttk.Label(url_row, text="📡", font=("Segoe UI", 12))
+        url_icon_label = ttk.Label(url_row, text="📡", font=("Segoe UI", 12), style="TLabel")
         url_icon_label.pack(side=tk.LEFT, padx=(0, Spacing.SM))
         
         self.live_url_entry = ttk.Entry(url_row, font=("Inter", Typography.SIZE_MD))
@@ -871,7 +872,7 @@ class EasyCutApp:
         url_row = ttk.Frame(url_card)
         url_row.pack(fill=tk.X)
         
-        url_icon_label = ttk.Label(url_row, text="🎵", font=("Segoe UI", 12))
+        url_icon_label = ttk.Label(url_row, text="🎵", font=("Segoe UI", 12), style="TLabel")
         url_icon_label.pack(side=tk.LEFT, padx=(0, Spacing.SM))
         
         self.audio_url_entry = ttk.Entry(url_row, font=("Inter", Typography.SIZE_MD))
@@ -1179,9 +1180,20 @@ class EasyCutApp:
         
         self.theme.apply_to_style(style)
         
-        # Configure root colors
+        # Force configure root colors and option database
         bg_color = self.design.get_color("bg_primary")
+        fg_color = self.design.get_color("fg_primary")
+        
         self.root.config(bg=bg_color)
+        
+        # Force colors through X11 option database (affects ALL widgets globally)
+        self.root.option_add("*TFrame.background", bg_color)
+        self.root.option_add("*TLabel.background", bg_color)
+        self.root.option_add("*TLabel.foreground", fg_color)
+        self.root.option_add("*Label.background", bg_color)
+        self.root.option_add("*Label.foreground", fg_color)
+        self.root.option_add("*background", bg_color)
+        self.root.option_add("*foreground", fg_color)
     
     def toggle_theme(self):
         """Toggle theme with instant reload"""
