@@ -42,12 +42,17 @@ class IconManager:
             return icon
         
         # Fallback para emoji/unicode
-        icon = self._get_emoji_icon(name, size)
-        
-        if icon:
-            self.cache[cache_key] = icon
-        
-        return icon
+        try:
+            icon = self._get_emoji_icon(name, size)
+            
+            if icon:
+                self.cache[cache_key] = icon
+            
+            return icon
+        except Exception as e:
+            # Se falhar completamente, retornar None
+            # (UI deve lidar com isso, talvez mostrando apenas texto)
+            return None
     
     def _get_png_icon(self, name: str, size: int, color: str = None) -> PhotoImage:
         """Carrega PNG pré-renderizado"""
@@ -127,33 +132,58 @@ class IconManager:
             img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
             draw = ImageDraw.Draw(img)
             
-            # Usar fonte padrão
-            font_size = int(size * 0.7)
-            try:
-                font = ImageFont.truetype("seguiemj.ttf", font_size)  # Segoe UI Emoji
-            except:
+            # Usar fonte padrão robusta
+            font_size = int(size * 0.8)
+            font = None
+            
+            # Tentar várias fontes
+            font_names = [
+                "seguiemj.ttf",    # Segoe UI Emoji (Windows)
+                "segoeui.ttf",     # Segoe UI
+                "arial.ttf",       # Arial
+                "C:\\Windows\\Fonts\\seguiemj.ttf",  # Path completo
+            ]
+            
+            for font_name in font_names:
                 try:
-                    font = ImageFont.truetype("arial.ttf", font_size)
+                    font = ImageFont.truetype(font_name, font_size)
+                    break
                 except:
-                    font = ImageFont.load_default()
+                    continue
             
-            # Centralizar emoji
-            bbox = draw.textbbox((0, 0), emoji, font=font)
-            text_width = bbox[2] - bbox[0]
-            text_height = bbox[3] - bbox[1]
+            # Fallback para fonte padrão
+            if font is None:
+                font = ImageFont.load_default()
             
-            position = (
-                (size - text_width) // 2 - bbox[0],
-                (size - text_height) // 2 - bbox[1]
-            )
+            # Centralizar texto/emoji
+            try:
+                bbox = draw.textbbox((0, 0), emoji, font=font)
+                text_width = bbox[2] - bbox[0]
+                text_height = bbox[3] - bbox[1]
+                
+                position = (
+                    (size - text_width) // 2 - bbox[0],
+                    (size - text_height) // 2 - bbox[1]
+                )
+            except:
+                # Fallback se textbbox não funcionar
+                position = (size // 4, size // 4)
             
-            draw.text(position, emoji, font=font, fill=(230, 230, 230, 255))
+            # Desenhar com cor padrão
+            draw.text(position, emoji, font=font, fill=(150, 150, 150, 255))
             
             photo = ImageTk.PhotoImage(img)
             return photo
             
         except Exception as e:
-            return None
+            print(f"Error creating emoji icon '{name}': {e}")
+            # Retornar imagem simples se falhar completamente
+            try:
+                img = Image.new('RGBA', (size, size), (100, 100, 100, 255))
+                photo = ImageTk.PhotoImage(img)
+                return photo
+            except:
+                return None
     
     def get_app_icon(self) -> PhotoImage:
         """Retorna o ícone do app"""

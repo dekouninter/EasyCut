@@ -14,12 +14,60 @@ from pathlib import Path
 from design_system import ModernTheme, DesignTokens, Typography, Spacing, Icons
 from icon_manager import get_ui_icon
 
+# Emoji fallback mapping for icons
+EMOJI_ICONS = {
+    "download": "⬇️",
+    "upload": "⬆️",
+    "search": "🔍",
+    "verify": "✓",
+    "settings": "⚙️",
+    "folder": "📁",
+    "music": "🎵",
+    "video": "🎬",
+    "globe": "🌐",
+    "moon": "🌙",
+    "sun": "☀️",
+    "heart": "❤️",
+    "star": "⭐",
+    "check-circle": "✅",
+    "x-circle": "❌",
+    "clear": "✖️",
+    "alert-triangle": "⚠️",
+    "info": "ℹ️",
+    "log-in": "🔑",
+    "log-out": "🚪",
+    "refresh": "🔄",
+    "trash-2": "🗑️",
+    "delete": "🗑️",
+    "clock": "🕐",
+    "history": "📜",
+    "calendar": "📅",
+    "github": "🐙",
+    "coffee": "☕",
+    "play-circle": "▶️",
+    "stop-circle": "⏹️",
+    "stop": "⏹️",
+    "record": "⏺️",
+    "circle": "⏺️",
+    "radio": "📻",
+    "layers": "📚",
+    "batch": "📦",
+    "clipboard": "📋",
+    "paste": "📋",
+    "external-link": "🔗",
+    "sliders": "🎚️",
+    "loader": "⏳",
+    "theme_dark": "🌙",
+    "theme_light": "☀️",
+    "language": "🌐",
+}
+
 
 class ModernButton(ttk.Button):
     """Modern button with icon support and variants"""
     
     def __init__(self, parent, text="", icon_name=None, variant="primary", 
-                 command=None, width=None,  **kwargs):
+                 command=None, width=None, **kwargs):
         """
         Create a modern button
         
@@ -33,9 +81,18 @@ class ModernButton(ttk.Button):
         """
         # Load icon if specified
         self.icon = None
+        emoji_prefix = ""
+        
         if icon_name:
             icon_size = Icons.SIZE_SM if width and width < 15 else Icons.SIZE_MD
-            self.icon = get_ui_icon(icon_name, size=icon_size)
+            try:
+                self.icon = get_ui_icon(icon_name, size=icon_size)
+            except:
+                self.icon = None
+            
+            # If icon failed to load, use emoji fallback
+            if not self.icon and icon_name in EMOJI_ICONS:
+                emoji_prefix = EMOJI_ICONS[icon_name] + " "
         
         # Apply style variant
         style_map = {
@@ -45,8 +102,8 @@ class ModernButton(ttk.Button):
         }
         style = style_map.get(variant, "TButton")
         
-        # Create button with icon
-        button_text = f" {text}" if self.icon and text else text
+        # Create button with icon or emoji
+        button_text = f"{emoji_prefix}{text}"
         
         super().__init__(
             parent,
@@ -447,13 +504,22 @@ class ModernIconButton(ttk.Button):
             tooltip: Tooltip text
             size: Icon size
         """
-        self.icon = get_ui_icon(icon_name, size=size)
+        try:
+            self.icon = get_ui_icon(icon_name, size=size)
+        except:
+            self.icon = None
+        
+        # Fallback to emoji if icon failed
+        button_text = ""
+        if not self.icon and icon_name in EMOJI_ICONS:
+            button_text = EMOJI_ICONS[icon_name]
         
         super().__init__(
             parent,
+            text=button_text if not self.icon else "",
             image=self.icon if self.icon else None,
             command=command,
-            width=4,
+            width=4 if not button_text else None,
             **kwargs
         )
         
@@ -485,13 +551,20 @@ class ModernTabHeader(ttk.Frame):
         left_frame = ttk.Frame(self)
         left_frame.pack(side="left", fill="x", expand=True)
         
-        # Icon
+        # Icon or emoji
         if icon_name:
-            icon = get_ui_icon(icon_name, size=Icons.SIZE_XL)
+            try:
+                icon = get_ui_icon(icon_name, size=Icons.SIZE_XL)
+            except:
+                icon = None
+            
             if icon:
                 icon_label = ttk.Label(left_frame, image=icon)
                 icon_label.image = icon
                 icon_label.pack(side="left", padx=(0, Spacing.MD))
+            elif icon_name in EMOJI_ICONS:
+                emoji_label = ttk.Label(left_frame, text=EMOJI_ICONS[icon_name], font=("Segoe UI Emoji", 24))
+                emoji_label.pack(side="left", padx=(0, Spacing.MD))
         
         # Text
         text_frame = ttk.Frame(left_frame)

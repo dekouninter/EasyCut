@@ -118,6 +118,14 @@ class EasyCutApp:
         self.root.geometry("1100x750")
         self.root.minsize(900, 600)
         
+        # Set window icon
+        try:
+            icon_path = Path(__file__).parent.parent / "assets" / "app_icon.ico"
+            if icon_path.exists():
+                self.root.iconbitmap(str(icon_path))
+        except Exception as e:
+            self.logger.warning(f"Could not set window icon: {e}")
+        
         # Apply style
         self.apply_theme()
     
@@ -1076,9 +1084,10 @@ class EasyCutApp:
             webbrowser.open(url)
         
         links = [
-            ("👙 " + tr("about_link_github", "GitHub Repository"), "https://github.com/dekouninter/EasyCut"),
+            ("� " + tr("about_link_github", "GitHub Repository"), "https://github.com/dekouninter/EasyCut"),
             ("☕ " + tr("about_link_coffee", "Buy Me a Coffee"), "https://buymeacoffee.com/dekocosta"),
-            ("💸 " + tr("about_link_livepix", "Livepix Donate"), "https://livepix.gg/dekocosta"),
+            ("💖 " + tr("about_link_kofi", "Support on Ko-fi"), "https://ko-fi.com/dekocosta"),
+            ("💸 " + tr("about_link_livepix", "Livepix (Brazil)"), "https://livepix.gg/dekocosta"),
         ]
         
         for label, url in links:
