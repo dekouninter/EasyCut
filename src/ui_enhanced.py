@@ -31,30 +31,38 @@ class Theme:
     Supports both native Tkinter and ttk widget styling.
     """
     
+    BASE_FONT = ("Segoe UI", 10)
+    TITLE_FONT = ("Segoe UI", 14, "bold")
+    SMALL_FONT = ("Segoe UI", 9)
+
     LIGHT_THEME = {
-        "bg": "#F5F5F5",
-        "fg": "#000000",
-        "accent": "#0078D4",
-        "accent_hover": "#005A9E",
-        "bg_button": "#E1E1E1",
-        "fg_button": "#000000",
+        "bg": "#F7F8FA",
+        "fg": "#0E0F12",
+        "muted": "#6B7280",
+        "accent": "#2F6BFF",
+        "accent_hover": "#2252C7",
+        "bg_button": "#E9ECF1",
+        "fg_button": "#0E0F12",
         "bg_entry": "#FFFFFF",
-        "fg_entry": "#000000",
-        "bg_frame": "#EEEEEE",
-        "border": "#CCCCCC",
+        "fg_entry": "#0E0F12",
+        "bg_frame": "#F0F2F6",
+        "card_bg": "#FFFFFF",
+        "border": "#D5DAE1",
     }
     
     DARK_THEME = {
-        "bg": "#1E1E1E",
-        "fg": "#FFFFFF",
-        "accent": "#0078D4",
-        "accent_hover": "#107FFF",
-        "bg_button": "#2D2D2D",
-        "fg_button": "#FFFFFF",
-        "bg_entry": "#3D3D3D",
-        "fg_entry": "#FFFFFF",
-        "bg_frame": "#252525",
-        "border": "#404040",
+        "bg": "#0F1115",
+        "fg": "#E7E9EE",
+        "muted": "#9AA4B2",
+        "accent": "#5B8CFF",
+        "accent_hover": "#3F6FF2",
+        "bg_button": "#1A1E26",
+        "fg_button": "#E7E9EE",
+        "bg_entry": "#141820",
+        "fg_entry": "#E7E9EE",
+        "bg_frame": "#12161D",
+        "card_bg": "#151A22",
+        "border": "#2A2F3A",
     }
     
     def __init__(self, dark_mode=False):
@@ -100,26 +108,21 @@ class Theme:
             ttk.Style: Configured style object
         """
         style = ttk.Style()
-        
-        if self.dark_mode:
-            style.theme_use('clam')
-            style.configure('TFrame', background=self.get("bg"))
-            style.configure('TLabel', background=self.get("bg"), foreground=self.get("fg"))
-            style.configure('TButton', background=self.get("bg_button"), foreground=self.get("fg_button"))
-            style.map('TButton',
-                     background=[('active', self.get("accent"))])
-            style.configure('TEntry', fieldbackground=self.get("bg_entry"), foreground=self.get("fg_entry"))
-            style.configure('TNotebook', background=self.get("bg"))
-            style.configure('TNotebook.Tab', background=self.get("bg_button"), foreground=self.get("fg_button"))
-        else:
-            style.theme_use('clam')
-            style.configure('TFrame', background=self.get("bg"))
-            style.configure('TLabel', background=self.get("bg"), foreground=self.get("fg"))
-            style.configure('TButton', background=self.get("bg_button"), foreground=self.get("fg_button"))
-            style.map('TButton',
-                     background=[('active', self.get("accent"))])
-            style.configure('TEntry', fieldbackground=self.get("bg_entry"), foreground=self.get("fg_entry"))
-        
+        style.theme_use('clam')
+
+        style.configure('.', font=self.BASE_FONT)
+        style.configure('TFrame', background=self.get("bg"))
+        style.configure('TLabel', background=self.get("bg"), foreground=self.get("fg"))
+        style.configure('TButton', background=self.get("bg_button"), foreground=self.get("fg_button"), padding=(10, 6))
+        style.map('TButton', background=[('active', self.get("accent"))])
+        style.configure('TEntry', fieldbackground=self.get("bg_entry"), foreground=self.get("fg_entry"), padding=(6, 4))
+        style.configure('TCombobox', fieldbackground=self.get("bg_entry"), foreground=self.get("fg_entry"))
+        style.configure('TNotebook', background=self.get("bg"), tabmargins=(6, 4, 6, 0))
+        style.configure('TNotebook.Tab', background=self.get("bg_button"), foreground=self.get("fg_button"), padding=(12, 6))
+        style.map('TNotebook.Tab', background=[('selected', self.get("bg_frame"))])
+        style.configure('TLabelframe', background=self.get("bg"), bordercolor=self.get("border"))
+        style.configure('TLabelframe.Label', background=self.get("bg"), foreground=self.get("fg"), font=self.SMALL_FONT)
+
         return style
 
 
@@ -130,7 +133,7 @@ class LoginPopup:
     storage option. Supports callback on successful authentication.
     """
     
-    def __init__(self, parent, title="User Login", callback=None):
+    def __init__(self, parent, title="Login do YouTube", callback=None):
         """Initialize login popup
         
         Args:
@@ -151,7 +154,7 @@ class LoginPopup:
         """
         dialog = tk.Toplevel(self.parent)
         dialog.title(self.title)
-        dialog.geometry("350x200")
+        dialog.geometry("420x260")
         dialog.resizable(False, False)
         dialog.transient(self.parent)
         dialog.grab_set()
@@ -161,18 +164,21 @@ class LoginPopup:
         main_frame.pack(fill=tk.BOTH, expand=True)
         
         # Email/Username field
-        ttk.Label(main_frame, text="Email/Username:").grid(row=0, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text="Email/Usuario do YouTube:").grid(row=0, column=0, sticky=tk.W, pady=5)
         email_entry = ttk.Entry(main_frame, width=30)
         email_entry.grid(row=0, column=1, sticky=tk.EW, pady=5, padx=10)
         
         # Password field
-        ttk.Label(main_frame, text="Password:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text="Senha:").grid(row=1, column=0, sticky=tk.W, pady=5)
         password_entry = ttk.Entry(main_frame, width=30, show="*")
         password_entry.grid(row=1, column=1, sticky=tk.EW, pady=5, padx=10)
-        
-        # Remember credentials checkbox
-        remember_var = tk.BooleanVar()
-        ttk.Checkbutton(main_frame, text="Remember credentials", variable=remember_var).grid(
+
+        # YouTube login notice
+        notice = (
+            "Este login e usado somente pelo yt-dlp para melhorar o acesso.\n"
+            "Nao armazenamos suas credenciais e nada e gravado localmente."
+        )
+        ttk.Label(main_frame, text=notice, justify=tk.LEFT, wraplength=360).grid(
             row=2, column=0, columnspan=2, sticky=tk.W, pady=10
         )
         
@@ -183,10 +189,10 @@ class LoginPopup:
         def on_ok():
             email = email_entry.get().strip()
             password = password_entry.get()
-            remember = remember_var.get()
+            remember = False
             
             if not email or not password:
-                messagebox.showwarning("Warning", "Please fill all fields!")
+                messagebox.showwarning("Aviso", "Preencha todos os campos.")
                 return
             
             self.result = {
@@ -203,8 +209,8 @@ class LoginPopup:
         def on_cancel():
             dialog.destroy()
         
-        ttk.Button(button_frame, text="OK", command=on_ok).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Cancel", command=on_cancel).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Entrar", command=on_ok).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Cancelar", command=on_cancel).pack(side=tk.LEFT, padx=5)
         
         # Configure grid weights
         main_frame.columnconfigure(1, weight=1)
@@ -302,7 +308,7 @@ class ConfigManager:
         self.history_file = self.config_dir / "history_downloads.json"
         self.default_config = {
             "dark_mode": True,
-            "language": "en",
+            "language": "pt",
             "output_folder": "downloads",
             "log_level": "INFO"
         }
