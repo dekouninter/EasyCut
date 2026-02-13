@@ -41,6 +41,7 @@ from modern_components import (
     ModernButton, ModernCard, ModernInput, ModernAlert,
     ModernDialog, ModernIconButton, ModernTabHeader
 )
+from font_loader import setup_fonts
 
 # Import external libraries
 try:
@@ -66,8 +67,11 @@ class EasyCutApp:
         self.config_manager = ConfigManager()
         self.load_config()
         
+        # Load custom fonts FIRST
+        self.font_family = setup_fonts()
+        
         # Modern Theme & Design System
-        self.theme = ModernTheme(dark_mode=self.dark_mode)
+        self.theme = ModernTheme(dark_mode=self.dark_mode, font_family=self.font_family)
         self.design = DesignTokens(dark_mode=self.dark_mode)
         self.translator = Translator(self.language)
         

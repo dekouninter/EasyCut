@@ -211,9 +211,21 @@ class DesignTokens:
 class ModernTheme:
     """Modern theme implementation for ttk widgets"""
     
-    def __init__(self, dark_mode: bool = True):
+    def __init__(self, dark_mode: bool = True, font_family: str = "Segoe UI"):
+        """
+        Initialize modern theme
+        
+        Args:
+            dark_mode: Use dark color scheme
+            font_family: Font family to use throughout the app
+        """
         self.tokens = DesignTokens(dark_mode)
         self.dark_mode = dark_mode
+        self.font_family = font_family
+    
+    def _font(self, size, weight="normal"):
+        """Helper to create font tuple"""
+        return (self.font_family, size, weight)
     
     def get_ttk_style_config(self) -> Dict:
         """Get complete ttk style configuration"""
@@ -242,27 +254,27 @@ class ModernTheme:
                 "configure": {
                     "background": colors["bg_primary"],
                     "foreground": colors["fg_primary"],
-                    "font": ("Inter", Typography.SIZE_MD, Typography.WEIGHT_REGULAR),
+                    "font": self._font(Typography.SIZE_MD, "normal"),
                 }
             },
             
             "Title.TLabel": {
                 "configure": {
-                    "font": ("Inter", Typography.SIZE_XXL, Typography.WEIGHT_BOLD),
+                    "font": self._font(Typography.SIZE_XXL, "bold"),
                     "foreground": colors["fg_primary"],
                 }
             },
             
             "Subtitle.TLabel": {
                 "configure": {
-                    "font": ("Inter", Typography.SIZE_LG, Typography.WEIGHT_SEMIBOLD),
+                    "font": self._font(Typography.SIZE_LG, "bold"),
                     "foreground": colors["fg_secondary"],
                 }
             },
             
             "Caption.TLabel": {
                 "configure": {
-                    "font": ("Inter", Typography.SIZE_SM, Typography.WEIGHT_REGULAR),
+                    "font": self._font(Typography.SIZE_SM, "normal"),
                     "foreground": colors["fg_tertiary"],
                 }
             },
@@ -279,7 +291,7 @@ class ModernTheme:
                     "focusthickness": 0,
                     "focuscolor": "none",
                     "padding": (spacing.LG, spacing.MD),
-                    "font": ("Inter", Typography.SIZE_MD, Typography.WEIGHT_MEDIUM),
+                    "font": self._font(Typography.SIZE_MD, "bold"),
                 },
                 "map": {
                     "background": [
@@ -332,7 +344,7 @@ class ModernTheme:
                     "insertcolor": colors["fg_primary"],
                     "borderwidth": 1,
                     "padding": (spacing.MD, spacing.SM),
-                    "font": ("Inter", Typography.SIZE_MD, Typography.WEIGHT_REGULAR),
+                    "font": self._font(Typography.SIZE_MD, "normal"),
                 },
                 "map": {
                     "bordercolor": [
@@ -354,7 +366,7 @@ class ModernTheme:
                     "bordercolor": colors["border"],
                     "arrowcolor": colors["fg_secondary"],
                     "padding": (spacing.MD, spacing.SM),
-                    "font": ("Inter", Typography.SIZE_MD, Typography.WEIGHT_REGULAR),
+                    "font": self._font(Typography.SIZE_MD, "normal"),
                 },
                 "map": {
                     "bordercolor": [
@@ -369,7 +381,7 @@ class ModernTheme:
                 "configure": {
                     "background": colors["bg_primary"],
                     "foreground": colors["fg_primary"],
-                    "font": ("Inter", Typography.SIZE_MD, Typography.WEIGHT_REGULAR),
+                    "font": self._font(Typography.SIZE_MD, "normal"),
                     "padding": (spacing.SM, spacing.XS),
                 }
             },
@@ -378,7 +390,7 @@ class ModernTheme:
                 "configure": {
                     "background": colors["bg_primary"],
                     "foreground": colors["fg_primary"],
-                    "font": ("Inter", Typography.SIZE_MD, Typography.WEIGHT_REGULAR),
+                    "font": self._font(Typography.SIZE_MD, "normal"),
                     "padding": (spacing.SM, spacing.XS),
                 }
             },
@@ -397,7 +409,7 @@ class ModernTheme:
                     "background": colors["bg_tertiary"],
                     "foreground": colors["fg_secondary"],
                     "padding": (spacing.LG, spacing.MD),
-                    "font": ("Inter", Typography.SIZE_MD, Typography.WEIGHT_MEDIUM),
+                    "font": self._font(Typography.SIZE_MD, "bold"),
                     "borderwidth": 0,
                 },
                 "map": {
@@ -426,7 +438,7 @@ class ModernTheme:
                 "configure": {
                     "background": colors["bg_tertiary"],
                     "foreground": colors["fg_primary"],
-                    "font": ("Inter", Typography.SIZE_MD, Typography.WEIGHT_SEMIBOLD),
+                    "font": self._font(Typography.SIZE_MD, "bold"),
                 }
             },
             
