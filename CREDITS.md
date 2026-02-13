@@ -123,10 +123,9 @@ If you find EasyCut useful, consider:
 - ☕ **Buy me a coffee** - Help fund development
 
 ### Coffee Donation Links
-- **GitHub Sponsors**: https://github.com/sponsors/dekouninter
 - **Ko-fi**: https://ko-fi.com/dekocosta
 - **Buy Me a Coffee**: https://buymeacoffee.com/dekocosta
-- **Pix (Brazil)**: dekocosta@email.com
+- **Pix (Brazil)**: https://livepix.gg/dekocosta
 
 ## 📝 Version History
 
@@ -173,7 +172,6 @@ python main.py
 
 ## 📧 Contact
 
-- **Email**: dekocosta@github.com
 - **GitHub Issues**: https://github.com/dekouninter/EasyCut/issues
 - **Discussions**: https://github.com/dekouninter/EasyCut/discussions
 

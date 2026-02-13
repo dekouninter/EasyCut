@@ -342,379 +342,661 @@ class EasyCutApp:
         ).pack(pady=20)
     
     def create_download_tab(self):
-        """Create video download tab with integrated audio options"""
+        """Create modern professional download tab"""
         tr = self.translator.get
+        
+        # Create tab
         frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text=tr("tab_download", "Download"))
+        self.notebook.add(frame, text=f"⬇️ {tr('tab_download', 'Download')}")
         
-        main = ttk.Frame(frame, padding=10)
-        main.pack(fill=tk.BOTH, expand=True)
+        # Main scrollable container
+        main_canvas = tk.Canvas(frame, bg=self.design.get_color("bg_primary"), highlightthickness=0)
+        scrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=main_canvas.yview)
+        main = ttk.Frame(main_canvas, padding=Spacing.LG)
         
-        # URL Input
-        url_frame = ttk.LabelFrame(main, text=tr("download_url", "YouTube URL"), padding=10)
-        url_frame.pack(fill=tk.X, pady=5)
+        main.bind("<Configure>", lambda e: main_canvas.configure(scrollregion=main_canvas.bbox("all")))
+        main_canvas.create_window((0, 0), window=main, anchor="nw")
+        main_canvas.configure(yscrollcommand=scrollbar.set)
         
-        self.download_url_entry = ttk.Entry(url_frame, width=80)
-        self.download_url_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+        main_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        verify_icon = get_ui_icon("verify", size=16)
-        verify_btn = ttk.Button(url_frame, text=" " + tr("download_verify", "Verify"), command=self.verify_video)
-        if verify_icon:
-            verify_btn.configure(image=verify_icon, compound="left")
-            verify_btn.image = verify_icon
-        verify_btn.pack(side=tk.LEFT, padx=5)
+        # === TAB HEADER ===
+        ModernTabHeader(
+            main,
+            title=tr("tab_download", "Download"),
+            icon_name="download",
+            subtitle=tr("download_subtitle", "Download videos and audio from YouTube")
+        )
         
-        # Video Info
-        info_frame = ttk.LabelFrame(main, text=tr("download_info", "Video Information"), padding=10)
-        info_frame.pack(fill=tk.X, pady=5)
+        # === URL INPUT CARD ===
+        url_card = ModernCard(main, title=tr("download_url", "YouTube URL"))
+        url_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
-        ttk.Label(info_frame, text=f"{tr('download_title', 'Title')}:", font=("Segoe UI", 10, "bold")).grid(row=0, column=0, sticky=tk.W, padx=5)
-        self.download_title_label = ttk.Label(info_frame, text="-", foreground="gray")
-        self.download_title_label.grid(row=0, column=1, sticky=tk.W, padx=5)
+        url_container = ttk.Frame(url_card)
+        url_container.pack(fill=tk.X)
         
-        ttk.Label(info_frame, text=f"{tr('download_duration', 'Duration')}:", font=("Segoe UI", 10, "bold")).grid(row=1, column=0, sticky=tk.W, padx=5)
-        self.download_duration_label = ttk.Label(info_frame, text="-", foreground="gray")
-        self.download_duration_label.grid(row=1, column=1, sticky=tk.W, padx=5)
+        # URL input with icon
+        input_frame = ttk.Frame(url_container)
+        input_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, Spacing.SM))
         
-        # Download Mode Section
-        mode_frame = ttk.LabelFrame(main, text=tr("download_mode", "Download Mode"), padding=10)
-        mode_frame.pack(fill=tk.X, pady=5)
+        url_icon = get_ui_icon("video", size=Icons.SIZE_SM)
+        if url_icon:
+            url_icon_label = ttk.Label(input_frame, image=url_icon)
+            url_icon_label.image = url_icon
+            url_icon_label.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        self.download_url_entry = ttk.Entry(input_frame)
+        self.download_url_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        # Verify button
+        ModernButton(
+            url_container,
+            text=tr("download_verify", "Verify"),
+            icon_name="verify",
+            command=self.verify_video,
+            variant="secondary",
+            width=12
+        ).pack(side=tk.LEFT)
+        
+        # === VIDEO INFO CARD ===
+        info_card = ModernCard(main, title=tr("download_info", "Video Information"))
+        info_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        info_grid = ttk.Frame(info_card)
+        info_grid.pack(fill=tk.X)
+        
+        # Title row
+        ttk.Label(info_grid, text=f"{tr('download_title', 'Title')}:", style="Subtitle.TLabel").grid(
+            row=0, column=0, sticky=tk.W, padx=(0, Spacing.MD), pady=Spacing.XS
+        )
+        self.download_title_label = ttk.Label(info_grid, text="-", style="Caption.TLabel")
+        self.download_title_label.grid(row=0, column=1, sticky=tk.W, pady=Spacing.XS)
+        
+        # Duration row
+        ttk.Label(info_grid, text=f"{tr('download_duration', 'Duration')}:", style="Subtitle.TLabel").grid(
+            row=1, column=0, sticky=tk.W, padx=(0, Spacing.MD), pady=Spacing.XS
+        )
+        self.download_duration_label = ttk.Label(info_grid, text="-", style="Caption.TLabel")
+        self.download_duration_label.grid(row=1, column=1, sticky=tk.W, pady=Spacing.XS)
+        
+        # === DOWNLOAD MODE CARD ===
+        mode_card = ModernCard(main, title=tr("download_mode", "Download Mode"))
+        mode_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         self.download_mode_var = tk.StringVar(value="full")
-        ttk.Radiobutton(mode_frame, text=tr("download_mode_full", "Complete Video"), variable=self.download_mode_var, value="full").pack(anchor=tk.W, pady=3)
-        ttk.Radiobutton(mode_frame, text=tr("download_mode_range", "Time Range"), variable=self.download_mode_var, value="range").pack(anchor=tk.W, pady=3)
-        ttk.Radiobutton(mode_frame, text=tr("download_mode_until", "Until Time"), variable=self.download_mode_var, value="until").pack(anchor=tk.W, pady=3)
-        ttk.Radiobutton(mode_frame, text=tr("download_mode_audio", "Audio Only"), variable=self.download_mode_var, value="audio").pack(anchor=tk.W, pady=3)
         
-        # Time Range Inputs (shown when mode changes)
-        time_frame = ttk.LabelFrame(main, text=f"{tr('download_start_time', 'Start Time')} / {tr('download_end_time', 'End Time')}", padding=10)
-        time_frame.pack(fill=tk.X, pady=5)
+        modes = [
+            ("full", tr("download_mode_full", "Complete Video"), "video"),
+            ("range", tr("download_mode_range", "Time Range"), "clock"),
+            ("until", tr("download_mode_until", "Until Time"), "clock"),
+            ("audio", tr("download_mode_audio", "Audio Only"), "music")
+        ]
         
-        ttk.Label(time_frame, text=f"{tr('download_start_time', 'Start Time')}:", font=("Segoe UI", 9)).grid(row=0, column=0, sticky=tk.W, padx=5)
-        self.time_start_entry = ttk.Entry(time_frame, width=15)
-        self.time_start_entry.insert(0, "00:00")
-        self.time_start_entry.grid(row=0, column=1, sticky=tk.W, padx=5)
+        for value, text, icon_name in modes:
+            mode_frame = ttk.Frame(mode_card)
+            mode_frame.pack(fill=tk.X, pady=Spacing.XS)
+            
+            icon = get_ui_icon(icon_name, size=Icons.SIZE_SM)
+            if icon:
+                icon_label = ttk.Label(mode_frame, image=icon)
+                icon_label.image = icon
+                icon_label.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+            
+            ttk.Radiobutton(
+                mode_frame,
+                text=text,
+                variable=self.download_mode_var,
+                value=value
+            ).pack(side=tk.LEFT)
         
-        ttk.Label(time_frame, text=f"{tr('download_end_time', 'End Time')}:", font=("Segoe UI", 9)).grid(row=0, column=2, sticky=tk.W, padx=5)
-        self.time_end_entry = ttk.Entry(time_frame, width=15)
-        self.time_end_entry.insert(0, "00:00")
-        self.time_end_entry.grid(row=0, column=3, sticky=tk.W, padx=5)
+        # === TIME RANGE CARD ===
+        time_card = ModernCard(main, title=tr("download_time_range", "Time Range"))
+        time_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
-        ttk.Label(time_frame, text=tr("download_time_help", "Use start/end for range."), font=("Segoe UI", 8), foreground="gray").grid(row=1, column=0, columnspan=4, sticky=tk.W, padx=5, pady=5)
+        time_grid = ttk.Frame(time_card)
+        time_grid.pack(fill=tk.X)
         
-        # Quality Section
-        quality_frame = ttk.LabelFrame(main, text=tr("download_quality", "Quality"), padding=10)
-        quality_frame.pack(fill=tk.X, pady=5)
+        # Start time
+        ttk.Label(time_grid, text=f"{tr('download_start_time', 'Start Time')}:").grid(
+            row=0, column=0, sticky=tk.W, padx=(0, Spacing.SM), pady=Spacing.XS
+        )
+        self.time_start_entry = ttk.Entry(time_grid, width=12)
+        self.time_start_entry.insert(0, "00:00:00")
+        self.time_start_entry.grid(row=0, column=1, sticky=tk.W, padx=(0, Spacing.XL), pady=Spacing.XS)
+        
+        # End time
+        ttk.Label(time_grid, text=f"{tr('download_end_time', 'End Time')}:").grid(
+            row=0, column=2, sticky=tk.W, padx=(0, Spacing.SM), pady=Spacing.XS
+        )
+        self.time_end_entry = ttk.Entry(time_grid, width=12)
+        self.time_end_entry.insert(0, "00:00:00")
+        self.time_end_entry.grid(row=0, column=3, sticky=tk.W, pady=Spacing.XS)
+        
+        # Help text
+        ttk.Label(
+            time_card,
+            text=tr("download_time_help", "Format: HH:MM:SS or MM:SS"),
+            style="Caption.TLabel"
+        ).pack(anchor=tk.W, pady=(Spacing.SM, 0))
+        
+        # === QUALITY CARD ===
+        quality_card = ModernCard(main, title=tr("download_quality", "Quality"))
+        quality_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         self.download_quality_var = tk.StringVar(value="best")
-        ttk.Radiobutton(quality_frame, text=tr("download_quality_best", "Best Quality"), variable=self.download_quality_var, value="best").pack(anchor=tk.W, pady=2)
-        ttk.Radiobutton(quality_frame, text=tr("download_quality_mp4", "MP4 (Best)"), variable=self.download_quality_var, value="mp4").pack(anchor=tk.W, pady=2)
-        ttk.Radiobutton(quality_frame, text="1080p", variable=self.download_quality_var, value="1080").pack(anchor=tk.W, pady=2)
-        ttk.Radiobutton(quality_frame, text="720p", variable=self.download_quality_var, value="720").pack(anchor=tk.W, pady=2)
         
-        # Audio Format Options (shown when Audio mode is selected)
-        audio_frame = ttk.LabelFrame(main, text=tr("audio_format", "Audio Format"), padding=10)
-        audio_frame.pack(fill=tk.X, pady=5)
+        qualities = [
+            ("best", tr("download_quality_best", "Best Quality"), "⭐"),
+            ("mp4", tr("download_quality_mp4", "MP4 (Best)"), "🎬"),
+            ("1080", "1080p Full HD", "📺"),
+            ("720", "720p HD", "📱")
+        ]
         
+        quality_grid = ttk.Frame(quality_card)
+        quality_grid.pack(fill=tk.X)
+        
+        for i, (value, text, emoji) in enumerate(qualities):
+            ttk.Radiobutton(
+                quality_grid,
+                text=f"{emoji} {text}",
+                variable=self.download_quality_var,
+                value=value
+            ).grid(row=i//2, column=i%2, sticky=tk.W, padx=Spacing.MD, pady=Spacing.XS)
+        
+        # === AUDIO FORMAT CARD ===
+        audio_card = ModernCard(main, title=tr("audio_format", "Audio Format"))
+        audio_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        # Format selection
         self.audio_format_var = tk.StringVar(value="mp3")
-        fmt_sub_frame1 = ttk.Frame(audio_frame)
-        fmt_sub_frame1.pack(anchor=tk.W, pady=3)
-        ttk.Radiobutton(fmt_sub_frame1, text="MP3", variable=self.audio_format_var, value="mp3").pack(side=tk.LEFT, padx=5)
-        ttk.Radiobutton(fmt_sub_frame1, text="WAV", variable=self.audio_format_var, value="wav").pack(side=tk.LEFT, padx=5)
-        ttk.Radiobutton(fmt_sub_frame1, text="M4A", variable=self.audio_format_var, value="m4a").pack(side=tk.LEFT, padx=5)
-        ttk.Radiobutton(fmt_sub_frame1, text="OPUS", variable=self.audio_format_var, value="opus").pack(side=tk.LEFT, padx=5)
         
-        ttk.Label(audio_frame, text=f"{tr('audio_bitrate', 'Bitrate')} (kbps):", font=("Segoe UI", 9)).pack(anchor=tk.W, pady=5)
+        fmt_frame = ttk.Frame(audio_card)
+        fmt_frame.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        formats = [("mp3", "MP3"), ("wav", "WAV"), ("m4a", "M4A"), ("opus", "OPUS")]
+        for value, text in formats:
+            ttk.Radiobutton(
+                fmt_frame,
+                text=text,
+                variable=self.audio_format_var,
+                value=value
+            ).pack(side=tk.LEFT, padx=(0, Spacing.LG))
+        
+        # Bitrate selection
+        ttk.Label(audio_card, text=f"🎵 {tr('audio_bitrate', 'Bitrate')}:", style="Subtitle.TLabel").pack(
+            anchor=tk.W, pady=(Spacing.SM, Spacing.XS)
+        )
+        
         self.audio_bitrate_var = tk.StringVar(value="320")
-        fmt_sub_frame2 = ttk.Frame(audio_frame)
-        fmt_sub_frame2.pack(anchor=tk.W, pady=3)
+        
+        bitrate_frame = ttk.Frame(audio_card)
+        bitrate_frame.pack(fill=tk.X)
+        
         for br in ["128", "192", "256", "320"]:
-            ttk.Radiobutton(fmt_sub_frame2, text=f"{br} kbps", variable=self.audio_bitrate_var, value=br).pack(side=tk.LEFT, padx=5)
+            ttk.Radiobutton(
+                bitrate_frame,
+                text=f"{br} kbps",
+                variable=self.audio_bitrate_var,
+                value=br
+            ).pack(side=tk.LEFT, padx=(0, Spacing.LG))
         
-        # Log
-        log_frame = ttk.LabelFrame(main, text=tr("download_log", "Download Log"), padding=5)
-        log_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        # === LOG CARD ===
+        log_card = ModernCard(main, title=tr("download_log", "Activity Log"))
+        log_card.pack(fill=tk.BOTH, expand=True, pady=(0, Spacing.MD))
         
-        self.download_log = LogWidget(log_frame, theme=self.theme, height=8)
-        scrollbar = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.download_log.yview)
-        self.download_log.config(yscrollcommand=scrollbar.set)
+        log_container = ttk.Frame(log_card)
+        log_container.pack(fill=tk.BOTH, expand=True)
+        
+        self.download_log = LogWidget(log_container, theme=self.theme, height=8)
+        log_scrollbar = ttk.Scrollbar(log_container, orient=tk.VERTICAL, command=self.download_log.yview)
+        self.download_log.config(yscrollcommand=log_scrollbar.set)
         self.download_log.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        log_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Buttons
-        btn_frame = ttk.Frame(main)
-        btn_frame.pack(fill=tk.X, pady=10)
+        # === ACTION BUTTONS ===
+        action_frame = ttk.Frame(main)
+        action_frame.pack(fill=tk.X, pady=(Spacing.MD, 0))
         
-        download_icon = get_ui_icon("download", size=16)
-        download_btn = ttk.Button(btn_frame, text=" " + tr("download_btn", "Download"), command=self.start_download, width=14)
-        if download_icon:
-            download_btn.configure(image=download_icon, compound="left")
-            download_btn.image = download_icon
-        download_btn.pack(side=tk.LEFT, padx=5)
+        ModernButton(
+            action_frame,
+            text=tr("download_btn", "Download"),
+            icon_name="download",
+            command=self.start_download,
+            variant="primary",
+            width=14
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
         
-        stop_icon = get_ui_icon("stop", size=16)
-        stop_btn = ttk.Button(btn_frame, text=" " + tr("download_stop", "Stop"), command=self.stop_download, width=14)
-        if stop_icon:
-            stop_btn.configure(image=stop_icon, compound="left")
-            stop_btn.image = stop_icon
-        stop_btn.pack(side=tk.LEFT, padx=5)
+        ModernButton(
+            action_frame,
+            text=tr("download_stop", "Stop"),
+            icon_name="stop",
+            command=self.stop_download,
+            variant="secondary",
+            width=14
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
         
-        clear_icon = get_ui_icon("clear", size=16)
-        clear_btn = ttk.Button(btn_frame, text=" " + tr("download_clear_log", "Clear Log"), command=lambda: self.download_log.clear(), width=14)
-        if clear_icon:
-            clear_btn.configure(image=clear_icon, compound="left")
-            clear_btn.image = clear_icon
-        clear_btn.pack(side=tk.LEFT, padx=5)
+        ModernButton(
+            action_frame,
+            text=tr("download_clear_log", "Clear Log"),
+            icon_name="clear",
+            command=lambda: self.download_log.clear(),
+            variant="outline",
+            width=14
+        ).pack(side=tk.LEFT)
     
     def create_batch_tab(self):
-        """Create batch download tab"""
+        """Create modern batch download tab"""
         tr = self.translator.get
-        frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text=tr("tab_batch", "Batch"))
         
-        main = ttk.Frame(frame, padding=10)
+        frame = ttk.Frame(self.notebook)
+        self.notebook.add(frame, text=f"☰ {tr('tab_batch', 'Batch')}")
+        
+        main = ttk.Frame(frame, padding=Spacing.LG)
         main.pack(fill=tk.BOTH, expand=True)
         
-        # URLs Input
-        urls_frame = ttk.LabelFrame(main, text=tr("batch_urls", "URLs (one per line)"), padding=10)
-        urls_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        # === TAB HEADER ===
+        ModernTabHeader(
+            main,
+            title=tr("tab_batch", "Batch Downloads"),
+            icon_name="batch",
+            subtitle=tr("batch_subtitle", "Download multiple videos at once")
+        )
         
-        scrollbar = ttk.Scrollbar(urls_frame, orient=tk.VERTICAL)
-        self.batch_text = tk.Text(urls_frame, height=10, yscrollcommand=scrollbar.set)
+        # === URLS INPUT CARD ===
+        urls_card = ModernCard(main, title=tr("batch_urls", "YouTube URLs"))
+        urls_card.pack(fill=tk.BOTH, expand=True, pady=(0, Spacing.MD))
+        
+        # Info text
+        ttk.Label(
+            urls_card,
+            text=tr("batch_help", "📝 Paste one URL per line. Up to 50 URLs supported."),
+            style="Caption.TLabel"
+        ).pack(anchor=tk.W, pady=(0, Spacing.SM))
+        
+        # Text area
+        text_container = ttk.Frame(urls_card)
+        text_container.pack(fill=tk.BOTH, expand=True)
+        
+        text_scrollbar = ttk.Scrollbar(text_container, orient=tk.VERTICAL)
+        self.batch_text = tk.Text(
+            text_container,
+            height=12,
+            yscrollcommand=text_scrollbar.set,
+            font=("Inter", Typography.SIZE_MD),
+            wrap=tk.WORD
+        )
         self.batch_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.config(command=self.batch_text.yview)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        text_scrollbar.config(command=self.batch_text.yview)
+        text_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Buttons
-        btn_frame = ttk.Frame(main)
-        btn_frame.pack(fill=tk.X, pady=10)
+        # Action buttons for text area
+        text_actions = ttk.Frame(urls_card)
+        text_actions.pack(fill=tk.X, pady=(Spacing.SM, 0))
         
-        batch_icon = get_ui_icon("batch", size=16)
-        batch_btn = ttk.Button(btn_frame, text=" " + tr("batch_download_all", "Download All"), command=self.start_batch_download)
-        if batch_icon:
-            batch_btn.configure(image=batch_icon, compound="left")
-            batch_btn.image = batch_icon
-        batch_btn.pack(side=tk.LEFT, padx=5)
+        ModernButton(
+            text_actions,
+            text=tr("batch_paste", "Paste from Clipboard"),
+            icon_name="paste",
+            command=self.batch_paste,
+            variant="secondary",
+            width=20
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
         
-        paste_icon = get_ui_icon("paste", size=16)
-        paste_btn = ttk.Button(btn_frame, text=" " + tr("batch_paste", "Paste"), command=self.batch_paste)
-        if paste_icon:
-            paste_btn.configure(image=paste_icon, compound="left")
-            paste_btn.image = paste_icon
-        paste_btn.pack(side=tk.LEFT, padx=5)
+        ModernButton(
+            text_actions,
+            text=tr("batch_clear", "Clear All"),
+            icon_name="clear",
+            command=lambda: self.batch_text.delete(1.0, tk.END),
+            variant="outline",
+            width=12
+        ).pack(side=tk.LEFT)
         
-        clear_icon = get_ui_icon("clear", size=16)
-        clear_btn = ttk.Button(btn_frame, text=" " + tr("batch_clear", "Clear"), command=lambda: self.batch_text.delete(1.0, tk.END))
-        if clear_icon:
-            clear_btn.configure(image=clear_icon, compound="left")
-            clear_btn.image = clear_icon
-        clear_btn.pack(side=tk.LEFT, padx=5)
+        # === LOG CARD ===
+        log_card = ModernCard(main, title=tr("batch_log", "Batch Progress Log"))
+        log_card.pack(fill=tk.BOTH, expand=True, pady=(0, Spacing.MD))
         
-        # Log
-        log_frame = ttk.LabelFrame(main, text=tr("batch_log", "Batch Log"), padding=5)
-        log_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        log_container = ttk.Frame(log_card)
+        log_container.pack(fill=tk.BOTH, expand=True)
         
-        self.batch_log = LogWidget(log_frame, theme=self.theme, height=6)
-        scrollbar = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.batch_log.yview)
-        self.batch_log.config(yscrollcommand=scrollbar.set)
+        self.batch_log = LogWidget(log_container, theme=self.theme, height=6)
+        log_scrollbar = ttk.Scrollbar(log_container, orient=tk.VERTICAL, command=self.batch_log.yview)
+        self.batch_log.config(yscrollcommand=log_scrollbar.set)
         self.batch_log.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        log_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # === ACTION BUTTONS ===
+        action_frame = ttk.Frame(main)
+        action_frame.pack(fill=tk.X)
+        
+        ModernButton(
+            action_frame,
+            text=tr("batch_download_all", "Start Batch Download"),
+            icon_name="download",
+            command=self.start_batch_download,
+            variant="primary",
+            width=20
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        ModernButton(
+            action_frame,
+            text=tr("batch_stop", "Stop All"),
+            icon_name="stop",
+            command=self.stop_download,
+            variant="secondary",
+            width=12
+        ).pack(side=tk.LEFT)
     
     def create_live_tab(self):
-        """Create live stream download tab with dynamic features"""
+        """Create modern live stream recording tab"""
         tr = self.translator.get
         frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text=tr("tab_live", "Live"))
+        self.notebook.add(frame, text=f"● {tr('tab_live', 'Live')}")
         
-        main = ttk.Frame(frame, padding=10)
+        main = ttk.Frame(frame, padding=Spacing.LG)
         main.pack(fill=tk.BOTH, expand=True)
         
-        # Title
-        title = ttk.Label(main, text=tr("live_title", "Live Stream Recorder"), font=("Segoe UI", 14, "bold"))
-        title.pack(pady=10)
+        # === TAB HEADER ===
+        ModernTabHeader(
+            main,
+            title=tr("live_title", "Live Stream Recorder"),
+            icon_name="record",
+            subtitle=tr("live_subtitle", "🔴 Record live streams with customizable duration and quality")
+        )
         
-        # URL Input
-        url_frame = ttk.LabelFrame(main, text=tr("live_url", "Live Stream URL"), padding=10)
-        url_frame.pack(fill=tk.X, pady=5)
+        # === URL INPUT CARD ===
+        url_card = ModernCard(main, title=tr("live_url", "Live Stream URL"))
+        url_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
-        self.live_url_entry = ttk.Entry(url_frame, width=80)
-        self.live_url_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+        url_row = ttk.Frame(url_card)
+        url_row.pack(fill=tk.X)
         
-        check_icon = get_ui_icon("verify", size=16)
-        check_btn = ttk.Button(url_frame, text=" " + tr("live_check_stream", "Check Stream"), command=self.verify_live_stream)
-        if check_icon:
-            check_btn.configure(image=check_icon, compound="left")
-            check_btn.image = check_icon
-        check_btn.pack(side=tk.LEFT, padx=5)
+        url_icon_label = ttk.Label(url_row, text="📡", font=("Segoe UI", 12))
+        url_icon_label.pack(side=tk.LEFT, padx=(0, Spacing.SM))
         
-        # Stream Info
-        info_frame = ttk.LabelFrame(main, text=tr("live_status", "Stream Status"), padding=10)
-        info_frame.pack(fill=tk.X, pady=5)
+        self.live_url_entry = ttk.Entry(url_row, font=("Inter", Typography.SIZE_MD))
+        self.live_url_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, Spacing.SM))
         
-        ttk.Label(info_frame, text=f"{tr('live_status', 'Status')}:", font=("Segoe UI", 10, "bold")).grid(row=0, column=0, sticky=tk.W, padx=5)
-        self.live_status_label = ttk.Label(info_frame, text=tr("live_status_unknown", "UNKNOWN"), foreground="#FF0000")
-        self.live_status_label.grid(row=0, column=1, sticky=tk.W, padx=5)
+        ModernButton(
+            url_row,
+            text=tr("live_check_stream", "Check"),
+            icon_name="verify",
+            command=self.verify_live_stream,
+            variant="secondary",
+            width=12
+        ).pack(side=tk.LEFT)
         
-        ttk.Label(info_frame, text=f"{tr('live_duration', 'Duration')} (hh:mm:ss):", font=("Segoe UI", 10, "bold")).grid(row=1, column=0, sticky=tk.W, padx=5)
-        self.live_duration_label = ttk.Label(info_frame, text="-", foreground="gray")
-        self.live_duration_label.grid(row=1, column=1, sticky=tk.W, padx=5)
+        # === STREAM STATUS CARD ===
+        status_card = ModernCard(main, title=tr("live_status", "Stream Status"))
+        status_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
-        # Recording Mode
-        mode_frame = ttk.LabelFrame(main, text=tr("live_mode", "Recording Mode"), padding=10)
-        mode_frame.pack(fill=tk.X, pady=5)
+        status_grid = ttk.Frame(status_card)
+        status_grid.pack(fill=tk.X)
+        
+        ttk.Label(status_grid, text=f"{tr('live_status', 'Status')}:", style="Subtitle.TLabel").grid(row=0, column=0, sticky=tk.W, padx=(0, Spacing.XL))
+        self.live_status_label = ttk.Label(status_grid, text=tr("live_status_unknown", "⚠️ UNKNOWN"), style="Caption.TLabel")
+        self.live_status_label.grid(row=0, column=1, sticky=tk.W)
+        
+        ttk.Label(status_grid, text=f"{tr('live_duration', 'Duration')}:", style="Subtitle.TLabel").grid(row=1, column=0, sticky=tk.W, padx=(0, Spacing.XL), pady=(Spacing.SM, 0))
+        self.live_duration_label = ttk.Label(status_grid, text="--:--:--", style="Caption.TLabel")
+        self.live_duration_label.grid(row=1, column=1, sticky=tk.W, pady=(Spacing.SM, 0))
+        
+        # === RECORDING MODE CARD ===
+        mode_card = ModernCard(main, title=tr("live_mode", "Recording Mode"))
+        mode_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         self.live_mode_var = tk.StringVar(value="continuous")
-        ttk.Radiobutton(mode_frame, text=tr("live_mode_continuous", "Continuous Recording"), variable=self.live_mode_var, value="continuous").pack(anchor=tk.W, pady=3)
-        ttk.Radiobutton(mode_frame, text=tr("live_mode_until", "Record Until Time"), variable=self.live_mode_var, value="until").pack(anchor=tk.W, pady=3)
-        ttk.Radiobutton(mode_frame, text=tr("live_mode_duration", "Record Duration"), variable=self.live_mode_var, value="duration").pack(anchor=tk.W, pady=3)
         
-        # Duration/Until inputs
-        duration_frame = ttk.LabelFrame(main, text=tr("live_mode", "Recording Mode"), padding=10)
-        duration_frame.pack(fill=tk.X, pady=5)
+        mode_options = [
+            ("continuous", tr("live_mode_continuous", "Continuous Recording"), "∞"),
+            ("duration", tr("live_mode_duration", "Record Duration"), "⏱️"),
+            ("until", tr("live_mode_until", "Record Until Time"), "⏰")
+        ]
         
-        ttk.Label(duration_frame, text=f"{tr('live_hours', 'Hours')}:", font=("Segoe UI", 9)).grid(row=0, column=0, sticky=tk.W, padx=5)
-        self.live_hours_entry = ttk.Entry(duration_frame, width=6)
-        self.live_hours_entry.insert(0, "01")
-        self.live_hours_entry.grid(row=0, column=1, sticky=tk.W, padx=5)
+        for value, label, icon in mode_options:
+            mode_frame = ttk.Frame(mode_card)
+            mode_frame.pack(fill=tk.X, pady=(0, Spacing.XS))
+            ttk.Label(mode_frame, text=icon, font=("Segoe UI", 12)).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+            ttk.Radiobutton(mode_frame, text=label, variable=self.live_mode_var, value=value).pack(side=tk.LEFT, anchor=tk.W)
         
-        ttk.Label(duration_frame, text=f"{tr('live_minutes', 'Minutes')}:", font=("Segoe UI", 9)).grid(row=0, column=2, sticky=tk.W, padx=5)
-        self.live_minutes_entry = ttk.Entry(duration_frame, width=6)
-        self.live_minutes_entry.insert(0, "00")
-        self.live_minutes_entry.grid(row=0, column=3, sticky=tk.W, padx=5)
+        # === DURATION CARD ===
+        duration_card = ModernCard(main, title=tr("live_duration_settings", "Duration Settings"))
+        duration_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
-        ttk.Label(duration_frame, text=f"{tr('live_seconds', 'Seconds')}:", font=("Segoe UI", 9)).grid(row=0, column=4, sticky=tk.W, padx=5)
-        self.live_seconds_entry = ttk.Entry(duration_frame, width=6)
-        self.live_seconds_entry.insert(0, "00")
-        self.live_seconds_entry.grid(row=0, column=5, sticky=tk.W, padx=5)
+        duration_grid = ttk.Frame(duration_card)
+        duration_grid.pack(fill=tk.X)
         
-        # Quality Section
-        quality_frame = ttk.LabelFrame(main, text=tr("live_quality", "Quality"), padding=10)
-        quality_frame.pack(fill=tk.X, pady=5)
+        for i, (key, default) in enumerate([("live_hours", "01"), ("live_minutes", "00"), ("live_seconds", "00")]):
+            ttk.Label(duration_grid, text=f"{tr(key, key.split('_')[1].title())}:", style="Caption.TLabel").grid(row=0, column=i*2, sticky=tk.W, padx=(0 if i==0 else Spacing.MD, Spacing.XS))
+            entry = ttk.Entry(duration_grid, width=6, font=("Inter", Typography.SIZE_MD))
+            entry.insert(0, default)
+            entry.grid(row=0, column=i*2+1, sticky=tk.W)
+            setattr(self, f"{key}_entry", entry)
+        
+        # === QUALITY CARD ===
+        quality_card = ModernCard(main, title=tr("live_quality", "Recording Quality"))
+        quality_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         self.live_quality_var = tk.StringVar(value="best")
-        ttk.Radiobutton(quality_frame, text=tr("live_quality_best", "Best Available"), variable=self.live_quality_var, value="best").pack(anchor=tk.W, pady=2)
-        ttk.Radiobutton(quality_frame, text="1080p", variable=self.live_quality_var, value="1080").pack(anchor=tk.W, pady=2)
-        ttk.Radiobutton(quality_frame, text="720p", variable=self.live_quality_var, value="720").pack(anchor=tk.W, pady=2)
-        ttk.Radiobutton(quality_frame, text="480p", variable=self.live_quality_var, value="480").pack(anchor=tk.W, pady=2)
         
-        # Log
-        log_frame = ttk.LabelFrame(main, text=tr("live_log", "Recording Log"), padding=5)
-        log_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        quality_options = [
+            ("best", tr("live_quality_best", "Best Available"), "⭐"),
+            ("1080", "1080p Full HD", "🎬"),
+            ("720", "720p HD", "📺"),
+            ("480", "480p SD", "📱")
+        ]
         
-        self.live_log = LogWidget(log_frame, theme=self.theme, height=8)
-        scrollbar = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.live_log.yview)
-        self.live_log.config(yscrollcommand=scrollbar.set)
+        quality_grid = ttk.Frame(quality_card)
+        quality_grid.pack(fill=tk.X)
+        
+        for i, (value, label, icon) in enumerate(quality_options):
+            quality_frame = ttk.Frame(quality_grid)
+            quality_frame.grid(row=i//2, column=i%2, sticky=tk.W, padx=(0 if i%2==0 else Spacing.XL, 0), pady=(0, Spacing.XS))
+            ttk.Label(quality_frame, text=icon, font=("Segoe UI", 12)).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+            ttk.Radiobutton(quality_frame, text=label, variable=self.live_quality_var, value=value).pack(side=tk.LEFT)
+        
+        # === LOG CARD ===
+        log_card = ModernCard(main, title=tr("live_log", "Recording Log"))
+        log_card.pack(fill=tk.BOTH, expand=True, pady=(0, Spacing.MD))
+        
+        log_container = ttk.Frame(log_card)
+        log_container.pack(fill=tk.BOTH, expand=True)
+        
+        self.live_log = LogWidget(log_container, theme=self.theme, height=6)
+        log_scrollbar = ttk.Scrollbar(log_container, orient=tk.VERTICAL, command=self.live_log.yview)
+        self.live_log.config(yscrollcommand=log_scrollbar.set)
         self.live_log.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        log_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Buttons
-        btn_frame = ttk.Frame(main)
-        btn_frame.pack(fill=tk.X, pady=10)
+        # === ACTION BUTTONS ===
+        action_frame = ttk.Frame(main)
+        action_frame.pack(fill=tk.X)
         
-        record_icon = get_ui_icon("record", size=16)
-        record_btn = ttk.Button(btn_frame, text=" " + tr("live_start_recording", "Start Recording"), command=self.start_live_recording, width=16)
-        if record_icon:
-            record_btn.configure(image=record_icon, compound="left")
-            record_btn.image = record_icon
-        record_btn.pack(side=tk.LEFT, padx=5)
+        ModernButton(
+            action_frame,
+            text=tr("live_start_recording", "Start Recording"),
+            icon_name="record",
+            command=self.start_live_recording,
+            variant="primary",
+            width=18
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
         
-        stop_icon = get_ui_icon("stop", size=16)
-        stop_btn = ttk.Button(btn_frame, text=" " + tr("live_stop_recording", "Stop Recording"), command=self.stop_live_recording, width=16)
-        if stop_icon:
-            stop_btn.configure(image=stop_icon, compound="left")
-            stop_btn.image = stop_icon
-        stop_btn.pack(side=tk.LEFT, padx=5)
+        ModernButton(
+            action_frame,
+            text=tr("live_stop_recording", "Stop"),
+            icon_name="stop",
+            command=self.stop_live_recording,
+            variant="secondary",
+            width=12
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
         
-        clear_icon = get_ui_icon("clear", size=16)
-        clear_btn = ttk.Button(btn_frame, text=" " + tr("download_clear_log", "Clear Log"), command=lambda: self.live_log.clear(), width=14)
-        if clear_icon:
-            clear_btn.configure(image=clear_icon, compound="left")
-            clear_btn.image = clear_icon
-        clear_btn.pack(side=tk.LEFT, padx=5)
+        ModernButton(
+            action_frame,
+            text=tr("download_clear_log", "Clear Log"),
+            icon_name="clear",
+            command=lambda: self.live_log.clear(),
+            variant="outline",
+            width=12
+        ).pack(side=tk.LEFT)
     
     def create_audio_tab(self):
-        """Create audio conversion tab"""
-        frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text="🎵 Audio")
-        
-        main = ttk.Frame(frame, padding=10)
-        main.pack(fill=tk.BOTH, expand=True)
-        
-        # URL
-        url_frame = ttk.LabelFrame(main, text="YouTube URL", padding=10)
-        url_frame.pack(fill=tk.X, pady=5)
-        
-        self.audio_url_entry = ttk.Entry(url_frame, width=80)
-        self.audio_url_entry.pack(fill=tk.X)
-        
-        # Format
-        format_frame = ttk.LabelFrame(main, text="Audio Format", padding=10)
-        format_frame.pack(fill=tk.X, pady=5)
-        
-        self.audio_format_var = tk.StringVar(value="mp3")
-        for fmt in ["MP3", "WAV", "M4A", "OPUS"]:
-            ttk.Radiobutton(format_frame, text=fmt, variable=self.audio_format_var, value=fmt.lower()).pack(anchor=tk.W)
-        
-        # Bitrate
-        bitrate_frame = ttk.LabelFrame(main, text="Bitrate (kbps)", padding=10)
-        bitrate_frame.pack(fill=tk.X, pady=5)
-        
-        self.audio_bitrate_var = tk.StringVar(value="320")
-        for br in ["128", "192", "256", "320"]:
-            ttk.Radiobutton(bitrate_frame, text=f"{br} kbps", variable=self.audio_bitrate_var, value=br).pack(anchor=tk.W)
-        
-        # Log
-        log_frame = ttk.LabelFrame(main, text="Conversion Log", padding=5)
-        log_frame.pack(fill=tk.BOTH, expand=True, pady=5)
-        
-        self.audio_log = LogWidget(log_frame, theme=self.theme, height=10)
-        scrollbar = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.audio_log.yview)
-        self.audio_log.config(yscrollcommand=scrollbar.set)
-        self.audio_log.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
-        # Button
-        ttk.Button(main, text="🎵 Convert", command=self.start_audio_conversion).pack(pady=10)
-    
-    def create_history_tab(self):
-        """Create download history tab"""
+        """Create modern audio conversion tab"""
         tr = self.translator.get
         frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text=tr("tab_history", "History"))
+        self.notebook.add(frame, text=f"🎵 {tr('tab_audio', 'Audio')}")
         
-        main = ttk.Frame(frame, padding=10)
+        main = ttk.Frame(frame, padding=Spacing.LG)
         main.pack(fill=tk.BOTH, expand=True)
         
-        # Buttons
-        btn_frame = ttk.Frame(main)
-        btn_frame.pack(fill=tk.X, pady=5)
+        # === TAB HEADER ===
+        ModernTabHeader(
+            main,
+            title=tr("audio_title", "Audio Converter"),
+            icon_name="music",
+            subtitle=tr("audio_subtitle", "🎧 Extract and convert audio from YouTube videos")
+        )
         
-        refresh_icon = get_ui_icon("refresh", size=16)
-        refresh_btn = ttk.Button(btn_frame, text=" " + tr("history_update", "Update"), command=self.refresh_history)
-        if refresh_icon:
-            refresh_btn.configure(image=refresh_icon, compound="left")
-            refresh_btn.image = refresh_icon
-        refresh_btn.pack(side=tk.LEFT, padx=5)
+        # === URL INPUT CARD ===
+        url_card = ModernCard(main, title=tr("audio_url", "YouTube URL"))
+        url_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
-        clear_icon = get_ui_icon("delete", size=16)
-        clear_btn = ttk.Button(btn_frame, text=" " + tr("history_clear", "Clear History"), command=self.clear_history)
-        if clear_icon:
-            clear_btn.configure(image=clear_icon, compound="left")
-            clear_btn.image = clear_icon
-        clear_btn.pack(side=tk.LEFT, padx=5)
+        url_row = ttk.Frame(url_card)
+        url_row.pack(fill=tk.X)
         
-        # Tree
-        tree_frame = ttk.Frame(main)
-        tree_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        url_icon_label = ttk.Label(url_row, text="🎵", font=("Segoe UI", 12))
+        url_icon_label.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        self.audio_url_entry = ttk.Entry(url_row, font=("Inter", Typography.SIZE_MD))
+        self.audio_url_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        # === FORMAT CARD ===
+        format_card = ModernCard(main, title=tr("audio_format", "Audio Format"))
+        format_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        self.audio_format_var = tk.StringVar(value="mp3")
+        
+        format_options = [("MP3", "mp3", "🎵"), ("WAV", "wav", "🎼"), ("M4A", "m4a", "🎶"), ("OPUS", "opus", "🎸")]
+        
+        format_grid = ttk.Frame(format_card)
+        format_grid.pack(fill=tk.X)
+        
+        for i, (label, value, icon) in enumerate(format_options):
+            format_frame = ttk.Frame(format_grid)
+            format_frame.grid(row=i//2, column=i%2, sticky=tk.W, padx=(0 if i%2==0 else Spacing.XL, 0), pady=(0, Spacing.XS))
+            ttk.Label(format_frame, text=icon, font=("Segoe UI", 12)).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+            ttk.Radiobutton(format_frame, text=label, variable=self.audio_format_var, value=value).pack(side=tk.LEFT)
+        
+        # === BITRATE CARD ===
+        bitrate_card = ModernCard(main, title=tr("audio_bitrate", "Audio Quality (Bitrate)"))
+        bitrate_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        self.audio_bitrate_var = tk.StringVar(value="320")
+        
+        bitrate_options = [("128", "📻 Standard"), ("192", "🎧 Good"), ("256", "⭐ High"), ("320", "💎 Best")]
+        
+        bitrate_grid = ttk.Frame(bitrate_card)
+        bitrate_grid.pack(fill=tk.X)
+        
+        for i, (value, label) in enumerate(bitrate_options):
+            bitrate_frame = ttk.Frame(bitrate_grid)
+            bitrate_frame.grid(row=i//2, column=i%2, sticky=tk.W, padx=(0 if i%2==0 else Spacing.XL, 0), pady=(0, Spacing.XS))
+            ttk.Radiobutton(bitrate_frame, text=f"{label} ({value} kbps)", variable=self.audio_bitrate_var, value=value).pack(side=tk.LEFT)
+        
+        # === LOG CARD ===
+        log_card = ModernCard(main, title=tr("audio_log", "Conversion Log"))
+        log_card.pack(fill=tk.BOTH, expand=True, pady=(0, Spacing.MD))
+        
+        log_container = ttk.Frame(log_card)
+        log_container.pack(fill=tk.BOTH, expand=True)
+        
+        self.audio_log = LogWidget(log_container, theme=self.theme, height=8)
+        log_scrollbar = ttk.Scrollbar(log_container, orient=tk.VERTICAL, command=self.audio_log.yview)
+        self.audio_log.config(yscrollcommand=log_scrollbar.set)
+        self.audio_log.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        log_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # === ACTION BUTTONS ===
+        action_frame = ttk.Frame(main)
+        action_frame.pack(fill=tk.X)
+        
+        ModernButton(
+            action_frame,
+            text=tr("audio_convert", "Convert & Download"),
+            icon_name="music",
+            command=self.start_audio_conversion,
+            variant="primary",
+            width=20
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        ModernButton(
+            action_frame,
+            text=tr("download_clear_log", "Clear Log"),
+            icon_name="clear",
+            command=lambda: self.audio_log.clear(),
+            variant="outline",
+            width=12
+        ).pack(side=tk.LEFT)
+    
+    def create_history_tab(self):
+        """Create modern download history tab"""
+        tr = self.translator.get
+        frame = ttk.Frame(self.notebook)
+        self.notebook.add(frame, text=f"📅 {tr('tab_history', 'History')}")
+        
+        main = ttk.Frame(frame, padding=Spacing.LG)
+        main.pack(fill=tk.BOTH, expand=True)
+        
+        # === TAB HEADER ===
+        ModernTabHeader(
+            main,
+            title=tr("history_title", "Download History"),
+            icon_name="history",
+            subtitle=tr("history_subtitle", "📋 Track all your downloads in one place")
+        )
+        
+        # === ACTION BUTTONS ===
+        action_frame = ttk.Frame(main)
+        action_frame.pack(fill=tk. X, pady=(0, Spacing.MD))
+        
+        ModernButton(
+            action_frame,
+            text=tr("history_update", "Refresh"),
+            icon_name="refresh",
+            command=self.refresh_history,
+            variant="secondary",
+            width=12
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        ModernButton(
+            action_frame,
+            text=tr("history_clear", "Clear History"),
+            icon_name="delete",
+            command=self.clear_history,
+            variant="outline",
+            width=14
+        ).pack(side=tk.LEFT)
+        
+        # === HISTORY TABLE CARD ===
+        table_card = ModernCard(main, title=tr("history_records", "Download Records"))
+        table_card.pack(fill=tk.BOTH, expand=True)
+        
+        tree_frame = ttk.Frame(table_card)
+        tree_frame.pack(fill=tk.BOTH, expand=True)
         
         columns = ("Date", "Filename", "Status")
-        self.history_tree = ttk.Treeview(tree_frame, columns=columns, height=20, show="tree headings")
+        self.history_tree = ttk.Treeview(
+            tree_frame,
+            columns=columns,
+            height=20,
+            show="tree headings"
+        )
         
         col_labels = {
             "Date": tr("history_date", "Date"),
             "Filename": tr("history_filename", "Filename"),
             "Status": tr("history_status", "Status"),
         }
+        
         for col in columns:
             self.history_tree.heading(col, text=col_labels.get(col, col))
             self.history_tree.column(col, width=250)
@@ -728,13 +1010,13 @@ class EasyCutApp:
         self.refresh_history()
     
     def create_about_tab(self):
-        """Create professional about tab with credits and information"""
+        """Create modern professional about tab"""
         tr = self.translator.get
         frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text=tr("tab_about", "About"))
+        self.notebook.add(frame, text=f"ℹ️ {tr('tab_about', 'About')}")
         
-        # Main container with scroll
-        canvas = tk.Canvas(frame, bg=self.theme.get("bg"), highlightthickness=0)
+        # Scrollable container
+        canvas = tk.Canvas(frame, highlightthickness=0)
         scrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
         
@@ -750,91 +1032,131 @@ class EasyCutApp:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         # Content
-        main = ttk.Frame(scrollable_frame, padding=30)
+        main = ttk.Frame(scrollable_frame, padding=Spacing.XXL)
         main.pack(fill=tk.BOTH, expand=True)
         
-        # Title Section
-        ttk.Label(main, text=tr("about_title", "EasyCut"), font=("Segoe UI", 22, "bold")).pack(pady=5)
-        ttk.Label(main, text=tr("about_subtitle", "Professional YouTube Downloader & Audio Converter"), font=("Segoe UI", 11), foreground="gray").pack(pady=6)
+        # === APP TITLE ===
+        ttk.Label(
+            main,
+            text=tr("about_title", "EasyCut"),
+            font=("Inter", Typography.SIZE_XXL, "bold")
+        ).pack(pady=(0, Spacing.XS))
         
-        ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=15)
+        ttk.Label(
+            main,
+            text=tr("about_subtitle", "🎬 Professional YouTube Downloader & Audio Converter"),
+            style="Caption.TLabel"
+        ).pack(pady=(0, Spacing.LG))
         
-        # Application Info
-        info_frame = ttk.LabelFrame(main, text=tr("about_section_info", "Application Info"), padding=15)
-        info_frame.pack(fill=tk.X, pady=10)
+        ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=Spacing.MD)
         
-        info_text = "\n".join([
-            tr("about_version_info", "Version 1.0.0"),
-            tr("about_author", "Author: Deko Costa"),
-            tr("about_license", "License: MIT"),
-        ])
-        ttk.Label(info_frame, text=info_text, justify=tk.LEFT, font=("Segoe UI", 9)).pack(anchor=tk.W)
+        # === APP INFO CARD ===
+        info_card = ModernCard(main, title=tr("about_section_info", "📦 Application Info"))
+        info_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
-        ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=15)
+        info_data = [
+            ("Version", "1.0.0"),
+            ("Author", "Deko Costa"),
+            ("License", "GPL-3.0"),
+            ("Release", "2026")
+        ]
         
-        # Social Links
-        social_frame = ttk.LabelFrame(main, text=tr("about_section_links", "Connect & Support"), padding=15)
-        social_frame.pack(fill=tk.X, pady=10)
+        for label, value in info_data:
+            row = ttk.Frame(info_card)
+            row.pack(fill=tk.X, pady=(0, Spacing.XS))
+            ttk.Label(row, text=f"{label}:", style="Subtitle.TLabel", width=12).pack(side=tk.LEFT)
+            ttk.Label(row, text=value, style="Caption.TLabel").pack(side=tk.LEFT)
+        
+        # === SOCIAL LINKS CARD ===
+        social_card = ModernCard(main, title=tr("about_section_links", "💚 Connect & Support"))
+        social_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         def open_link(url):
             import webbrowser
             webbrowser.open(url)
         
         links = [
-            (tr("about_link_github", "GitHub Repository"), "https://github.com/dekouninter/EasyCut"),
-            (tr("about_link_coffee", "Buy Me a Coffee"), "https://buymeacoffee.com/dekocosta"),
-            (tr("about_link_livepix", "Livepix Donate"), "https://livepix.gg/dekocosta"),
+            ("👙 " + tr("about_link_github", "GitHub Repository"), "https://github.com/dekouninter/EasyCut"),
+            ("☕ " + tr("about_link_coffee", "Buy Me a Coffee"), "https://buymeacoffee.com/dekocosta"),
+            ("💸 " + tr("about_link_livepix", "Livepix Donate"), "https://livepix.gg/dekocosta"),
         ]
         
-        for i, (label, url) in enumerate(links):
-            ttk.Button(
-                social_frame,
+        for label, url in links:
+            ModernButton(
+                social_card,
                 text=label,
                 command=lambda u=url: open_link(u),
-                width=35
-            ).pack(pady=5)
+                variant="outline",
+                width=30
+            ).pack(pady=(0, Spacing.SM), fill=tk.X)
         
-        ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=15)
+        # === FEATURES CARD ===
+        features_card = ModernCard(main, title=tr("about_section_features", "✨ Features"))
+        features_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
-        # Features
-        features_frame = ttk.LabelFrame(main, text=tr("about_section_features", "Features"), padding=15)
-        features_frame.pack(fill=tk.X, pady=10)
-        
-        features = tr("about_features_list", [])
-        if not isinstance(features, list):
-            features = []
+        features = [
+            "✅ Download videos in multiple qualities (4K to 144p)",
+            "✅ Extract audio in MP3, WAV, M4A, OPUS formats",
+            "✅ Batch download multiple videos simultaneously",
+            "✅ Record live streams with customizable duration",
+            "✅ Time range selection for video trimming",
+            "✅ Dark and Light theme support",
+            "✅ Multi-language support (EN, PT, ES)",
+            "✅ Professional icon set (Feather Icons)",
+            "✅ Download history tracking"
+        ]
         
         for feature in features:
-            ttk.Label(features_frame, text=feature, font=("Arial", 9)).pack(anchor=tk.W, pady=3)
+            ttk.Label(
+                features_card,
+                text=feature,
+                style="Caption.TLabel"
+            ).pack(anchor=tk.W, pady=(0, Spacing.XS))
         
-        ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=15)
+        # === TECHNOLOGIES CARD ===
+        tech_card = ModernCard(main, title=tr("about_section_tech", "🛠️ Technologies & Credits"))
+        tech_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
-        # Technologies & Credits
-        tech_frame = ttk.LabelFrame(main, text=tr("about_section_tech", "Technologies & Credits"), padding=15)
-        tech_frame.pack(fill=tk.X, pady=10)
+        tech_data = [
+            ("Core", "Python 3.13 + Tkinter"),
+            ("Downloader", "yt-dlp (Unlicense)"),
+            ("Converter", "FFmpeg (GPL-2.0+)"),
+            ("Security", "keyring (MIT)"),
+            ("Icons", "Feather Icons (MIT)"),
+            ("Font", "Inter (OFL 1.1)"),
+            ("Image", "Pillow (HPND)")
+        ]
         
-        tech_text = "\n".join([
-            tr("about_credits_libs", "Libraries: yt-dlp, FFmpeg, keyring"),
-            tr("about_credits_tools", "Tools: Python, Tkinter"),
-            tr("about_tech_text", "Core: Python, Tkinter, yt-dlp, FFmpeg, keyring"),
-        ])
+        for label, value in tech_data:
+            row = ttk.Frame(tech_card)
+            row.pack(fill=tk.X, pady=(0, Spacing.XS))
+            ttk.Label(row, text=f"{label}:", style="Subtitle.TLabel", width=12).pack(side=tk.LEFT)
+            ttk.Label(row, text=value, style="Caption.TLabel").pack(side=tk.LEFT)
         
-        ttk.Label(tech_frame, text=tech_text, justify=tk.LEFT, font=("Segoe UI", 9)).pack(anchor=tk.W)
+        # === THANKS CARD ===
+        thanks_card = ModernCard(main, title=tr("about_section_thanks", "🙏 Special Thanks"))
+        thanks_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
-        ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=15)
+        thanks_text = tr(
+            "about_thanks_text",
+            "Thanks to the open-source community, yt-dlp developers, FFmpeg team, and all contributors who make projects like this possible. See CREDITS.md for full attributions."
+        )
+        ttk.Label(
+            thanks_card,
+            text=thanks_text,
+            style="Caption.TLabel",
+            wraplength=600,
+            justify=tk.LEFT
+        ).pack(anchor=tk.W)
         
-        # Credits
-        credits_frame = ttk.LabelFrame(main, text=tr("about_section_thanks", "Special Thanks"), padding=15)
-        credits_frame.pack(fill=tk.X, pady=10)
+        # === FOOTER ===
+        ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=Spacing.LG)
         
-        credits_text = tr("about_thanks_text", "Thanks to the open-source community and creators.")
-        ttk.Label(credits_frame, text=credits_text, justify=tk.LEFT, font=("Segoe UI", 9)).pack(anchor=tk.W)
-        
-        ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=15)
-        
-        # Footer
-        footer = ttk.Label(main, text=tr("about_footer", "Made with Python | MIT License | © 2026 Deko Costa"), font=("Segoe UI", 8), foreground="gray")
-        footer.pack(pady=20)
+        ttk.Label(
+            main,
+            text=tr("about_footer", "💜 Made with Python | GPL-3.0 License | © 2026 Deko Costa"),
+            style="Caption.TLabel"
+        ).pack(pady=Spacing.MD)
     
     def apply_theme(self):
         """Apply modern theme to window"""
