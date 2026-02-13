@@ -229,13 +229,20 @@ class ModernTheme:
                 }
             },
             
+            "Card.TFrame": {
+                "configure": {
+                    "background": colors["bg_tertiary"],
+                    "borderwidth": 1,
+                    "relief": "flat",
+                }
+            },
+            
             # === TLabel ===
             "TLabel": {
                 "configure": {
                     "background": colors["bg_primary"],
                     "foreground": colors["fg_primary"],
                     "font": ("Inter", Typography.SIZE_MD, Typography.WEIGHT_REGULAR),
-                    "padding": (spacing.SM, spacing.SM),
                 }
             },
             

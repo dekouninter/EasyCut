@@ -1024,7 +1024,7 @@ class EasyCutApp:
         self.notebook.add(frame, text=f"ℹ️ {tr('tab_about', 'About')}")
         
         # Scrollable container
-        canvas = tk.Canvas(frame, highlightthickness=0)
+        canvas = tk.Canvas(frame, bg=self.design.get_color("bg_primary"), highlightthickness=0)
         scrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
         

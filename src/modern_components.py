@@ -133,6 +133,10 @@ class ModernCard(ttk.Frame):
             title: Optional card title
             padding: Custom padding (default: comfortable)
         """
+        # Force Card.TFrame style
+        if "style" not in kwargs:
+            kwargs["style"] = "Card.TFrame"
+        
         super().__init__(parent, **kwargs)
         
         # Use comfortable padding by default
