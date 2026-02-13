@@ -13,6 +13,7 @@ from pathlib import Path
 
 from design_system import ModernTheme, DesignTokens, Typography, Spacing, Icons
 from icon_manager import get_ui_icon
+from font_loader import LOADED_FONT_FAMILY
 
 # Emoji fallback mapping for icons
 EMOJI_ICONS = {
@@ -582,15 +583,15 @@ class ModernTabHeader(ttk.Frame):
         text_frame = ttk.Frame(left_frame)
         text_frame.pack(side="left", fill="x", expand=True)
         
-        title_label =tk.Label(text_frame, text=title,
-                              font=("Inter", 24, "bold"),
+        title_label = tk.Label(text_frame, text=title,
+                              font=(LOADED_FONT_FAMILY, 24, "bold"),
                               bg=bg_color, fg=fg_color,
                               borderwidth=0, highlightthickness=0)
         title_label.pack(anchor="w")
         
         if subtitle:
             subtitle_label = tk.Label(text_frame, text=subtitle,
-                                     font=("Inter", 11),
+                                     font=(LOADED_FONT_FAMILY, 11),
                                      bg=bg_color, fg=design.get_color("fg_tertiary"),
                                      borderwidth=0, highlightthickness=0)
             subtitle_label.pack(anchor="w")

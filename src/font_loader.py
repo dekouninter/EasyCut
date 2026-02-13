@@ -14,6 +14,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Global variable to store the loaded font family name
+LOADED_FONT_FAMILY = "Segoe UI"  # Default fallback
+
 
 def get_base_path():
     """Get base path for assets (works in dev and frozen/PyInstaller mode)"""
@@ -138,6 +141,8 @@ def setup_fonts():
     Returns:
         str: Font family name to use
     """
+    global LOADED_FONT_FAMILY
+    
     # Try to load custom fonts
     fonts_loaded = load_custom_fonts()
     
@@ -146,6 +151,9 @@ def setup_fonts():
         font_name = get_available_font("Inter Display", "Segoe UI")
     else:
         font_name = get_available_font("Inter", "Segoe UI")
+    
+    # Update global variable
+    LOADED_FONT_FAMILY = font_name
     
     logger.info(f"Using font: {font_name}")
     return font_name

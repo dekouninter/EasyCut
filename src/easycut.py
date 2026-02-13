@@ -41,7 +41,7 @@ from modern_components import (
     ModernButton, ModernCard, ModernInput, ModernAlert,
     ModernDialog, ModernIconButton, ModernTabHeader
 )
-from font_loader import setup_fonts
+from font_loader import setup_fonts, LOADED_FONT_FAMILY
 
 # Import external libraries
 try:
@@ -636,7 +636,7 @@ class EasyCutApp:
             text_container,
             height=12,
             yscrollcommand=text_scrollbar.set,
-            font=("Inter", Typography.SIZE_MD),
+            font=(LOADED_FONT_FAMILY, Typography.SIZE_MD),
             wrap=tk.WORD
         )
         self.batch_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -727,7 +727,7 @@ class EasyCutApp:
         url_icon_label = ttk.Label(url_row, text="📡", font=("Segoe UI", 12), style="TLabel")
         url_icon_label.pack(side=tk.LEFT, padx=(0, Spacing.SM))
         
-        self.live_url_entry = ttk.Entry(url_row, font=("Inter", Typography.SIZE_MD))
+        self.live_url_entry = ttk.Entry(url_row, font=(LOADED_FONT_FAMILY, Typography.SIZE_MD))
         self.live_url_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, Spacing.SM))
         
         ModernButton(
@@ -781,7 +781,7 @@ class EasyCutApp:
         
         for i, (key, default) in enumerate([("live_hours", "01"), ("live_minutes", "00"), ("live_seconds", "00")]):
             ttk.Label(duration_grid, text=f"{tr(key, key.split('_')[1].title())}:", style="Caption.TLabel").grid(row=0, column=i*2, sticky=tk.W, padx=(0 if i==0 else Spacing.MD, Spacing.XS))
-            entry = ttk.Entry(duration_grid, width=6, font=("Inter", Typography.SIZE_MD))
+            entry = ttk.Entry(duration_grid, width=6, font=(LOADED_FONT_FAMILY, Typography.SIZE_MD))
             entry.insert(0, default)
             entry.grid(row=0, column=i*2+1, sticky=tk.W)
             setattr(self, f"{key}_entry", entry)
@@ -879,7 +879,7 @@ class EasyCutApp:
         url_icon_label = ttk.Label(url_row, text="🎵", font=("Segoe UI", 12), style="TLabel")
         url_icon_label.pack(side=tk.LEFT, padx=(0, Spacing.SM))
         
-        self.audio_url_entry = ttk.Entry(url_row, font=("Inter", Typography.SIZE_MD))
+        self.audio_url_entry = ttk.Entry(url_row, font=(LOADED_FONT_FAMILY, Typography.SIZE_MD))
         self.audio_url_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
         # === FORMAT CARD ===
@@ -1052,7 +1052,7 @@ class EasyCutApp:
         ttk.Label(
             main,
             text=tr("about_title", "EasyCut"),
-            font=("Inter", Typography.SIZE_XXL, "bold")
+            font=(LOADED_FONT_FAMILY, Typography.SIZE_XXL, "bold")
         ).pack(pady=(0, Spacing.XS))
         
         ttk.Label(
