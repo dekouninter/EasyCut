@@ -1,0 +1,206 @@
+# -*- coding: utf-8 -*-
+"""
+Professional Donation System for EasyCut
+Manages donation links and support interface with professional UI
+
+Author: Deko Costa
+Repository: https://github.com/dekouninter/EasyCut
+License: MIT
+
+Features:
+- Multiple donation platforms (Buy Me a Coffee, Livepix)
+- Professional modal presentation
+- Hover effects and animations
+- Floating action button
+"""
+
+import tkinter as tk
+from tkinter import ttk
+import webbrowser
+from i18n import translator as t
+
+
+class DonationWindow:
+    """Professional Donation Support Window
+    
+    Displays available donation platforms with professional UI
+    and links to support the EasyCut project development.
+    """
+    
+    def __init__(self, parent):
+        """Initialize donation window
+        
+        Args:
+            parent: Parent window reference
+        """
+        self.parent = parent
+        self.window = None
+        self.donation_links = {
+            "coffee": {
+                "name": "Buy Me a Coffee",
+                "url": "https://buymeacoffee.com/dekocosta",
+                "icon": "☕"
+            },
+            "livepix": {
+                "name": "Livepix",
+                "url": "https://livepix.gg/dekocosta",
+                "icon": "🎁"
+            }
+        }
+    
+    def open_donation_window(self):
+        """Display donation window with support options"""
+        if self.window is not None and self.window.winfo_exists():
+            self.window.lift()
+            return
+        
+        self.window = tk.Toplevel(self.parent)
+        self.window.title(t("donation_title"))
+        self.window.geometry("400x300")
+        self.window.resizable(False, False)
+        
+        # Center window on parent
+        self.window.transient(self.parent)
+        self.window.grab_set()
+        
+        # Main frame
+        main_frame = ttk.Frame(self.window, padding=20)
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Title
+        title_label = ttk.Label(
+            main_frame,
+            text=t("donation_title"),
+            font=("Arial", 14, "bold")
+        )
+        title_label.pack(pady=(0, 10))
+        
+        # Description
+        desc_label = ttk.Label(
+            main_frame,
+            text=t("donation_description"),
+            wraplength=360,
+            justify=tk.CENTER
+        )
+        desc_label.pack(pady=(0, 20))
+        
+        # Buttons frame
+        buttons_frame = ttk.Frame(main_frame)
+        buttons_frame.pack(pady=10)
+        
+        # Donation platform buttons
+        for key, donation in self.donation_links.items():
+            btn = tk.Button(
+                buttons_frame,
+                text=f"{donation['icon']} {donation['name']}",
+                command=lambda url=donation['url']: self.open_link(url),
+                bg="#4CAF50",
+                fg="white",
+                font=("Arial", 11, "bold"),
+                cursor="hand2",
+                padx=15,
+                pady=10,
+                relief=tk.RAISED,
+                bd=2
+            )
+            btn.pack(pady=8, fill=tk.X)
+            
+            # Hover effects
+            btn.bind("<Enter>", lambda e, b=btn: self.on_hover(b, True))
+            btn.bind("<Leave>", lambda e, b=btn: self.on_hover(b, False))
+        
+        # Thank you message
+        thanks_label = ttk.Label(
+            main_frame,
+            text="Thank you for supporting EasyCut Development!",
+            wraplength=360,
+            justify=tk.CENTER,
+            font=("Arial", 9, "italic")
+        )
+        thanks_label.pack(pady=(20, 0))
+    
+    def on_hover(self, button, hover):
+        """Apply hover effects to buttons
+        
+        Args:
+            button: Button widget
+            hover (bool): True if entering, False if leaving
+        """
+        if hover:
+            button.config(bg="#45a049")
+        else:
+            button.config(bg="#4CAF50")
+    
+    def open_link(self, url):
+        """Open donation link in default web browser
+        
+        Args:
+            url (str): Link URL to open
+        """
+        try:
+            webbrowser.open(url)
+        except Exception as e:
+            print(f"Error opening link: {e}")
+
+
+class DonationButton:
+    """Floating Action Button for Donations
+    
+    Provides quick access to donation options with floating
+    action button placement and hover animations.
+    """
+    
+    def __init__(self, parent):
+        """Initialize donation button
+        
+        Args:
+            parent: Parent window reference
+        """
+        self.parent = parent
+        self.button = None
+        self.donation_window = DonationWindow(parent)
+    
+    def create_floating_button(self, root_window):
+        """Create floating donation action button
+        
+        Args:
+            root_window: Root window for button placement
+        """
+        # Floating button frame
+        floating_frame = ttk.Frame(root_window)
+        floating_frame.pack(side=tk.BOTTOM, anchor=tk.SE, padx=10, pady=10)
+        
+        # Donation button
+        self.button = tk.Button(
+            floating_frame,
+            text="❤️ Support Development",
+            command=self.open_donation,
+            bg="#FF6B6B",
+            fg="white",
+            font=("Arial", 9, "bold"),
+            cursor="hand2",
+            padx=12,
+            pady=6,
+            relief=tk.RAISED,
+            bd=2
+        )
+        self.button.pack()
+        
+        # Hover effects
+        self.button.bind("<Enter>", lambda e: self.on_hover(True))
+        self.button.bind("<Leave>", lambda e: self.on_hover(False))
+    
+    def on_hover(self, hover):
+        """Apply hover effects to button
+        
+        Args:
+            hover (bool): True if entering, False if leaving
+        """
+        if hover:
+            self.button.config(bg="#E63946")
+        else:
+            self.button.config(bg="#FF6B6B")
+    
+    def open_donation(self):
+        """Open donation window when button clicked"""
+        self.donation_window.open_donation_window()

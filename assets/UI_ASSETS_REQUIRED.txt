@@ -1,0 +1,236 @@
+================================================================================
+EasyCut - UI Assets Required Specification
+================================================================================
+
+This document outlines all images, icons, and interface elements needed to 
+professionalize the EasyCut application.
+
+FOLDER STRUCTURE:
+  /assets
+    ├── /icons/       → Application icons
+    ├── /logos/       → Branding logos
+    ├── /buttons/     → Button assets
+    ├── /backgrounds/ → Window backgrounds
+    └── /ui/          → Other UI elements
+
+================================================================================
+SECTION 1: APPLICATION ICONS (icons/)
+================================================================================
+
+1.1 APP MAIN ICON
+   File: app_icon.ico / app_icon.png
+   Size: 64x64 pixels (icon), 256x256 pixels (high-res)
+   Format: ICO (primary), PNG (fallback)
+   Description: EasyCut logo used as:
+     - Window taskbar icon
+     - Window title bar icon
+     - Application shortcut
+   Design: Color, should feature video/play symbols
+
+1.2 FEATURE-SPECIFIC ICONS (16x16 pixels each - SVG or PNG)
+   - download_video.png: Downward arrow + video symbol
+   - download_audio.png: Downward arrow + music note
+   - download_live.png: Downward arrow + live indicator (red dot)
+   - batch.png: Multiple stacked documents
+   - history.png: Clock/history symbol
+   - settings.png: Gear/cog symbol
+   - login.png: Padlock + user symbol
+   - logout.png: Door/exit symbol
+   - theme_dark.png: Moon/dark symbol
+   - theme_light.png: Sun/light symbol
+   Format: PNG with transparency
+   Purpose: Tab labels, button decorations
+
+1.3 STATUS ICONS (24x24 pixels)
+   - success_checkmark.png: Green checkmark (✓)
+   - error_x.png: Red X mark (✗)
+   - warning_triangle.png: Orange/yellow triangle with exclamation
+   - loading_spinner.gif: Animated spinner (or static multiple frames)
+   Format: PNG (GIF for animated)
+   Purpose: Real-time logging display
+
+================================================================================
+SECTION 2: LOGOS & BRANDING (logos/)
+================================================================================
+
+2.1 MAIN LOGO
+   File: easycut_logo.png
+   Size: 200x200 pixels (transparent background)
+   Format: PNG
+   Description: Professional EasyCut branding logo
+   Usage: 
+     - Application header/title
+     - About tab
+     - Splash screen (if implemented)
+
+2.2 DONATION/SUPPORT LOGOS
+   File: buymeacoffee_logo.png
+   Size: 32x32 pixels
+   Format: PNG
+   Description: Buy Me a Coffee official badge/icon
+   
+   File: livepix_logo.png
+   Size: 32x32 pixels
+   Format: PNG
+   Description: Livepix official logo/icon
+
+================================================================================
+SECTION 3: BUTTONS & INTERACTIVE (buttons/)
+================================================================================
+
+3.1 ACTION BUTTONS (Base + Hover states)
+   Files:
+   - download_btn.png (default), download_btn_hover.png
+   - upload_btn.png (default), upload_btn_hover.png
+   - play_btn.png (default), play_btn_hover.png
+   - stop_btn.png (default), stop_btn_hover.png
+   - clear_btn.png (default), clear_btn_hover.png
+   Size: 32x32 pixels each
+   Format: PNG with transparency
+   Purpose: Visual feedback for button interactions
+
+3.2 SOCIAL/EXTERNAL BUTTONS
+   - github_btn.png: GitHub logo icon
+   - coffee_btn.png: Buy Me a Coffee icon
+   - livepix_btn.png: Livepix icon
+   Size: 32x32 pixels
+   Format: PNG
+   Purpose: Quick links in header/footer
+
+================================================================================
+SECTION 4: BACKGROUNDS & STYLING (backgrounds/)
+================================================================================
+
+4.1 WINDOW BACKGROUNDS
+   Files:
+   - dark_background.png: Subtle dark theme background (repeating pattern)
+   - light_background.png: Subtle light theme background (repeating pattern)
+   Size: 1920x1080 pixels (or tiling pattern 256x256)
+   Format: PNG
+   Purpose: Window background texture/overlay
+   Note: Should be subtle (low opacity, not distracting)
+
+4.2 HEADER/BANNER
+   Files:
+   - header_dark.png: Dark theme banner for top section
+   - header_light.png: Light theme banner for top section
+   Size: 1920x120 pixels
+   Format: PNG
+   Purpose: Professional header section styling
+
+================================================================================
+SECTION 5: UI ELEMENTS & DECORATIVE (ui/)
+================================================================================
+
+5.1 LIVE STREAM INDICATORS
+   - live_badge.png: "LIVE" badge with red background
+   Size: 48x24 pixels
+   Format: PNG
+   Purpose: Mark live stream related tabs/buttons
+
+   - live_overlay.gif: Animated live indicator (pulsing red dot)
+   Size: 16x16 pixels
+   Format: GIF (animated)
+   Purpose: Real-time indicator in status bar/header
+
+5.2 QUALITY INDICATORS
+   - quality_best.png: "Best" quality badge
+   - quality_720p.png: "720p" quality badge
+   - quality_1080p.png: "1080p" quality badge
+   - quality_audio.png: "Audio Only" badge
+   Size: 64x32 pixels each
+   Format: PNG
+   Purpose: Quality selection visual indicators
+
+5.3 TIME RANGE INTERFACE (NEW)
+   - time_picker_bg.png: Background for time range picker
+   Size: Variable (used in TimeRangeFrame widget)
+   Format: PNG
+   Purpose: Visual styling for the new time range selection widget
+
+5.4 SEPARATORS & DIVIDERS
+   - separator_vertical.png: Vertical divider line (dark/light versions)
+   - separator_horizontal.png: Horizontal divider line (dark/light versions)
+   Size: 2x16 pixels (vertical), 16x2 pixels (horizontal)
+   Format: PNG
+   Purpose: Professional UI element spacing
+
+================================================================================
+SECTION 6: IMPLEMENTATION GUIDELINES
+================================================================================
+
+6.1 DESIGN PRINCIPLES
+   - Color Scheme:
+     * Dark Mode: Use dark grays (#1E1E1E, #2D2D2D, #3D3D3D), blue accent (#0078D4)
+     * Light Mode: Use light grays (#F5F5F5, #EEEEEE, #E1E1E1), blue accent (#0078D4)
+   
+   - Consistency: All icons should follow same style (flat design recommended)
+   
+   - Sizing: Maintain consistent padding and proportions across all elements
+   
+   - Accessibility: Ensure adequate contrast ratios (WCAG AA minimum)
+
+6.2 FILE NAMING CONVENTION
+   - Use snake_case for all files
+   - Include variant in filename: _dark, _light, _hover, _active
+   - Example: button_download_dark_hover.png
+
+6.3 TRANSPARENCY & OPTIMIZATION
+   - Use PNG format with proper transparency for layering
+   - Optimize all images for web (compress without quality loss)
+   - Consider using SVG for scalability where applicable
+
+6.4 INTEGRATION NOTES
+   - Icons will be loaded in ui_enhanced.py and referenced in easycut.py
+   - Implement fallback emoji if PNG assets fail to load
+   - All assets should be optional (graceful degradation)
+
+================================================================================
+SECTION 7: PRIORITY ORDER (Implementation Sequence)
+================================================================================
+
+PHASE 1 (Critical):
+  ✓ APP_ICON.ICO - Application branding
+  ✓ Feature icons (16x16) - Tab identification
+  ✓ Status icons (24x24) - Feedback indication
+
+PHASE 2 (Important):
+  ✓ Dark/Light backgrounds - Professional appearance
+  ✓ Header banner - Branding display
+  ✓ Logo - About section
+
+PHASE 3 (Enhanced):
+  ✓ Button states (hover/active) - User feedback
+  ✓ Live indicator animation - Real-time feel
+  ✓ Social logos - Support links
+
+PHASE 4 (Polish):
+  ✓ Quality badges - Information display
+  ✓ Time picker styling - Interface refinement
+  ✓ Separators - Layout refinement
+
+================================================================================
+SECTION 8: CURRENT STATUS
+================================================================================
+
+Status: PENDING - Awaiting design/creation of visual assets
+
+Location: d:/Deko/Desktop/EasyCut/assets/
+Subdirectories ready: /icons/, /logos/, /buttons/, /backgrounds/, /ui/
+
+Next Steps:
+  1. Create or source all specified assets
+  2. Place in appropriate subdirectories
+  3. Update ui_enhanced.py to load assets
+  4. Integrate with easycut.py main application
+  5. Test theme switching and asset display
+  6. Optimize for performance
+
+Design References:
+  - Microsoft Fluent Design System
+  - Google Material Design
+  - Modern flat design principles
+
+================================================================================
+End of Specification
+================================================================================
