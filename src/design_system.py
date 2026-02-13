@@ -421,16 +421,23 @@ class ModernTheme:
                     "foreground": colors["fg_secondary"],
                     "padding": (spacing.LG, spacing.MD),
                     "font": self._font(Typography.SIZE_MD, "bold"),
-                    "borderwidth": 0,
+                    "borderwidth": 1,
+                    "relief": "flat",
                 },
                 "map": {
                     "background": [
-                        ("selected", colors["bg_elevated"]),
+                        ("selected", colors["accent_primary"]),
                         ("active", colors["bg_hover"]),
+                        ("!selected", colors["bg_tertiary"]),
                     ],
                     "foreground": [
-                        ("selected", colors["fg_primary"]),
+                        ("selected", "#FFFFFF"),
                         ("active", colors["fg_primary"]),
+                        ("!selected", colors["fg_tertiary"]),
+                    ],
+                    "bordercolor": [
+                        ("selected", colors["accent_primary"]),
+                        ("!selected", colors["border"]),
                     ],
                 }
             },
@@ -456,16 +463,19 @@ class ModernTheme:
             # === TScrollbar ===
             "TScrollbar": {
                 "configure": {
-                    "background": colors["bg_hover"],
+                    "background": colors["accent_primary"],
                     "bordercolor": colors["bg_primary"],
-                    "troughcolor": colors["bg_secondary"],
-                    "arrowcolor": colors["fg_secondary"],
+                    "troughcolor": colors["bg_tertiary"],
+                    "arrowcolor": colors["fg_primary"],
                     "borderwidth": 0,
                     "relief": "flat",
+                    "width": 12,
                 },
                 "map": {
                     "background": [
-                        ("active", colors["accent_primary"]),
+                        ("active", colors["accent_hover"]),
+                        ("pressed", colors["accent_hover"]),
+                        ("!active", colors["bg_hover"]),
                     ],
                 }
             },

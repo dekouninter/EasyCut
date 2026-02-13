@@ -589,7 +589,7 @@ class EasyCutApp:
         tr = self.translator.get
         
         frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text=f"☰ {tr('tab_batch', 'Batch')}")
+        self.notebook.add(frame, text=f"📦 {tr('tab_batch', 'Batch')}")
         
         main = ttk.Frame(frame, padding=Spacing.LG)
         main.pack(fill=tk.BOTH, expand=True)
@@ -690,7 +690,7 @@ class EasyCutApp:
         """Create modern live stream recording tab"""
         tr = self.translator.get
         frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text=f"● {tr('tab_live', 'Live')}")
+        self.notebook.add(frame, text=f"🔴 {tr('tab_live', 'Live')}")
         
         main = ttk.Frame(frame, padding=Spacing.LG)
         main.pack(fill=tk.BOTH, expand=True)
@@ -940,7 +940,7 @@ class EasyCutApp:
         """Create modern download history tab"""
         tr = self.translator.get
         frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text=f"📅 {tr('tab_history', 'History')}")
+        self.notebook.add(frame, text=f"� {tr('tab_history', 'History')}")
         
         main = ttk.Frame(frame, padding=Spacing.LG)
         main.pack(fill=tk.BOTH, expand=True)
