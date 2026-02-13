@@ -289,41 +289,69 @@ class ModernAlert(ttk.Frame):
         super().__init__(parent, **kwargs)
         self.configure(padding=Spacing.PADDING_NORMAL)
         
-        # Icon based on variant
-        icon_map = {
-            "info": "info",
-            "success": "success",
-            "warning": "warning",
-            "error": "error"
+        # Get colors for variants
+        design = DesignTokens()
+        color_map = {
+            "info": "#3B82F6",      # Blue
+            "success": "#10B981",   # Green
+            "warning": "#F59E0B",   # Orange/Yellow
+            "error": "#EF4444"      # Red
         }
         
+        # Emoji icons based on variant
+        emoji_map = {
+            "info": "ℹ️",
+            "success": "✅",
+            "warning": "⚠️",
+            "error": "❌"
+        }
+        
+        alert_color = color_map.get(variant, color_map["info"])
+        
+        # Colored border on the left
+        border = tk.Frame(self, width=4, bg=alert_color)
+        border.pack(side="left", fill="y", padx=(0, Spacing.MD))
+        
         content_frame = ttk.Frame(self)
-        content_frame.pack(fill="x")
+        content_frame.pack(fill="x", expand=True)
         
-        # Icon
-        icon_name = icon_map.get(variant, "info")
-        icon = get_ui_icon(icon_name, size=Icons.SIZE_MD)
-        if icon:
-            icon_label = ttk.Label(content_frame, image=icon)
-            icon_label.image = icon
-            icon_label.pack(side="left", padx=(0, Spacing.MD))
+        # Emoji icon
+        emoji = emoji_map.get(variant, "ℹ️")
+        emoji_label = tk.Label(
+            content_frame, 
+            text=emoji, 
+            font=("Segoe UI Emoji", 16),
+            bg=design.get_color("bg_primary"),
+            fg=alert_color,
+            borderwidth=0
+        )
+        emoji_label.pack(side="left", padx=(0, Spacing.MD))
         
-        # Message
-        msg_label = ttk.Label(content_frame, text=message)
+        # Message with color
+        msg_label = tk.Label(
+            content_frame, 
+            text=message,
+            font=(LOADED_FONT_FAMILY, 12),
+            bg=design.get_color("bg_primary"),
+            fg=design.get_color("fg_primary"),
+            wraplength=600,
+            justify="left"
+        )
         msg_label.pack(side="left", fill="x", expand=True)
         
         # Dismiss button
         if dismissible:
-            dismiss_icon = get_ui_icon("clear", size=Icons.SIZE_SM)
-            if dismiss_icon:
-                dismiss_btn = ttk.Button(
-                    content_frame,
-                    image=dismiss_icon,
-                    command=self.destroy,
-                    width=4
-                )
-                dismiss_btn.image = dismiss_icon
-                dismiss_btn.pack(side="right")
+            dismiss_btn = tk.Label(
+                content_frame,
+                text="✖",
+                font=("Segoe UI", 14),
+                bg=design.get_color("bg_primary"),
+                fg=design.get_color("fg_tertiary"),
+                cursor="hand2",
+                padx=Spacing.SM
+            )
+            dismiss_btn.pack(side="right")
+            dismiss_btn.bind("<Button-1>", lambda e: self.destroy())
 
 
 class ModernDialog(tk.Toplevel):

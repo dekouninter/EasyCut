@@ -365,6 +365,9 @@ class ModernTheme:
                     "foreground": colors["fg_primary"],
                     "bordercolor": colors["border"],
                     "arrowcolor": colors["fg_secondary"],
+                    "insertcolor": colors["fg_primary"],
+                    "selectbackground": colors["accent_primary"],
+                    "selectforeground": "#FFFFFF",
                     "padding": (spacing.MD, spacing.SM),
                     "font": self._font(Typography.SIZE_MD, "normal"),
                 },
@@ -372,6 +375,14 @@ class ModernTheme:
                     "bordercolor": [
                         ("focus", colors["border_focus"]),
                         ("hover", colors["border_hover"]),
+                    ],
+                    "fieldbackground": [
+                        ("readonly", colors["bg_secondary"]),
+                        ("disabled", colors["bg_hover"]),
+                    ],
+                    "foreground": [
+                        ("readonly", colors["fg_primary"]),
+                        ("disabled", colors["fg_disabled"]),
                     ],
                 }
             },

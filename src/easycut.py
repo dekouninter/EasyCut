@@ -197,30 +197,27 @@ class EasyCutApp:
         app_title_frame = ttk.Frame(left_frame)
         app_title_frame.pack(side=tk.LEFT, padx=(0, Spacing.XL))
         
-        # Try to load app icon
-        app_icon = get_ui_icon("video", size=Icons.SIZE_LG)
-        if app_icon:
-            icon_label = ttk.Label(app_title_frame, image=app_icon)
-            icon_label.image = app_icon
-            icon_label.pack(side=tk.LEFT, padx=(0, Spacing.MD))
+        # Load app icon from assets
+        try:
+            from PIL import Image, ImageTk
+            icon_path = Path(__file__).parent.parent / "assets" / "app_icon.png"
+            if icon_path.exists():
+                img = Image.open(icon_path)
+                img = img.resize((32, 32), Image.Resampling.LANCZOS)
+                app_icon = ImageTk.PhotoImage(img)
+                icon_label = ttk.Label(app_title_frame, image=app_icon)
+                icon_label.image = app_icon
+                icon_label.pack(side=tk.LEFT, padx=(0, Spacing.MD))
+        except Exception as e:
+            self.logger.warning(f"Could not load app icon: {e}")
         
-        # Title with gradient effect (simulated with label)
-        title_frame = ttk.Frame(app_title_frame)
-        title_frame.pack(side=tk.LEFT)
-        
+        # Title only (no subtitle)
         title_lbl = ttk.Label(
-            title_frame,
+            app_title_frame,
             text=tr("about_title", "EasyCut"),
             style="Title.TLabel"
         )
         title_lbl.pack(anchor="w")
-        
-        subtitle_lbl = ttk.Label(
-            title_frame,
-            text="YouTube Downloader Pro",
-            style="Caption.TLabel"
-        )
-        subtitle_lbl.pack(anchor="w")
         
         # Separator
         ttk.Separator(left_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=Spacing.MD)
@@ -269,27 +266,16 @@ class EasyCutApp:
         right_frame = ttk.Frame(header)
         right_frame.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Open folder button
+        # Open folder button (primary action)
         folder_btn = ModernButton(
             right_frame,
             text=tr("header_open_folder", "Open Folder"),
             icon_name="folder",
             command=self.open_output_folder,
-            variant="secondary",
+            variant="primary",
             width=14
         )
         folder_btn.pack(side=tk.RIGHT, padx=Spacing.XS)
-        
-        # Login button (primary action)
-        login_btn = ModernButton(
-            right_frame,
-            text=tr("header_login", "YouTube Login"),
-            icon_name="login",
-            command=self.open_login_popup,
-            variant="primary",
-            width=16
-        )
-        login_btn.pack(side=tk.RIGHT, padx=Spacing.XS)
         
         # Version badge
         version_label = ttk.Label(
@@ -1044,24 +1030,33 @@ class EasyCutApp:
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Content
-        main = ttk.Frame(scrollable_frame, padding=Spacing.XXL)
-        main.pack(fill=tk.BOTH, expand=True)
+        # Centralized content container
+        center_container = ttk.Frame(scrollable_frame)
+        center_container.pack(fill=tk.BOTH, expand=True)
         
-        # === APP TITLE ===
+        # Content with max width for better readability
+        main = ttk.Frame(center_container, padding=Spacing.XXL)
+        main.place(relx=0.5, anchor=tk.N, relwidth=0.8, y=20)
+        
+        # === APP TITLE (CENTERED) ===
+        title_frame = ttk.Frame(main)
+        title_frame.pack(pady=(0, Spacing.MD))
+        
         ttk.Label(
-            main,
+            title_frame,
             text=tr("about_title", "EasyCut"),
-            font=(LOADED_FONT_FAMILY, Typography.SIZE_XXL, "bold")
-        ).pack(pady=(0, Spacing.XS))
+            font=(LOADED_FONT_FAMILY, Typography.SIZE_XXL, "bold"),
+            justify=tk.CENTER
+        ).pack()
         
         ttk.Label(
-            main,
+            title_frame,
             text=tr("about_subtitle", "🎬 Professional YouTube Downloader & Audio Converter"),
-            style="Caption.TLabel"
-        ).pack(pady=(0, Spacing.LG))
+            style="Caption.TLabel",
+            justify=tk.CENTER
+        ).pack()
         
-        ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=Spacing.MD)
+        ttk.Separator(main, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=Spacing.LG)
         
         # === APP INFO CARD ===
         info_card = ModernCard(main, title=tr("about_section_info", "📦 Application Info"))
@@ -1198,6 +1193,12 @@ class EasyCutApp:
         self.root.option_add("*Label.foreground", fg_color)
         self.root.option_add("*background", bg_color)
         self.root.option_add("*foreground", fg_color)
+        
+        # Combobox dropdown list colors
+        self.root.option_add("*TCombobox*Listbox.background", self.design.get_color("bg_secondary"))
+        self.root.option_add("*TCombobox*Listbox.foreground", fg_color)
+        self.root.option_add("*TCombobox*Listbox.selectBackground", self.design.get_color("accent_primary"))
+        self.root.option_add("*TCombobox*Listbox.selectForeground", "#FFFFFF")
     
     def toggle_theme(self):
         """Toggle theme with instant reload"""
