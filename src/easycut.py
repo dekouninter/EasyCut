@@ -1170,6 +1170,13 @@ class EasyCutApp:
     def apply_theme(self):
         """Apply modern theme to window"""
         style = ttk.Style()
+        
+        # Try to use a custom theme base (avoid Windows theme conflicts)
+        try:
+            style.theme_use("clam")  # Use base theme compatible with customization
+        except:
+            pass  # If clam not available, continue anyway
+        
         self.theme.apply_to_style(style)
         
         # Configure root colors
