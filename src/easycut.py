@@ -119,15 +119,17 @@ class EasyCutApp:
     
     def setup_window(self):
         """Setup main window"""
-        self.root.title(self.translator.get("app_title", "EasyCut"))
+        self.root.title("EasyCut")
         self.root.geometry("1100x750")
         self.root.minsize(900, 600)
         
-        # Set window icon
+        # Set window icon (use .ico for Windows)
         try:
             icon_path = Path(__file__).parent.parent / "assets" / "app_icon.ico"
             if icon_path.exists():
                 self.root.iconbitmap(str(icon_path))
+            else:
+                self.logger.warning(f"Window icon not found: {icon_path}")
         except Exception as e:
             self.logger.warning(f"Could not set window icon: {e}")
         
@@ -266,6 +268,17 @@ class EasyCutApp:
         right_frame = ttk.Frame(header)
         right_frame.pack(side=tk.RIGHT, fill=tk.Y)
         
+        # Select folder button (secondary action)
+        select_btn = ModernButton(
+            right_frame,
+            text=tr("header_select_folder", "Select Folder"),
+            icon_name="folder-plus",
+            command=self.select_output_folder,
+            variant="secondary",
+            width=12
+        )
+        select_btn.pack(side=tk.RIGHT, padx=Spacing.XS)
+        
         # Open folder button (primary action)
         folder_btn = ModernButton(
             right_frame,
@@ -273,7 +286,7 @@ class EasyCutApp:
             icon_name="folder",
             command=self.open_output_folder,
             variant="primary",
-            width=14
+            width=12
         )
         folder_btn.pack(side=tk.RIGHT, padx=Spacing.XS)
         
@@ -318,24 +331,25 @@ class EasyCutApp:
     
     def create_login_tab(self):
         """Create login tab with popup-only interface"""
+        tr = self.translator.get
         frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text="🔐 Login")
+        self.notebook.add(frame, text=f"🔐 {tr('tab_login', 'Login')}")
         
         container = ttk.Frame(frame, padding=40)
         container.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         
         # Title
-        ttk.Label(container, text="Authentication", font=("Arial", 16, "bold"), style="TLabel").pack(pady=10)
-        ttk.Label(container, text=self.get_login_status(), font=("Arial", 11), style="TLabel").pack(pady=20)
+        ttk.Label(container, text=tr("login_tab_title", "Authentication"), font=(LOADED_FONT_FAMILY, 16, "bold"), style="TLabel").pack(pady=10)
+        ttk.Label(container, text=self.get_login_status(), font=(LOADED_FONT_FAMILY, 11), style="TLabel").pack(pady=20)
         
         # Buttons
-        ttk.Button(container, text="🔓 Login (Popup)", command=self.open_login_popup, width=20).pack(pady=5)
-        ttk.Button(container, text="🚪 Logout", command=self.do_logout, width=20).pack(pady=5)
+        ModernButton(container, text=tr("login_popup_btn", "Login (Popup)"), command=self.open_login_popup, width=20).pack(pady=5)
+        ModernButton(container, text=tr("login_logout_btn", "Logout"), command=self.do_logout, width=20).pack(pady=5)
         
         # Info
         ttk.Label(
             container,
-            text="Use popup login for secure authentication\nCredentials are stored securely using Windows Keyring",
+            text=tr("login_tab_info", "Use popup login for secure authentication\nCredentials are stored securely using Windows Keyring"),
             justify=tk.CENTER,
             wraplength=400
         ).pack(pady=20)
@@ -977,33 +991,22 @@ class EasyCutApp:
         
         # === HISTORY TABLE CARD ===
         table_card = ModernCard(main, title=tr("history_records", "Download Records"))
-        table_card.pack(fill=tk.BOTH, expand=True)
+        table_card.pack(fill=tk.BOTH, expand=True, pady=(Spacing.MD, 0))
         
-        tree_frame = ttk.Frame(table_card)
-        tree_frame.pack(fill=tk.BOTH, expand=True)
+        # Scrollable records list
+        canvas = tk.Canvas(table_card, bg=self.design.get_color("bg_tertiary"), highlightthickness=0)
+        scrollbar = ttk.Scrollbar(table_card, orient=tk.VERTICAL, command=canvas.yview)
+        self.history_records_frame = ttk.Frame(canvas)
         
-        columns = ("Date", "Filename", "Status")
-        self.history_tree = ttk.Treeview(
-            tree_frame,
-            columns=columns,
-            height=20,
-            show="tree headings"
+        self.history_records_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
         
-        col_labels = {
-            "Date": tr("history_date", "Date"),
-            "Filename": tr("history_filename", "Filename"),
-            "Status": tr("history_status", "Status"),
-        }
+        canvas.create_window((0, 0), window=self.history_records_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
         
-        for col in columns:
-            self.history_tree.heading(col, text=col_labels.get(col, col))
-            self.history_tree.column(col, width=250)
-        
-        scrollbar = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.history_tree.yview)
-        self.history_tree.config(yscrollcommand=scrollbar.set)
-        
-        self.history_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.refresh_history()
@@ -1506,24 +1509,85 @@ class EasyCutApp:
         thread.start()
     
     def refresh_history(self):
-        """Refresh download history"""
+        """Refresh download history with improved card layout"""
         tr = self.translator.get
-        for item in self.history_tree.get_children():
-            self.history_tree.delete(item)
+        
+        # Clear existing records
+        for widget in self.history_records_frame.winfo_children():
+            widget.destroy()
         
         history = self.config_manager.load_history()
         
         if not history:
-            self.history_tree.insert("", tk.END, values=(tr("history_empty", "No downloads yet"), "-", "-"))
+            empty_label = ttk.Label(
+                self.history_records_frame,
+                text=tr("history_empty", "No downloads yet"),
+                style="Caption.TLabel"
+            )
+            empty_label.pack(pady=Spacing.XXL)
             return
         
+        # Display records as cards
         for item in reversed(history):
-            date_obj = datetime.fromisoformat(item.get("date", ""))
-            date_str = date_obj.strftime("%Y-%m-%d %H:%M")
-            filename = item.get("filename", "unknown")
-            status = item.get("status", "unknown")
-            
-            self.history_tree.insert("", tk.END, values=(date_str, filename[:40], status))
+            try:
+                date_obj = datetime.fromisoformat(item.get("date", ""))
+                date_str = date_obj.strftime("%d/%m/%Y %H:%M")
+                filename = item.get("filename", "unknown")
+                status = item.get("status", "unknown")
+                
+                # Create record card
+                record_card = ModernCard(self.history_records_frame)
+                record_card.pack(fill=tk.X, pady=Spacing.XS, padx=0)
+                
+                # Status color
+                status_color_map = {
+                    "success": "#10B981",
+                    "error": "#EF4444",
+                    "pending": "#F59E0B"
+                }
+                status_color = status_color_map.get(status, "#3B82F6")
+                status_emoji_map = {
+                    "success": "✅",
+                    "error": "❌",
+                    "pending": "⏳"
+                }
+                status_emoji = status_emoji_map.get(status, "ℹ️")
+                
+                # Header with status
+                header_frame = ttk.Frame(record_card)
+                header_frame.pack(fill=tk.X, pady=(0, Spacing.XS))
+                
+                status_label = tk.Label(
+                    header_frame,
+                    text=status_emoji,
+                    font=("Segoe UI Emoji", 14),
+                    fg=status_color,
+                    bg=self.design.get_color("bg_tertiary")
+                )
+                status_label.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+                
+                filename_label = tk.Label(
+                    header_frame,
+                    text=filename[:50],
+                    font=(LOADED_FONT_FAMILY, 11, "bold"),
+                    fg=self.design.get_color("fg_primary"),
+                    bg=self.design.get_color("bg_tertiary"),
+                    wraplength=400,
+                    justify=tk.LEFT
+                )
+                filename_label.pack(side=tk.LEFT, fill=tk.X, expand=True, anchor=tk.W)
+                
+                date_label = tk.Label(
+                    header_frame,
+                    text=date_str,
+                    font=(LOADED_FONT_FAMILY, 9),
+                    fg=self.design.get_color("fg_tertiary"),
+                    bg=self.design.get_color("bg_tertiary")
+                )
+                date_label.pack(side=tk.RIGHT, padx=(Spacing.SM, 0))
+                
+            except Exception as e:
+                self.logger.warning(f"Error displaying history record: {e}")
     
     def clear_history(self):
         """Clear download history"""
@@ -1538,6 +1602,25 @@ class EasyCutApp:
         try:
             import subprocess
             subprocess.Popen(f'explorer "{self.output_dir}"')
+        except Exception as e:
+            messagebox.showerror(tr("msg_error", "Error"), f"{tr('msg_error', 'Error')}: {e}")
+    
+    def select_output_folder(self):
+        """Let user select output folder"""
+        tr = self.translator.get
+        try:
+            from tkinter import filedialog
+            selected_dir = filedialog.askdirectory(
+                title=tr("header_select_folder", "Select Folder"),
+                initialdir=str(self.output_dir)
+            )
+            if selected_dir:
+                self.output_dir = Path(selected_dir)
+                self.config_manager.set("output_dir", str(self.output_dir))
+                messagebox.showinfo(
+                    tr("msg_info", "Information"),
+                    tr("folder_selected", f"Output folder changed to:\n{self.output_dir}")
+                )
         except Exception as e:
             messagebox.showerror(tr("msg_error", "Error"), f"{tr('msg_error', 'Error')}: {e}")
     

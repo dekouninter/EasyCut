@@ -291,6 +291,8 @@ class ModernAlert(ttk.Frame):
         
         # Get colors for variants
         design = DesignTokens()
+        is_dark = design.dark_mode
+        
         color_map = {
             "info": "#3B82F6",      # Blue
             "success": "#10B981",   # Green
@@ -327,7 +329,7 @@ class ModernAlert(ttk.Frame):
         )
         emoji_label.pack(side="left", padx=(0, Spacing.MD))
         
-        # Message with color
+        # Message with color (adaptive to theme)
         msg_label = tk.Label(
             content_frame, 
             text=message,

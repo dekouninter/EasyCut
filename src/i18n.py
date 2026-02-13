@@ -16,7 +16,7 @@ All translations are organized by functional category for easy maintenance.
 TRANSLATIONS = {
     "en": {
         # Application Titles and Headers
-        "app_title": "EasyCut - YouTube Video Downloader",
+        "app_title": "EasyCut",
         "version": "1.0.0",
         
         # Menu and Shortcuts
@@ -52,6 +52,14 @@ TRANSLATIONS = {
         "header_theme": "Theme",
         "header_login": "YouTube Login",
         "header_open_folder": "Open Folder",
+        "header_select_folder": "Select Folder",
+        
+        # Login Tab
+        "login_tab_title": "Authentication",
+        "login_tab_info": "Use popup login for secure authentication\nCredentials are stored securely using Windows Keyring",
+        "login_popup_btn": "Login (Popup)",
+        "login_logout_btn": "Logout",
+        "folder_selected": "Output folder changed to:",
 
         # Login Banner
         "login_banner_title": "Not connected to YouTube",
@@ -98,6 +106,7 @@ TRANSLATIONS = {
         "download_until_time": "Until Time (MM:SS)",
         "download_quality": "Quality/Format",
         "download_quality_best": "Best Quality",
+        "download_subtitle": "Download videos and audio from YouTube",
         "download_quality_mp4": "MP4 (Best)",
         "download_quality_audio": "Audio Only",
         "download_btn": "Download",
@@ -250,7 +259,7 @@ TRANSLATIONS = {
     
     "pt": {
         # Títulos e cabeçalhos
-        "app_title": "EasyCut - Baixador de Vídeos YouTube",
+        "app_title": "EasyCut",
         "version": "1.0.0",
         
         # Menu e atalhos
@@ -286,6 +295,14 @@ TRANSLATIONS = {
         "header_theme": "Tema",
         "header_login": "Login YouTube",
         "header_open_folder": "Abrir pasta",
+        "header_select_folder": "Selecionar pasta",
+        
+        # Aba de Login
+        "login_tab_title": "Autenticação",
+        "login_tab_info": "Use login popup para autenticação segura\nCredenciais são armazenadas com segurança no Keyring do Windows",
+        "login_popup_btn": "Entrar (Popup)",
+        "login_logout_btn": "Sair",
+        "folder_selected": "Pasta de saída alterada para:",
 
         # Banner de login
         "login_banner_title": "Nao conectado ao YouTube",
@@ -332,6 +349,7 @@ TRANSLATIONS = {
         "download_until_time": "Até o Tempo (MM:SS)",
         "download_quality": "Qualidade/Formato",
         "download_quality_best": "Melhor Qualidade",
+        "download_subtitle": "Baixe vídeos e áudio do YouTube",
         "download_quality_mp4": "MP4 (Melhor)",
         "download_quality_audio": "Somente Áudio",
         "download_btn": "Baixar",

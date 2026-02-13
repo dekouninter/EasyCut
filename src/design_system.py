@@ -245,7 +245,8 @@ class ModernTheme:
                 "configure": {
                     "background": colors["bg_tertiary"],
                     "borderwidth": 1,
-                    "relief": "flat",
+                    "relief": "solid",
+                    "bordercolor": colors["border"],
                 }
             },
             
