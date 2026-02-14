@@ -27,7 +27,9 @@ def main():
     try:
         icon_path = Path(__file__).parent / "assets" / "app_icon.ico"
         if icon_path.exists():
-            root.iconbitmap(str(icon_path))
+            # Use forward slashes for Windows iconbitmap (important!)
+            icon_str = str(icon_path).replace("\\", "/")
+            root.iconbitmap(icon_str)
     except Exception as e:
         print(f"Warning: Could not set window icon: {e}")
     
