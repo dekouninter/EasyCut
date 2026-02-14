@@ -354,9 +354,9 @@ class LogWidget(tk.Text):
                 bg_color = self.theme.get_color("bg_secondary")
                 fg_color = self.theme.get_color("fg_primary")
             else:
-                # Fallback
-                bg_color = "#1A1D2E"
-                fg_color = "#E8EAED"
+                # Fallback — match current dark palette
+                bg_color = "#1E1E1E"
+                fg_color = "#E4E4E4"
             
             self.config(
                 bg=bg_color,

@@ -405,8 +405,8 @@ class ModernTheme:
                 },
                 "map": {
                     "background": [
-                        ("active", "#D32F2F"),
-                        ("pressed", "#B71C1C"),
+                        ("active", colors.get("error_hover", "#D32F2F")),
+                        ("pressed", colors.get("error_pressed", "#B71C1C")),
                         ("disabled", colors["bg_hover"]),
                     ],
                     "foreground": [

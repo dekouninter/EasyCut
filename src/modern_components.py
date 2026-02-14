@@ -394,7 +394,7 @@ class ModernAlert(tk.Frame):  # Changed from ttk.Frame to tk.Frame
             dismiss_btn = tk.Label(
                 content_frame,
                 text="✖",
-                font=("Segoe UI", 14),
+                font=(LOADED_FONT_FAMILY, 14),
                 bg=design.get_color("bg_primary"),
                 fg=design.get_color("fg_tertiary"),
                 cursor="hand2",

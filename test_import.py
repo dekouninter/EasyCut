@@ -44,13 +44,15 @@ except Exception as e:
 # Test 3: ui_enhanced module
 print("\n[3] Testing ui_enhanced.py...")
 try:
-    from ui_enhanced import Theme, ConfigManager, LogWidget, StatusBar, LoginPopup, LanguageSelector
+    from ui_enhanced import ConfigManager, LogWidget, StatusBar, LoginPopup, LanguageSelector
     print("    ✓ Module loaded successfully")
     print("    ✓ All UI classes available")
     
-    # Test Theme
-    theme = Theme(dark_mode=True)
-    print(f"    ✓ Theme test: Dark mode = {theme.dark_mode}")
+    # Test DesignTokens (unified theme system)
+    from design_system import DesignTokens
+    tokens = DesignTokens(dark_mode=True)
+    print(f"    ✓ DesignTokens test: bg_primary = {tokens.get_color('bg_primary')}")
+    print(f"    ✓ DesignTokens test: accent = {tokens.get_color('accent_primary')}")
     
     # Test ConfigManager
     config = ConfigManager()

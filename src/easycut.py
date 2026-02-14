@@ -1318,7 +1318,7 @@ class EasyCutApp:
         self.root.option_add("*TCombobox*Listbox.background", self.design.get_color("bg_secondary"))
         self.root.option_add("*TCombobox*Listbox.foreground", fg_color)
         self.root.option_add("*TCombobox*Listbox.selectBackground", self.design.get_color("accent_primary"))
-        self.root.option_add("*TCombobox*Listbox.selectForeground", "#FFFFFF" if self.dark_mode else "#FFFFFF")
+        self.root.option_add("*TCombobox*Listbox.selectForeground", "#FFFFFF")
     
     def toggle_theme(self):
         """Toggle theme with instant reload"""
@@ -1602,7 +1602,7 @@ class EasyCutApp:
                 status = item.get("status", "unknown")
                 
                 # Create record card
-                record_card = ModernCard(self.history_records_frame)
+                record_card = ModernCard(self.history_records_frame, dark_mode=self.dark_mode)
                 record_card.pack(fill=tk.X, pady=Spacing.XS, padx=0)
                 
                 # Status color

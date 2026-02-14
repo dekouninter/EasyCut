@@ -140,7 +140,7 @@ class HistoryScreen(BaseScreen):
         content.pack(fill=tk.X)
         
         # Status indicator with emoji
-        ttk.Label(content, text=status_emoji, font=("Arial", 14)).pack(side=tk.LEFT, padx=(0, Spacing.MD))
+        ttk.Label(content, text=status_emoji, font=("Segoe UI Emoji", 14)).pack(side=tk.LEFT, padx=(0, Spacing.MD))
         
         # File info
         info_frame = ttk.Frame(content)

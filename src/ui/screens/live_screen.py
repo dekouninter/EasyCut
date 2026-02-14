@@ -63,7 +63,7 @@ class LiveScreen(BaseScreen):
         url_row = ttk.Frame(url_card)
         url_row.pack(fill=tk.X)
         
-        url_icon_label = ttk.Label(url_row, text="📡", font=("Segoe UI", 12), style="TLabel")
+        url_icon_label = ttk.Label(url_row, text="📡", font=("Segoe UI Emoji", 12), style="TLabel")
         url_icon_label.pack(side=tk.LEFT, padx=(0, Spacing.SM))
         
         self.url_entry = ttk.Entry(url_row, font=(LOADED_FONT_FAMILY, Typography.SIZE_MD))
@@ -108,7 +108,7 @@ class LiveScreen(BaseScreen):
         for value, label, icon in mode_options:
             mode_frame = ttk.Frame(mode_card)
             mode_frame.pack(fill=tk.X, pady=(0, Spacing.XS))
-            ttk.Label(mode_frame, text=icon, font=("Segoe UI", 12)).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+            ttk.Label(mode_frame, text=icon, font=("Segoe UI Emoji", 12)).pack(side=tk.LEFT, padx=(0, Spacing.SM))
             ttk.Radiobutton(mode_frame, text=label, variable=self.mode_var, value=value).pack(side=tk.LEFT, anchor=tk.W)
         
         # === DURATION CARD ===
@@ -144,7 +144,7 @@ class LiveScreen(BaseScreen):
         for i, (value, label, icon) in enumerate(quality_options):
             quality_frame = ttk.Frame(quality_grid)
             quality_frame.grid(row=i//2, column=i%2, sticky=tk.W, padx=(0 if i%2==0 else Spacing.XL, 0), pady=(0, Spacing.XS))
-            ttk.Label(quality_frame, text=icon, font=("Segoe UI", 12)).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+            ttk.Label(quality_frame, text=icon, font=("Segoe UI Emoji", 12)).pack(side=tk.LEFT, padx=(0, Spacing.SM))
             ttk.Radiobutton(quality_frame, text=label, variable=self.quality_var, value=value).pack(side=tk.LEFT)
         
         # === LOG CARD ===
