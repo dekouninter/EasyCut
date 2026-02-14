@@ -115,12 +115,20 @@ def run_pyinstaller(temp_dir: Path, app_name: str, version: str):
     """Run PyInstaller to create executable"""
     
     # PyInstaller command
+    icon_path = Path("assets/headerapp_icon.ico")
+    
     cmd = [
         "pyinstaller",
         "--name", app_name,
         "--onefile",  # Single executable
         "--windowed",  # No console window
-        "--icon", "assets/icon.ico" if Path("assets/icon.ico").exists() else None,
+    ]
+    
+    # Add icon if exists
+    if icon_path.exists():
+        cmd.extend(["--icon", str(icon_path)])
+    
+    cmd.extend([
         "--add-data", f"{temp_dir}/assets;assets",
         "--add-data", f"{temp_dir}/config;config",
         "--hidden-import", "google_auth_oauthlib",
@@ -129,10 +137,7 @@ def run_pyinstaller(temp_dir: Path, app_name: str, version: str):
         "--hidden-import", "PIL",
         "--hidden-import", "yt_dlp",
         f"{temp_dir}/main.py"
-    ]
-    
-    # Remove None values
-    cmd = [x for x in cmd if x is not None]
+    ])
     
     print("\n" + "="*60)
     print(f"Building {app_name} v{version}")
