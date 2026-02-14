@@ -1195,12 +1195,12 @@ class EasyCutApp:
         # Create all screens with the notebook and theme
         # These replace the monolithic create_*_tab() methods
         self.screens = {
-            "download": DownloadScreen(self.notebook, self.theme, **screen_kwargs),
-            "batch": BatchScreen(self.notebook, self.theme, **screen_kwargs),
-            "live": LiveScreen(self.notebook, self.theme, **screen_kwargs),
-            "audio": AudioScreen(self.notebook, self.theme, **screen_kwargs),
-            "history": HistoryScreen(self.notebook, self.theme, **screen_kwargs),
-            "about": AboutScreen(self.notebook, self.theme, **screen_kwargs)
+            "download": DownloadScreen(self.notebook, self.design, **screen_kwargs),
+            "batch": BatchScreen(self.notebook, self.design, **screen_kwargs),
+            "live": LiveScreen(self.notebook, self.design, **screen_kwargs),
+            "audio": AudioScreen(self.notebook, self.design, **screen_kwargs),
+            "history": HistoryScreen(self.notebook, self.design, **screen_kwargs),
+            "about": AboutScreen(self.notebook, self.design, **screen_kwargs)
         }
         
         # Build each screen (creates UI and binds events)
