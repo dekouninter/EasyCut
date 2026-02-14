@@ -63,17 +63,17 @@ class ColorPalette:
     # === LIGHT THEME - Soft, Clean Colors ===
     LIGHT = {
         # Backgrounds
-        "bg_primary": "#F8F9FA",          # Soft white
+        "bg_primary": "#FAFBFC",          # Pure white
         "bg_secondary": "#FFFFFF",        # Pure white
-        "bg_tertiary": "#F1F3F5",         # Light gray
+        "bg_tertiary": "#F5F5F5",         # Neutral light gray
         "bg_elevated": "#FFFFFF",         # Elevated white
-        "bg_hover": "#E9ECEF",            # Hover gray
+        "bg_hover": "#EEEEEE",            # Hover gray
         
         # Foregrounds
-        "fg_primary": "#1A1D2E",          # Near black
-        "fg_secondary": "#495057",        # Gray
-        "fg_tertiary": "#6C757D",         # Light gray
-        "fg_disabled": "#ADB5BD",         # Disabled gray
+        "fg_primary": "#161616",          # Dark text
+        "fg_secondary": "#424242",        # Medium gray text
+        "fg_tertiary": "#666666",         # Light gray text
+        "fg_disabled": "#BDBDBD",         # Disabled gray
         
         # Accents & Semantics (derived from app icon colors)  
         "accent_primary": ICON_PRIMARY,     # Primary accent from icon (coral red)
@@ -87,12 +87,12 @@ class ColorPalette:
         "error": "#EF4444",               # Red
         "error_bg": "#FEE2E2",            # Error background
         "info": "#3B82F6",                # Blue
-        "info_bg": "#DBEAFE",             # Info background
+        "info_bg": "#E3F2FD",             # Info background (neutral blue)
         
         # UI Elements
-        "border": "#DEE2E6",              # Default border
+        "border": "#E0E0E0",              # Default border
         "border_focus": ICON_PRIMARY,      # Focused border (icon color)
-        "border_hover": "#ADB5BD",        # Hover border
+        "border_hover": "#BDBDBD",        # Hover border
         
         "shadow": "rgba(0, 0, 0, 0.1)",   # Shadow color
         "overlay": "rgba(255, 255, 255, 0.95)",  # Modal overlay

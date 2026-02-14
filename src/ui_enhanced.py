@@ -36,18 +36,18 @@ class Theme:
     SMALL_FONT = ("Segoe UI", 9)
 
     LIGHT_THEME = {
-        "bg": "#F7F8FA",
-        "fg": "#0E0F12",
-        "muted": "#6B7280",
+        "bg": "#FAFBFC",
+        "fg": "#161616",
+        "muted": "#424242",
         "accent": "#f85451",
         "accent_hover": "#E83E3A",
-        "bg_button": "#E9ECF1",
-        "fg_button": "#0E0F12",
+        "bg_button": "#EEEEEE",
+        "fg_button": "#161616",
         "bg_entry": "#FFFFFF",
-        "fg_entry": "#0E0F12",
-        "bg_frame": "#F0F2F6",
+        "fg_entry": "#161616",
+        "bg_frame": "#F5F5F5",
         "card_bg": "#FFFFFF",
-        "border": "#D5DAE1",
+        "border": "#E0E0E0",
     }
     
     DARK_THEME = {
