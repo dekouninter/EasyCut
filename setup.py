@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Setup script para EasyCut
-Para empacotar: python setup.py py2exe
+Setup script for EasyCut
+For packaging: python setup.py sdist bdist_wheel
 """
 
 from setuptools import setup, find_packages
@@ -24,7 +24,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: Microsoft :: Windows",
         "Topic :: Multimedia :: Sound/Audio",
         "Topic :: Multimedia :: Video",
@@ -33,6 +33,7 @@ setup(
     install_requires=[
         "yt-dlp>=2024.3.10",
         "keyring>=24.0.0",
+        "pillow>=10.0.0",
     ],
     extras_require={
         "dev": [
@@ -41,7 +42,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "easycut=src.easycut:main",
+            "easycut=main:main",
         ],
     },
 )

@@ -51,7 +51,7 @@ echo.
 echo [INFO] Launching EasyCut...
 echo.
 
-python src/easycut.py
+python main.py
 
 if %errorlevel% neq 0 (
     echo.

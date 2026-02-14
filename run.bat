@@ -66,8 +66,7 @@ REM Launch application
 echo.
 echo [INFO] Launching EasyCut...
 echo.
-cd src
-python easycut.py
+python main.py
 
 REM Deactivate virtual environment on exit
 deactivate

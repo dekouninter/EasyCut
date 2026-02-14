@@ -6,11 +6,13 @@
 
 #### Option 1: Automatic Script
 
-1. Open PowerShell in the EasyCut folder
-2. Run:
-   ```powershell
-   .\START.bat
-   ```
+1. Open the EasyCut folder in File Explorer
+2. Double-click `START.bat`
+
+It will automatically:
+- Create a virtual environment
+- Install dependencies
+- Launch the application
 
 #### Option 2: Manual
 
@@ -30,7 +32,7 @@
    pip install -r requirements.txt
    ```
 
-3. **Install FFmpeg** (optional, but recommended):
+3. **Install FFmpeg** (optional, but required for audio conversion):
    ```powershell
    # Using Chocolatey
    choco install ffmpeg
@@ -41,7 +43,7 @@
 
 4. **Run the application:**
    ```powershell
-   python src/easycut.py
+   python main.py
    ```
 
 ---
@@ -83,15 +85,15 @@
 3. Restart the application
 
 ### Q: Where are my downloads?
-**A:** They are in `downloads/` or open the folder via Menu > File > Open Folder
+**A:** They are in the `downloads/` folder inside the project directory.
 
 ### Q: Can I download playlists?
-**A:** Not directly, but use the "Batch" tab for multiple URLs
+**A:** Not directly, but use the "Batch" tab for multiple URLs.
 
-### Q: Is my YouTube safe?
+### Q: Is my YouTube login safe?
 **A:** 
-- Yes, credentials are stored in Windows keyring
-- We never save to plaintext files
+- Yes, credentials are stored in Windows Credential Manager (via keyring)
+- We never save passwords to files
 - You can logout anytime
 
 ### Q: Which sites work?
@@ -107,15 +109,16 @@
 ## 🎯 Main Features
 
 | Feature | Description |
-|---------|---|
+|---------|-------------|
 | **Download** | Download videos in best quality |
-| **Batch** | Multiple videos simultaneously |
+| **Batch** | Multiple videos at once |
+| **Live** | Record live streams |
 | **Audio** | Extract audio as MP3, WAV, M4A, OPUS |
 | **Time Range** | Extract only video parts |
 | **Login** | Access restricted content securely |
 | **History** | Track your downloads |
-| **Themes** | Light/dark interface |
-| **Languages** | Portuguese and English |
+| **Themes** | Light/dark interface (instant toggle) |
+| **Languages** | Portuguese and English (instant switch) |
 
 ---
 
@@ -125,13 +128,14 @@ After first run:
 
 ```
 EasyCut/
-├── src/                  # Source code
-├── config/               # Settings
+├── main.py               # Run this to start the app
+├── src/                   # Source code
+├── config/                # Settings (auto-created)
 │   ├── config.json
 │   ├── history_downloads.json
 │   └── app.log
-├── downloads/            # Downloaded files here
-├── venv/                 # Virtual environment
+├── downloads/             # Downloaded files here
+├── venv/                  # Virtual environment
 └── ...
 ```
 
@@ -140,16 +144,16 @@ EasyCut/
 ## 🔐 Security
 
 ✅ **Secure credentials:**
-- Stored in Windows keyring
-- Never in txt file
+- Stored in Windows Credential Manager
+- Never in plaintext files
 
-✅ **No malware:**
-- Open source (GitHub)
+✅ **Open source:**
+- Full source on GitHub
 - No data collection
 
 ✅ **Privacy:**
-- Everything local
-- No server
+- Everything runs locally
+- No external server
 
 ---
 
@@ -195,20 +199,6 @@ This checks:
 - 🐛 **Bugs**: [GitHub Issues](https://github.com/dekouninter/EasyCut/issues)
 - 💬 **Suggestions**: [GitHub Discussions](https://github.com/dekouninter/EasyCut/discussions)
 - ❤️ **Support**: [Buy Me a Coffee](https://buymeacoffee.com/dekocosta)
-
----
-
-## 🎓 Next Steps
-
-1. **Customize theme:**
-   - Menu > View > Theme
-
-2. **Change language:**
-   - Menu > Language > Português
-
-3. **Change output folder:**
-   - Edit `config/config.json`
-   - Change `"output_folder"`
 
 ---
 

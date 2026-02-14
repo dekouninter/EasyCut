@@ -1,7 +1,7 @@
 # 🎬 EasyCut - Professional YouTube Downloader
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
 ![Author](https://img.shields.io/badge/author-Deko%20Costa-brightgreen.svg)
 
 **EasyCut** is a professional desktop application for downloading YouTube videos and converting audio, built with Python and Tkinter.
@@ -21,6 +21,8 @@
 - ✅ **Download History**: Track your recent downloads
 - ✅ **Real-Time Logs**: Monitor operation progress
 - ✅ **Donation Buttons**: Support the developer
+- ✅ **Icon Branding**: Accent colors extracted from the app icon
+- ✅ **Custom Fonts**: Inter Display with Segoe UI fallback
 
 ---
 
@@ -28,18 +30,19 @@
 
 - **Python**: 3.8 or higher
 - **FFmpeg**: Required for audio conversion
-- **Windows**: Optimized for Windows (uses explorer to open folders)
+- **Windows**: Optimized for Windows (uses Windows GDI for fonts, explorer for folders)
 
 ### Python Dependencies
 
 ```
 yt-dlp>=2024.3.10
 keyring>=24.0.0
+pillow>=10.0.0
 ```
 
 **Default Settings:**
 - Language: **English** (can switch to Portuguese instantly)
-- Theme: **Dark** (can toggle instantly)
+- Theme: **Light** (can toggle to Dark instantly)
 - Login: **Pop-up only** (clean and simple)
 
 Tkinter usually comes pre-installed with Python.
@@ -100,7 +103,7 @@ winget install FFmpeg
 ### Run the Application
 
 ```bash
-python src/easycut.py
+python main.py
 ```
 
 **Or double-click:** `START.bat`
@@ -117,31 +120,42 @@ python src/easycut.py
 
 ```
 EasyCut/
-├── src/
-│   ├── core/                   # Config, Logger, Exceptions, Constants
-│   ├── theme/                  # Unified ThemeManager (dark/light)
+├── main.py                     # Entry point (sets icon, launches app)
+├── requirements.txt            # Dependencies: yt-dlp, keyring, pillow
+├── setup.py                    # Packaging script (setuptools)
+├── START.bat                   # Windows launcher (auto-creates venv)
+├── run.bat                     # Alternative launcher (checks FFmpeg)
+│
+├── src/                        # Application source code (~8,450 lines)
+│   ├── easycut.py              # Main application class (EasyCutApp)
+│   ├── i18n.py                 # Translation system (EN + PT, 150+ keys)
+│   ├── design_system.py        # Design tokens, palettes, typography
+│   ├── modern_components.py    # Custom widgets (Button, Card, Alert, etc.)
+│   ├── ui_enhanced.py          # ConfigManager, LogWidget, LoginPopup
+│   ├── color_extractor.py      # Extracts brand colors from app icon
+│   ├── font_loader.py          # Loads Inter font via Windows GDI
+│   ├── icon_manager.py         # Icon loading with emoji fallback
+│   ├── donation_system.py      # Donation window and button
+│   │
+│   ├── core/                   # Foundation: config, logger, exceptions
+│   ├── theme/                  # ThemeManager (dark/light)
 │   ├── ui/
 │   │   ├── factories/          # Widget & Tab factories (DRY)
-│   │   ├── components/         # Reusable modern components
 │   │   └── screens/            # 7 screen implementations
-│   ├── services/               # Business logic (download, audio, etc.)
-│   ├── utils/                  # Helper utilities
-│   ├── i18n.py                 # Translation system (EN, PT)
-│   ├── easycut.py              # Main application (~400 lines)
-│   └── main.py                 # Entry point
-├── config/
-│   ├── config.json             # Application settings
+│   └── services/               # BaseService (abstract only)
+│
+├── assets/                     # Static assets
+│   ├── app_icon.png            # Application icon (PNG)
+│   ├── headerapp_icon.ico      # Window icon (ICO)
+│   ├── fonts/Inter/            # Inter Display font files (TTF)
+│   └── feather-main/           # Feather icon source (SVG)
+│
+├── config/                     # Runtime configuration (auto-created)
+│   ├── config.json             # User settings
 │   ├── history_downloads.json  # Download history
 │   └── app.log                 # Application log
-├── downloads/                  # Default output folder
-├── requirements.txt            # Python dependencies
-├── README.md                   # This file
-├── ARCHITECTURE.md             # Architecture & design patterns
-├── TECHNICAL.md                # Technical deep dive
-├── REFACTORING_SUMMARY.md      # Refactoring results & metrics
-├── QUICKSTART.md               # 5-minute setup guide
-├── CREDITS.md                  # Credits & acknowledgements
-└── setup.py                    # (Optional) For packaging
+│
+└── downloads/                  # Default output folder
 ```
 
 ---
@@ -164,20 +178,24 @@ EasyCut/
 - Paste URLs from clipboard
 - Dedicated progress logging
 
-### 4. **Audio** 🎵
+### 4. **Live** 📡
+- Record live streams
+- Monitor stream status
+
+### 5. **Audio** 🎵
 - Convert videos to audio (MP3, WAV, M4A, OPUS)
 - Select bitrate (128, 192, 256, 320 kbps)
 - Separate thread processing
 
-### 5. **History** 📜
+### 6. **History** 📜
 - View recent downloads
-- Date, filename, and status
-- Persistent history (last 100 items)
+- Card-based display with date, filename, status
+- Persistent history (JSON)
 
-### 6. **About** ℹ️
+### 7. **About** ℹ️
 - Application information
 - Credits and licenses
-- List of features
+- Donation links
 
 ---
 
@@ -187,7 +205,7 @@ EasyCut/
 
 ```json
 {
-  "dark_mode": true,
+  "dark_mode": false,
   "language": "en",
   "output_folder": "downloads",
   "log_level": "INFO"
@@ -195,9 +213,10 @@ EasyCut/
 ```
 
 **Options:**
-- `dark_mode`: true (dark) or false (light)
-- `language`: "en" (English) or "pt" (Portuguese)
+- `dark_mode`: `true` (dark) or `false` (light)
+- `language`: `"en"` (English) or `"pt"` (Portuguese)
 - `output_folder`: Output folder path
+- `log_level`: Logging verbosity (`"DEBUG"`, `"INFO"`, `"WARNING"`, `"ERROR"`)
 
 ---
 
@@ -205,8 +224,8 @@ EasyCut/
 
 ### Credential Management
 
-- **Windows Keyring**: Credentials stored securely
-- **No plaintext files**: Passwords never saved to file
+- **Windows Keyring**: Credentials stored securely in Windows Credential Manager
+- **No plaintext files**: Passwords never saved to disk
 - **"Remember" option**: Save credentials for quick access
 
 ### Validations
@@ -274,7 +293,7 @@ pip install --upgrade keyring
 
 ## 📄 License
 
-This project is licensed under the **MIT License** - see [LICENSE](LICENSE) for details.
+This project is licensed under the **GPL-3.0 License** — GNU General Public License v3.0. See [CREDITS.md](CREDITS.md) for details.
 
 ---
 
@@ -301,35 +320,46 @@ Report bugs or suggest features:
 
 ## 🎓 Credits
 
-- **yt-dlp**: YouTube video downloading tool
+- **yt-dlp**: YouTube video downloading engine
 - **FFmpeg**: Media conversion and processing
 - **Keyring**: Secure credential storage
+- **Pillow**: Image processing for icons and color extraction
+- **Inter Font**: Modern typography by Rasmus Andersson
 - **Python & Tkinter**: Programming language and GUI framework
 
 ---
 
 ## 🔄 Version History
 
-### v1.0.0 - 2024-02-13
-- Initial complete version
-- 6 functional tabs
-- Multi-language support (EN, PT)
-- Donation system
-- Secure credential management
-- Hot-reload theme/language switching
-- Professional UI/UX
+### v1.0.0 - Current
+- ✨ Complete UI redesign with modern design system
+- 🎨 Professional color palette (dark/light themes)
+- 🔤 Inter Display font integration
+- 🌐 Full internationalization (EN/PT) with hot-reload
+- 🎯 7 functional tabs
+- 🔐 Secure credential management via keyring
+- 📦 Batch download support
+- 📡 Live stream recording
+- 🎵 Audio conversion (MP3, WAV, M4A, OPUS)
+- ☕ Donation system
+
+### Coming Soon
+- 🎬 Playlist support
+- 📹 Multiple simultaneous downloads
+- 🎨 Custom themes
+- 🌍 More language support
+- 📊 Download statistics
 
 ---
 
 ## 📖 Additional Resources
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Architecture & design patterns
-- [TECHNICAL.md](TECHNICAL.md) - Technical deep dive
-- [REFACTORING_SUMMARY.md](REFACTORING_SUMMARY.md) - Refactoring results
-- [QUICKSTART.md](QUICKSTART.md) - 5-minute setup guide
-- [CREDITS.md](CREDITS.md) - Credits & acknowledgements
+- [ARCHITECTURE.md](ARCHITECTURE.md) — Architecture overview and module map
+- [TECHNICAL.md](TECHNICAL.md) — Technical deep dive (threading, config, security)
+- [REFACTORING_SUMMARY.md](REFACTORING_SUMMARY.md) — Refactoring status and metrics
+- [QUICKSTART.md](QUICKSTART.md) — 5-minute setup guide
+- [CREDITS.md](CREDITS.md) — Credits and licenses
 - [yt-dlp Documentation](https://github.com/yt-dlp/yt-dlp)
-- [Tkinter Documentation](https://docs.python.org/3/library/tkinter.html)
 - [FFmpeg Documentation](https://ffmpeg.org/documentation.html)
 
 ---

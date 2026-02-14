@@ -134,3 +134,4 @@ dmypy.json
 config/app.log
 downloads/
 .config/
+debug.txt

@@ -1,126 +1,281 @@
-# 🔧 EasyCut - Technical Deep Dive
+# 🔧 EasyCut - Technical Documentation
 
 **Author:** Deko Costa  
 **Version:** 1.0.0  
-**Python Version:** 3.8+  
+**Python:** 3.8+  
 **Repository:** [github.com/dekouninter/EasyCut](https://github.com/dekouninter/EasyCut)
 
 ---
 
 ## 📋 Table of Contents
 
-1. [Application Architecture](#application-architecture)
+1. [Module Reference](#module-reference)
 2. [Threading Model](#threading-model)
 3. [Configuration System](#configuration-system)
 4. [Security Architecture](#security-architecture)
-5. [Error Handling Strategy](#error-handling-strategy)
-6. [Performance Optimization](#performance-optimization)
+5. [Error Handling](#error-handling)
+6. [Performance](#performance)
 7. [Data Persistence](#data-persistence)
-8. [Development Guide](#development-guide)
+8. [Hot-Reload System](#hot-reload-system)
+9. [Icon & Font Pipeline](#icon--font-pipeline)
+10. [API Reference](#api-reference)
 
 ---
 
-## 🏗️ Application Architecture
+## 📦 Module Reference
 
-### Overview
+### `easycut.py` — Main Application (1,868 lines)
 
-EasyCut follows a **professional 7-layer architecture** with clear separation of concerns:
+The central orchestrator. Contains `EasyCutApp` class which:
+- Creates the main window, header bar, and tab notebook
+- Implements all 7 tabs (Login, Download, Batch, Live, Audio, History, About)
+- Contains all download/convert/batch/live-stream business logic
+- Manages threading for non-blocking operations
+- Handles theme toggle and language switching (hot-reload)
+- Manages download history (JSON persistence)
 
-```
-Layer 7: ORCHESTRATION
-  ↓
-Layer 6: SCREENS (UI Presentation)
-  ↓
-Layer 5: SERVICES (Business Logic)
-  ↓
-Layer 4: UI (Components, Factories)
-  ↓
-Layer 3: THEME (Design System)
-  ↓
-Layer 2: CORE (Config, Logger, Exceptions)
-  ↓
-Layer 1: EXTERNAL (YouTube, FFmpeg, Keyring)
-```
-
-### Complete Module Structure
-
-```
-src/
-├── core/                    # Foundation (required for everything)
-│   ├── config.py           # ConfigManager - unified configuration
-│   ├── constants.py        # Global constants and translation keys
-│   ├── logger.py           # Logger - structured, colored output
-│   ├── exceptions.py       # Custom exception hierarchy
-│   └── utils.py            # Helper functions
-│
-├── theme/                   # Design system (unified from 3 systems)
-│   ├── theme_manager.py    # ThemeManager (dark/light, instant toggle)
-│   └── color_palette.py    # Color definitions and constants
-│
-├── ui/                      # User interface
-│   ├── factories/           # Widget creation factories (DRY principle)
-│   │   ├── widget_factory.py   # ButtonFactory, FrameFactory, etc.
-│   │   └── tab_factory.py      # TabFactory (creates scrollable tabs)
-│   │
-│   ├── components/          # Reusable UI components
-│   │   ├── modern_button.py
-│   │   ├── modern_card.py
-│   │   ├── modern_alert.py
-│   │   ├── modern_input.py
-│   │   └── ... others
-│   │
-│   └── screens/             # Screen implementations (7 screens)
-│       ├── base_screen.py   # Abstract base class
-│       ├── login_screen.py
-│       ├── download_screen.py
-│       ├── batch_screen.py
-│       ├── live_screen.py
-│       ├── audio_screen.py
-│       ├── history_screen.py
-│       └── about_screen.py
-│
-├── services/                # Service layer (business logic)
-│   ├── base_service.py
-│   ├── download_service.py
-│   ├── audio_service.py
-│   ├── history_service.py
-│   ├── auth_service.py
-│   └── streaming_service.py
-│
-├── utils/                   # Utility functions
-│   ├── icon_helper.py
-│   ├── file_helper.py
-│   └── validators.py
-│
-├── i18n.py                 # Internationalization (140+ translation keys)
-├── easycut.py              # Main app orchestrator (~400 lines)
-└── main.py                 # Entry point
+```python
+class EasyCutApp:
+    def __init__(self, root):
+        # Config, fonts, theme, design tokens
+        # Header bar, tab notebook, all screens
+    
+    def toggle_theme(self)          # Instant dark/light switch
+    def change_language(self, lang)  # Instant language switch
+    def handle_download(self)        # Video download (threaded)
+    def handle_batch_download(self)  # Batch download (threaded)
+    def handle_audio_conversion(self)# Audio conversion (threaded)
+    def load_history(self)           # Load from JSON
+    def save_history(self)           # Save to JSON
+    def run_in_thread(self, target)  # Background execution
 ```
 
-### Data Flow
+**Imports:**
+- `i18n` — translations
+- `ui_enhanced` — ConfigManager, LogWidget, StatusBar, LoginPopup
+- `design_system` — ModernTheme, DesignTokens, Typography, Spacing, Icons
+- `modern_components` — ModernButton, ModernCard, ModernInput, ModernAlert, etc.
+- `font_loader` — setup_fonts(), LOADED_FONT_FAMILY
+- `icon_manager` — icon loading
+- `donation_system` — DonationButton
+- `ui.screens` — LoginScreen, DownloadScreen, BatchScreen, LiveScreen, AudioScreen, HistoryScreen, AboutScreen
 
+---
+
+### `i18n.py` — Internationalization (565 lines)
+
+Translation engine supporting English and Portuguese with hot-reload.
+
+```python
+class Translator:
+    def __init__(self, language='en')
+    def set_language(lang: str) -> bool  # Hot-reload support
+    def get(key: str, default='') -> str
+    def get_all() -> dict
+
+# Module-level singleton
+translator = Translator("en")
 ```
-User Action (UI Event)
-    ↓
-Screen (DownloadScreen, BatchScreen, etc.)
-    ├─ Validates input
-    ├─ Calls appropriate service
-    └─ Updates UI with results
-        ↓
-        Service (DownloadService, AudioService, etc.)
-        ├─ Executes business logic
-        ├─ Uses logger for traceability  
-        ├─ Handles errors with custom exceptions
-        └─ Returns ServiceResult
-            ↓
-            Core (Logger, ConfigManager, Exceptions)
-            ├─ Structured output
-            ├─ Persistent config
-            └─ Typed errors
-                ↓
-                External (YouTube, FFmpeg, Keyring, File System)
-                └─ Actual work happens
+
+**Translation structure:**
+```python
+TRANSLATIONS = {
+    "app_title": {"en": "EasyCut", "pt": "EasyCut"},
+    "tab_login": {"en": "Login", "pt": "Conexão"},
+    "btn_download": {"en": "Download", "pt": "Baixar"},
+    # 150+ keys organized by category
+}
 ```
+
+---
+
+### `design_system.py` — Design Tokens (515 lines)
+
+Design token system with icon-branded colors.
+
+```python
+class ColorPalette:
+    DARK = { "bg_primary": "#0A0E27", ... }
+    LIGHT = { "bg_primary": "#FFFFFF", ... }
+
+class ModernTheme:
+    def __init__(self, dark_mode=True, font_family="Segoe UI")
+
+class DesignTokens:
+    def __init__(self, dark_mode=True)
+    def get_color(self, key: str) -> str
+    def get_font(self, size: str, weight: str) -> tuple
+
+class Typography:    # Font size constants (XS through XXL)
+class Spacing:       # Spacing constants (XS through XXL)
+class Icons:         # Icon name → file mapping
+```
+
+**Color branding:** Imports `color_extractor.py` to extract accent colors from `app_icon.png`. The icon's primary color (`#f85451` coral red) is used as `accent_primary` across both themes.
+
+---
+
+### `modern_components.py` — Custom Widgets (621 lines)
+
+Modern UI components built on Tkinter Canvas and Frame:
+
+| Class | Purpose |
+|-------|---------|
+| `ModernButton` | Styled button with hover, colors, icons |
+| `ModernCard` | Container with title and border |
+| `ModernInput` | Labeled input with validation |
+| `ModernAlert` | Notification bar (success/warning/error/info) |
+| `ModernDialog` | Modal dialog window |
+| `ModernIconButton` | Icon-only button |
+| `ModernTabHeader` | Tab header with icon and label |
+
+Includes **emoji fallback mapping** (40+ icons) for when PNG icons are unavailable.
+
+---
+
+### `ui_enhanced.py` — UI Infrastructure (534 lines)
+
+Original UI utilities, still actively used by `easycut.py`:
+
+| Class | Purpose |
+|-------|---------|
+| `Theme` | Dark/light color dictionaries |
+| `ConfigManager` | JSON config persistence (load/save/get/set) |
+| `LogWidget` | Auto-scrolling timestamped log display |
+| `StatusBar` | Login status indicator |
+| `LoginPopup` | Modal authentication dialog with keyring |
+| `LanguageSelector` | Language dropdown selector |
+
+---
+
+### `color_extractor.py` — Icon Color Extraction (197 lines)
+
+Extracts vibrant and dominant colors from `assets/app_icon.png` using Pillow:
+
+```python
+def extract_vibrant_colors(image_path) -> dict    # {primary, accent, secondary}
+def extract_dominant_colors(image_path, n=5) -> list
+def get_theme_palette_from_icon() -> dict          # {DARK: {...}, LIGHT: {...}}
+def get_icon_path() -> Path
+```
+
+Used by `design_system.py` to brand the accent color from the app logo.
+
+---
+
+### `font_loader.py` — Font Loading (147 lines)
+
+Loads the Inter Display font family via Windows GDI (`AddFontResourceEx`):
+
+```python
+def setup_fonts() -> str              # Returns loaded font family name
+def load_custom_fonts() -> bool       # Loads TTF files from assets/fonts/
+LOADED_FONT_FAMILY: str               # Global: "Inter Display" or "Segoe UI"
+```
+
+Falls back to "Segoe UI" if Inter font files are missing or loading fails.
+
+---
+
+### `icon_manager.py` — Icon Management (290 lines)
+
+Manages icon loading with emoji fallback:
+
+```python
+class IconManager:
+    def get_icon(self, name, size=24) -> ImageTk.PhotoImage
+    def get_emoji_icon(self, name, size=24) -> ImageTk.PhotoImage
+
+def get_ui_icon(name, size=24) -> ImageTk.PhotoImage
+
+icon_manager = IconManager()  # Module-level singleton
+```
+
+Looks for PNG icons in `assets/icons/`. If not found, renders emoji text as images via Pillow. Currently uses emoji fallback exclusively (PNG icons not yet generated).
+
+---
+
+### `donation_system.py` — Donation UI (199 lines)
+
+```python
+class DonationWindow(tk.Toplevel):   # Modal with donation links
+class DonationButton(tk.Frame):      # Floating action button
+```
+
+Links: [Buy Me a Coffee](https://buymeacoffee.com/dekocosta), [Livepix](https://livepix.gg/dekocosta)
+
+---
+
+### `core/` — Foundation Layer (675 lines total)
+
+| File | Lines | Key Exports |
+|------|------:|-------------|
+| `config.py` | 195 | `ConfigManager` — JSON config with dot notation, defaults, hot-reload |
+| `constants.py` | 272 | `Constants` (DOWNLOAD, AUDIO, LIVE, UI), `TranslationKeys` |
+| `logger.py` | 119 | `Logger`, `StructuredFormatter`, `get_logger()` — colored console + file |
+| `exceptions.py` | 55 | `EasyCutException`, `DownloadException`, `AudioException`, `ConfigException`, `AuthException`, `ValidationException` |
+
+---
+
+### `theme/theme_manager.py` — Theme Engine (376 lines)
+
+Unified theme manager used by `BaseScreen` and factories:
+
+```python
+class ThemeManager:
+    def __init__(self, dark_mode=True)
+    def get_color(self, key: str) -> str
+    def get_font(self, size: str, weight: str) -> tuple
+    def toggle(self)
+    def apply_to_style(self, style: ttk.Style)
+```
+
+---
+
+### `ui/factories/` — Widget Factories (646 lines total)
+
+| File | Lines | Key Exports |
+|------|------:|-------------|
+| `widget_factory.py` | 336 | `ButtonFactory`, `FrameFactory`, `CanvasScrollFactory`, `DialogFactory`, `InputFactory` |
+| `tab_factory.py` | 272 | `TabFactory`, `create_tab()`, `create_tab_header()`, `create_tab_section()` |
+
+---
+
+### `ui/screens/` — Screen Implementations (1,612 lines total)
+
+| File | Lines | Class |
+|------|------:|-------|
+| `base_screen.py` | 242 | `BaseScreen` (ABC) — defines `build()`, `bind_events()`, `get_data()` |
+| `login_screen.py` | 123 | `LoginScreen` — authentication tab |
+| `download_screen.py` | 317 | `DownloadScreen` — video download with quality/format |
+| `batch_screen.py` | 173 | `BatchScreen` — multi-URL batch processing |
+| `live_screen.py` | 229 | `LiveScreen` — live stream recording |
+| `audio_screen.py` | 160 | `AudioScreen` — audio extraction/conversion |
+| `history_screen.py` | 158 | `HistoryScreen` — card-based history display |
+| `about_screen.py` | 210 | `AboutScreen` — app info and credits |
+
+---
+
+### `services/base_service.py` — Service Base (193 lines)
+
+Abstract base class and typed result wrapper:
+
+```python
+class BaseService(ABC):
+    @abstractmethod
+    def execute(self, **kwargs): pass
+    @abstractmethod
+    def validate(self, **kwargs): pass
+    def cleanup(self): pass
+
+class ServiceResult:
+    success: bool
+    data: Any
+    error: str
+    metadata: dict
+```
+
+> **Status:** Only the abstract base exists. Concrete service implementations are planned for a future phase. All business logic currently remains in `easycut.py`.
 
 ---
 
@@ -128,121 +283,65 @@ Screen (DownloadScreen, BatchScreen, etc.)
 
 ### Problem
 
-Downloads, audio conversions, and batch operations are I/O intensive (network, disk, CPU). Running them on the main thread freezes the UI.
+Downloads and conversions are I/O intensive (network + disk). Running on the main thread freezes the UI.
 
 ### Solution
 
-**Asynchronous Threading:** Background operations run on separate threads while UI remains responsive.
+Background threads via `threading.Thread(daemon=True)`:
 
 ```python
-import threading
-
-# In main app
-def handle_download(self):
-    """Initiate download without freezing UI"""
-    url = self.url_entry.get()
-    quality = self.quality_combo.get()
-    
-    # Run download in background thread
+def run_in_thread(self, target, *args, **kwargs):
     thread = threading.Thread(
-        target=self._download_worker,
-        args=(url, quality),
+        target=target, args=args, kwargs=kwargs,
         daemon=True
     )
     thread.start()
-
-def _download_worker(self, url, quality):
-    """Runs in background thread"""
-    try:
-        result = self.download_service.download(url, quality)
-        # Update UI from main thread
-        self.root.after(0, self._on_download_complete, result)
-    except Exception as e:
-        logger.error(f"Download failed: {e}")
-        self.root.after(0, self._on_download_error, str(e))
 ```
 
-### Threading Architecture
+### Operations
 
-| Operation | Thread | Block? | Performance |
-|-----------|--------|--------|---|
-| **Video Download** | Background | No | Multiple downloads in parallel |
-| **Audio Conversion** | Background | No | Doesn't freeze UI |
-| **Batch Download** | Background | No | Processes URLs sequentially per queue |
-| **History Load** | Background | No | Fast JSON parsing |
-| **Logger Update** | Main | No | Queued to main thread |
+| Operation | Thread | Blocks UI? |
+|-----------|--------|------------|
+| Video download | Background | No |
+| Audio conversion | Background | No |
+| Batch download | Background | No |
+| Live recording | Background | No |
+| UI updates | Main (via `root.after`) | No |
+| Config load/save | Main | Negligible |
 
-### Thread Safety Patterns
+### Thread Safety
 
-1. **Main Thread for UI Updates** - Always update Tkinter widgets on main thread
-2. **Daemon Threads** - Background threads don't block app exit
-3. **Thread-Safe Logging** - Logger has internal locks
-4. **No Shared State** - Each service is independent
-5. **Exception Handling** - Try/catch in worker threads
+- UI updates dispatched to main thread via `root.after(0, callback)`
+- Daemon threads: don't block app exit
+- Thread-safe logging with internal locks
+- No shared mutable state between threads
 
 ---
 
 ## 💾 Configuration System
 
-### File Structure
-
-```
-config/
-├── config.json ..................... Application settings
-├── history_downloads.json ......... Download history (JSON array)
-└── app.log ........................ Application logs
-```
-
-### Configuration File (`config/config.json`)
+### File: `config/config.json`
 
 ```json
 {
-    "dark_mode": true,
+    "dark_mode": false,
     "language": "en",
-    "username": "user@email.com",
-    "output_folder": "C:\\Users\\User\\Downloads",
-    "download_quality": "best",
-    "audio_format": "mp3",
-    "audio_bitrate": "192",
-    "window_width": 1000,
-    "window_height": 700,
-    "remember_username": false
+    "output_folder": "downloads",
+    "log_level": "INFO"
 }
 ```
 
-### ConfigManager Implementation
+### ConfigManager (from `ui_enhanced.py`)
 
 ```python
-from core.config import ConfigManager
-
-# Usage
-config = ConfigManager("config/config.json")
-
-# Load settings
-settings = config.load()
-
-# Get a value
-language = config.get("language", "en")  # Default: "en"
-
-# Set and save
-config.set("theme", "dark")
+config = ConfigManager()
+config.load()
+lang = config.get("language", "en")
+config.set("dark_mode", True)
 config.save()
-
-# Get nested value (dot notation)
-quality = config.get("download.quality")
 ```
 
-### Supported Configuration Keys
-
-| Key | Type | Default | Purpose |
-|-----|------|---------|---------|
-| `dark_mode` | bool | true | Theme preference |
-| `language` | string | "en" | Language setting |
-| `username` | string | "" | Saved username |
-| `output_folder` | string | "~/Downloads" | Download destination |
-| `download_quality` | string | "best" | Video quality preference |
-| `audio_format` | string | "mp3" | Audio format for conversion |
-| `audio_bitrate` | string | "192" | Audio bitrate (128/192/256/320) |
+Auto-creates `config/` directory and default config on first run.
 
 ---
 
@@ -250,341 +349,195 @@ quality = config.get("download.quality")
 
 ### Credential Storage
 
-Passwords are **never stored** in config files. They use OS-level encryption via Windows Keyring:
+Passwords stored via OS keyring (Windows Credential Manager):
 
 ```python
 import keyring
 
-# Store password (encrypted)
-keyring.set_password(
-    service="EasyCut",
-    username="user@email.com",
-    password="secret_password"
-)
-
-# Retrieve password (decrypted)
-password = keyring.get_password(
-    service="EasyCut",
-    username="user@email.com"
-)
-
-# Delete password
-keyring.delete_password(
-    service="EasyCut",
-    username="user@email.com"
-)
+keyring.set_password("EasyCut", username, password)   # Store
+password = keyring.get_password("EasyCut", username)   # Retrieve
+keyring.delete_password("EasyCut", username)            # Delete
 ```
 
 ### Security Features
 
-✅ **OS-Level Encryption** - Uses Windows Credential Manager  
-✅ **No Plaintext Storage** - Passwords never visible in files  
-✅ **Automatic Decryption** - Transparent to application  
-✅ **Per-User Isolation** - Each Windows user has separate credentials  
-✅ **Secure Transport** - Uses OS security primitives
-
-### Input Validation
-
-```python
-import re
-
-# Email validation
-EMAIL_REGEX = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-def is_valid_email(email):
-    return re.match(EMAIL_REGEX, email) is not None
-
-# YouTube URL validation
-def is_valid_youtube_url(url):
-    return 'youtube.com' in url or 'youtu.be' in url
-
-# Time format validation (MM:SS)
-TIME_REGEX = r'^([0-5][0-9]):([0-5][0-9])$'
-def is_valid_time(time_str):
-    return re.match(TIME_REGEX, time_str) is not None
-```
+- **OS-level encryption** — uses Windows Credential Manager
+- **No plaintext** — passwords never written to files
+- **Per-user isolation** — each Windows user has separate credentials
+- **Input validation** — URL, email, time format regex checks
 
 ---
 
-## ⚠️ Error Handling Strategy
+## ⚠️ Error Handling
 
-### Exception Hierarchy
+### Custom Exception Hierarchy
 
-```python
-# In core/exceptions.py
-class EasyCutException(Exception):
-    """Base exception for all EasyCut errors"""
-    pass
-
-class DownloadException(EasyCutException):
-    """Download-related errors"""
-    pass
-
-class AudioException(EasyCutException):
-    """Audio conversion errors"""
-    pass
-
-class ConfigException(EasyCutException):
-    """Configuration errors"""
-    pass
-
-class AuthenticationException(EasyCutException):
-    """Auth/credential errors"""
-    pass
+```
+EasyCutException (base)
+├── DownloadException    — download failures
+├── AudioException       — conversion failures
+├── ConfigException      — config read/write errors
+├── AuthException        — authentication failures
+└── ValidationException  — input validation errors
 ```
 
-### Error Handling Patterns
+### User-Facing Errors
 
 ```python
-# In services
 try:
-    result = self.download_service.download(url, quality)
-    logger.info(f"Download successful: {result.filename}")
-    
-except DownloadException as e:
-    logger.error(f"Download failed: {e}")
-    self.show_error("Download Error", str(e))
-    
+    result = download_video(url)
 except Exception as e:
-    logger.error(f"Unexpected error: {e}", exc_info=True)
-    self.show_error("Error", "An unexpected error occurred")
-```
-
-### User-Facing Error Messages
-
-```
-GOOD: "Invalid YouTube URL. Please check the link."
-      "FFmpeg not installed. See documentation."
-      
-BAD:  "URLError: <urlopen error [Errno 11001] getaddrinfo failed>"
-      "Traceback (most recent call last)..."
+    log_widget.log(f"ERROR: {str(e)}")
+    messagebox.showerror("Error", user_friendly_message)
 ```
 
 ---
 
-## ⚡ Performance Optimization
+## ⚡ Performance
 
-### Optimization Strategies
+| Metric | Target | Actual |
+|--------|--------|--------|
+| Cold startup | < 2s | ~1-2s |
+| Theme toggle | < 300ms | ~200ms |
+| Language switch | < 300ms | ~300ms |
+| Memory (idle) | < 100MB | ~50-80MB |
+| Memory (downloading) | < 200MB | ~100-150MB |
 
-| Strategy | Implementation | Benefit |
-|----------|---|---|
-| **Lazy Loading** | Screens created on demand | Faster startup (~1-2s) |
-| **Caching** | Theme colors cached | Faster UI updates |
-| **Threading** | I/O in background threads | No UI blocking |
-| **JSON Config** | Lightweight file format | Fast load/save (<100ms) |
-| **Minimal Widgets** | Only visible widgets created | Lower memory usage |
-| **Event Queuing** | Logger uses queue | No main thread blocking |
+### Optimizations
 
-### Startup Sequence
-
-```
-1. Load config (50ms)
-2. Initialize logger (10ms)
-3. Create theme manager (20ms)
-4. Build main window (100ms)
-5. Create initial screens (200ms)
-6. Load history (50ms)
------
-Total: ~430ms (target: <1500ms)
-```
-
-### Memory Usage
-
-| Component | Memory |
-|-----------|--------|
-| Base app | ~50MB |
-| All screens loaded | ~80MB |
-| Active download | ~150MB |
-| Max sustainable | ~200MB |
-
-### Performance Targets
-
-- **Startup time:** < 2 seconds
-- **Theme toggle:** < 300ms
-- **Language change:** < 300ms
-- **Download start:** < 500ms
-- **Memory footprint:** < 200MB
+- Lazy tab creation — screens built on demand
+- Cached theme colors — no recomputation
+- Background threads — UI never blocks
+- JSON config — lightweight persistence
+- Emoji icon fallback — avoids loading 286 PNG files
 
 ---
 
 ## 📊 Data Persistence
 
-### Persistent Data Types
+| Data | Storage | Format |
+|------|---------|--------|
+| Settings | `config/config.json` | JSON |
+| Credentials | Windows Keyring | Encrypted |
+| History | `config/history_downloads.json` | JSON array |
+| Logs | `config/app.log` | Plain text |
 
-| Data | Storage | Format | Scope |
-|------|---------|--------|-------|
-| **Settings** | config.json | JSON | Per user |
-| **Credentials** | Windows Keyring | Encrypted | Per system |
-| **History** | history_downloads.json | JSON array | Per user |
-| **Logs** | app.log | Plain text | Session |
-
-### Data Lifecycle
-
-```
-App Start
-  ↓
-[1] Load config.json
-  ├─ If missing: Create with defaults
-  └─ If corrupt: Use hardcoded defaults
-  ↓
-[2] Retrieve credentials from Keyring
-  ├─ If missing: Prompt user on login
-  └─ If expired: Request refresh
-  ↓
-[3] Load history_downloads.json
-  ├─ If missing: Create empty
-  └─ If corrupt: Reset to empty
-  ↓
-[4] App Running
-  ├─ User downloads → Add to history
-  ├─ User changes settings → Update config.json
-  └─ Operations → Live append to app.log
-  ↓
-[5] App Exit
-  ├─ Save config.json
-  ├─ Save history_downloads.json
-  └─ Close app.log
-  ↓
-Next Session: All data restored
-```
-
-### History Entry Structure
+### History Entry
 
 ```json
 {
-  "url": "https://www.youtube.com/watch?v=...",
-  "title": "Video Title",
-  "date": "2024-02-13 15:30:45",
-  "status": "success",
-  "format": "mp4",
-  "size_mb": 45.3,
-  "duration_sec": 600
+    "url": "https://www.youtube.com/watch?v=...",
+    "title": "Video Title",
+    "date": "2024-02-13 15:30:45",
+    "status": "success",
+    "format": "mp4",
+    "size_mb": 45.3
 }
 ```
 
 ---
 
-## 🔨 Development Guide
+## 🔄 Hot-Reload System
 
-### Adding a New Screen
+### Theme Toggle
 
 ```python
-# 1. Create file: src/ui/screens/my_screen.py
-from .base_screen import BaseScreen
-
-class MyScreen(BaseScreen):
-    def build(self):
-        """Build screen UI"""
-        # Use TabFactory to create scrollable tab
-        self.tab_data = TabFactory.create_scrollable_tab(
-            self.notebook,
-            "My Tab",
-            self.theme,
-            "🎬"  # emoji
-        )
-        
-        content = self.tab_data["content"]
-        # Add your widgets here
-    
-    def bind_events(self):
-        """Bind user interactions"""
-        pass
-    
-    def get_data(self):
-        """Return screen state"""
-        return {}
-
-# 2. Register in easycut.py
-from ui.screens import MyScreen
-
-class EasyCutApp:
-    def __init__(self):
-        self.my_screen = MyScreen(self.notebook, self.theme, self.services)
-        self.my_screen.build()
+def toggle_theme(self):
+    self.dark_mode = not self.dark_mode
+    self.config_manager.set("dark_mode", self.dark_mode)
+    self.theme = ModernTheme(dark_mode=self.dark_mode, font_family=self.font_family)
+    self.setup_ui()  # Full UI rebuild (~200ms)
 ```
 
-### Adding a New Service
+### Language Switch
 
 ```python
-# 1. Create file: src/services/my_service.py
-from .base_service import BaseService
-from ..core.logger import get_logger
-
-logger = get_logger(__name__)
-
-class MyService(BaseService):
-    def execute(self, **kwargs):
-        """Main operation"""
-        try:
-            # Your logic here
-            result = self._do_work(**kwargs)
-            logger.info("Operation completed")
-            return result
-        except Exception as e:
-            logger.error(f"Operation failed: {e}")
-            raise
-    
-    def validate(self, **kwargs):
-        """Validate inputs before execution"""
-        pass
-    
-    def cleanup(self):
-        """Clean up resources"""
-        pass
-
-# 2. Register in easycut.py
-from services.my_service import MyService
-
-class EasyCutApp:
-    def __init__(self):
-        self.my_service = MyService()
+def change_language(self, lang):
+    translator.set_language(lang)
+    self.config_manager.set("language", lang)
+    self.setup_ui()  # Full UI rebuild (~300ms)
 ```
 
-### Using Services from Screens
+Both operations destroy all widgets and rebuild the entire UI with the new theme/language. User data (history, config, logs) is preserved.
+
+---
+
+## 🎨 Icon & Font Pipeline
+
+### Font Loading
+
+1. `font_loader.py` searches `assets/fonts/Inter/` for TTF files
+2. Loads via Windows GDI `AddFontResourceEx` (temporary, process-only)
+3. Sets `LOADED_FONT_FAMILY` global: `"Inter Display"` or `"Segoe UI"` fallback
+4. All modules import `LOADED_FONT_FAMILY` for consistent typography
+
+### Icon Loading
+
+1. `icon_manager.py` looks in `assets/icons/` for `{name}_{size}.png`
+2. If PNG not found → renders emoji via Pillow `ImageFont`/`ImageDraw`
+3. 40+ emoji mappings defined in `modern_components.py`
+4. Icons cached in memory after first load
+
+### Color Extraction
+
+1. `color_extractor.py` loads `assets/app_icon.png`
+2. Extracts dominant colors via pixel clustering
+3. Returns primary color (`#f85451` coral red)
+4. `design_system.py` uses this as `accent_primary` in both palettes
+
+---
+
+## 🔌 API Reference
+
+### EasyCutApp
 
 ```python
-# In download_screen.py
-class DownloadScreen(BaseScreen):
-    def __init__(self, notebook, theme, services):
-        super().__init__(notebook, theme)
-        self.services = services  # Dict of services
-    
-    def on_download_click(self):
-        url = self.url_entry.get()
-        quality = self.quality_combo.get()
-        
-        try:
-            result = self.services['download'].download(
-                url=url,
-                quality=quality,
-                output_dir=Path.home() / "Downloads"
-            )
-            
-            if result.success:
-                self.log_widget.info(f"✅ {result.filename}")
-            else:
-                self.log_widget.error(f"❌ {result.error}")
-        
-        except Exception as e:
-            logger.error(f"Download failed: {e}")
-            messagebox.showerror("Error", str(e))
+app.toggle_theme()                       # Switch dark ↔ light
+app.change_language("pt")                # Switch to Portuguese
+app.handle_download()                    # Start video download
+app.handle_batch_download()              # Start batch downloads
+app.handle_audio_conversion()            # Start audio conversion
+app.load_history()                       # Load from JSON
+app.save_history()                       # Save to JSON
+app.run_in_thread(func, *args)           # Background execution
+app.open_output_folder()                 # Open downloads in explorer
+```
+
+### Translator
+
+```python
+from i18n import translator as t
+t.get("btn_download")                    # "Download" or "Baixar"
+t.set_language("pt")                     # Switch language
+```
+
+### DesignTokens
+
+```python
+from design_system import DesignTokens
+tokens = DesignTokens(dark_mode=True)
+tokens.get_color("bg_primary")           # "#0A0E27"
+tokens.get_color("accent_primary")       # "#f85451"
+```
+
+### ConfigManager
+
+```python
+from ui_enhanced import ConfigManager
+config = ConfigManager()
+config.get("language", "en")
+config.set("dark_mode", True)
+config.save()
 ```
 
 ---
 
 ## 📚 Related Documentation
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) - High-level architecture and design patterns
-- [REFACTORING_SUMMARY.md](REFACTORING_SUMMARY.md) - What was refactored and results
-- [README.md](README.md) - User guide and features
-- [QUICKSTART.md](QUICKSTART.md) - 5-minute setup guide
-
----
-
-## 🤝 Support & Contribution
-
-- 🐛 **Report bugs:** [GitHub Issues](https://github.com/dekouninter/EasyCut/issues)
-- 💡 **Suggest features:** [GitHub Discussions](https://github.com/dekouninter/EasyCut/discussions)
-- ☕ **Support development:** [Buy Me a Coffee](https://buymeacoffee.com/dekocosta)
+- [ARCHITECTURE.md](ARCHITECTURE.md) — Architecture overview and module map
+- [README.md](README.md) — User guide and installation
+- [QUICKSTART.md](QUICKSTART.md) — 5-minute setup guide
+- [CREDITS.md](CREDITS.md) — Credits and licenses
 
 ---
 
