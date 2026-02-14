@@ -273,7 +273,7 @@ class ModernBadge(ttk.Label):
         self.variant = variant
 
 
-class ModernAlert(ttk.Frame):
+class ModernAlert(tk.Frame):  # Changed from ttk.Frame to tk.Frame
     """Alert/notification component"""
     
     def __init__(self, parent, message="", variant="info", dismissible=True, **kwargs):
@@ -286,18 +286,22 @@ class ModernAlert(ttk.Frame):
             variant: "info", "success", "warning", "error"
             dismissible: Whether alert can be dismissed
         """
-        super().__init__(parent, **kwargs)
-        self.configure(padding=Spacing.PADDING_NORMAL)
-        
-        # Get colors for variants
+        # Get design before calling super().__init__
         design = DesignTokens()
-        is_dark = design.dark_mode
+        
+        # Call super with background color to prevent style inheritance
+        super().__init__(parent, bg=design.get_color("bg_primary"), **kwargs)
+        self.configure(
+            bg=design.get_color("bg_primary"),
+            highlightthickness=0,
+            relief="flat"
+        )
         
         color_map = {
-            "info": "#3B82F6",      # Blue
-            "success": "#10B981",   # Green
-            "warning": "#F59E0B",   # Orange/Yellow
-            "error": "#EF4444"      # Red
+            "info": design.get_color("info"),           # Use theme color
+            "success": design.get_color("success"),     # Use theme color
+            "warning": design.get_color("warning"),     # Use theme color
+            "error": design.get_color("error")          # Use theme color
         }
         
         # Emoji icons based on variant
@@ -314,7 +318,8 @@ class ModernAlert(ttk.Frame):
         border = tk.Frame(self, width=4, bg=alert_color)
         border.pack(side="left", fill="y", padx=(0, Spacing.MD))
         
-        content_frame = ttk.Frame(self)
+        # Use tk.Frame (not ttk.Frame) to avoid inheriting ttk style colors
+        content_frame = tk.Frame(self, bg=design.get_color("bg_primary"))
         content_frame.pack(fill="x", expand=True)
         
         # Emoji icon
