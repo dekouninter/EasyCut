@@ -5,7 +5,7 @@ Professional User Interface with Theme and Configuration Management
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
-Version: 1.0.0
+Version: 1.1.2
 License: MIT
 
 This module provides:
@@ -18,9 +18,8 @@ This module provides:
 """
 
 import tkinter as tk
-from tkinter import ttk, simpledialog, messagebox
+from tkinter import ttk, messagebox
 import json
-import os
 from pathlib import Path
 
 
@@ -130,72 +129,6 @@ class LoginPopup:
         return self.result
 
 
-class LanguageSelector:
-    """Multi-Language Selection Component
-    
-    Provides language selection via menu or dropdown with support for
-    callback on language change. Enables dynamic language switching.
-    """
-    
-    def __init__(self, languages=None, default="en"):
-        """Initialize language selector
-        
-        Args:
-            languages (list): Available language codes
-            default (str): Default language code
-        """
-        self.languages = languages or ["en", "pt"]
-        self.current = default
-    
-    def create_menu(self, parent_menu, callback):
-        """Create language submenu for menu bar
-        
-        Args:
-            parent_menu: Parent menu widget
-            callback: Function to call on language selection
-            
-        Returns:
-            tk.Menu: Language submenu
-        """
-        lang_menu = tk.Menu(parent_menu, tearoff=0)
-        
-        for lang in self.languages:
-            lang_name = "Portuguese (PT)" if lang == "pt" else "English (EN)"
-            lang_menu.add_command(
-                label=lang_name,
-                command=lambda l=lang: callback(l)
-            )
-        
-        return lang_menu
-    
-    def create_dropdown(self, parent, callback):
-        """Create language dropdown combobox
-        
-        Args:
-            parent: Parent widget
-            callback: Function to call on selection change
-            
-        Returns:
-            ttk.Combobox: Language selector combo box
-        """
-        lang_names = {
-            "pt": "Portuguese (PT)",
-            "en": "English (EN)"
-        }
-        available = [lang_names.get(lang, lang) for lang in self.languages]
-        
-        combo = ttk.Combobox(
-            parent,
-            values=available,
-            state="readonly",
-            width=20
-        )
-        combo.set(lang_names.get(self.current, self.current))
-        combo.bind("<<ComboboxSelected>>", lambda e: callback(self.languages[combo.current()]))
-        
-        return combo
-
-
 class ConfigManager:
     """JSON-Based Configuration Management System
     
@@ -217,7 +150,11 @@ class ConfigManager:
             "dark_mode": True,
             "language": "pt",
             "output_folder": "downloads",
-            "log_level": "INFO"
+            "log_level": "INFO",
+            "browser_cookies": "chrome",     # Browser for cookie extraction or "file"
+            "browser_profile": "",           # Browser profile name (e.g., "Profile 1", "Default")
+            "use_browser_cookies": True,     # Use browser cookies for auth
+            "cookies_file": ""               # Path to cookies.txt file (when browser_cookies="file")
         }
     
     def load(self):

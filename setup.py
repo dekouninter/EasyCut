@@ -11,9 +11,9 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="EasyCut",
-    version="1.0.0",
+    version="1.2.0",
     author="Deko Costa",
-    description="YouTube Video Downloader and Audio Converter",
+    description="YouTube Video Downloader and Audio Converter with OAuth Authentication",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/dekouninter/EasyCut",
@@ -34,6 +34,9 @@ setup(
         "yt-dlp>=2024.3.10",
         "keyring>=24.0.0",
         "pillow>=10.0.0",
+        "google-auth-oauthlib>=1.2.0",
+        "google-auth-httplib2>=0.3.0",
+        "requests>=2.32.0",
     ],
     extras_require={
         "dev": [

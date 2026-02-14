@@ -5,18 +5,19 @@ Professional Desktop Application using Tkinter
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
-Version: 1.0.0
-License: MIT
+Version: 1.2.0
+License: GPL-3.0
 
 Features:
 - Download YouTube videos with multiple quality options
-- Batch downloads
+- Batch downloads with queue management
 - Audio conversion (MP3, WAV, M4A, OPUS)
+- YouTube OAuth authentication (integrated)
 - Real-time logging
-- Secure credential storage
+- Live stream recording support
 - Dark/Light theme with instant reload
 - Multi-language support (EN, PT)
-- Professional UI design
+- Professional UI design with modern components
 """
 
 import tkinter as tk
@@ -26,7 +27,6 @@ import logging
 import re
 import sys
 import os
-import json
 from pathlib import Path
 from datetime import datetime
 
@@ -34,20 +34,14 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(__file__))
 from i18n import translator as t, Translator
 from ui_enhanced import ConfigManager, LogWidget, StatusBar, LoginPopup
+from oauth_manager import OAuthManager, OAuthError
 from donation_system import DonationButton
-from icon_manager import icon_manager, get_ui_icon
+from icon_manager import icon_manager, get_ui_icon, set_icon_theme
 from design_system import ModernTheme, DesignTokens, Typography, Spacing, Icons
 from modern_components import (
-    ModernButton, ModernCard, ModernInput, ModernAlert,
-    ModernDialog, ModernIconButton, ToastManager
+    ModernButton, ModernCard
 )
 from font_loader import setup_fonts, LOADED_FONT_FAMILY
-
-# Import UI Screens (new modular architecture)
-from ui.screens import (
-    LoginScreen, DownloadScreen, BatchScreen, LiveScreen,
-    HistoryScreen, AboutScreen
-)
 
 # Import external libraries
 try:
@@ -73,6 +67,9 @@ class EasyCutApp:
         self.config_manager = ConfigManager()
         self.load_config()
         
+        # OAuth Manager
+        self.oauth_manager = OAuthManager(config_dir="config")
+        
         # Load custom fonts FIRST
         self.font_family = setup_fonts()
         
@@ -83,19 +80,12 @@ class EasyCutApp:
         
         # Icon Manager
         self.icon_manager = icon_manager
-        self.icons = {}  # Cache for loaded icons
-        
-        # UI Components (will be created)
-        self.ui_components = {}
-        
-        # Screen instances (will be created in setup_ui)
-        self.screens = {}  # {screen_name: screen_instance}
+        set_icon_theme(self.dark_mode)  # Sync icon colors with theme
         
         # State
-        self.logged_in = False
-        self.current_email = ""
         self.is_downloading = False
         self.active_scroll_canvas = None  # Track active canvas for mouse wheel scroll
+        self.browser_var = None  # Browser selection variable
         
         # Paths
         self.output_dir = Path(self.config_manager.get("output_folder", "downloads"))
@@ -152,9 +142,8 @@ class EasyCutApp:
         # --- HEADER (45px) ---
         self.create_header(root_frame)
         
-        # --- LOGIN BANNER ---
-        if not self.logged_in:
-            self.create_login_banner(root_frame)
+        # --- BROWSER AUTH BANNER (replaces old login) ---
+        self.create_login_banner(root_frame)
         
         # --- BODY (sidebar + content) ---
         body = ttk.Frame(root_frame)
@@ -169,32 +158,19 @@ class EasyCutApp:
         # Content area
         self.content_area = ttk.Frame(body)
         self.content_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        
-        # Toast notification manager (top-right of content area)
-        self.toast = ToastManager(self.content_area, dark_mode=self.dark_mode)
-        
-        # Create a notebook (hidden tabs) for content switching
-        self.notebook = ttk.Notebook(self.content_area)
-        self.notebook.pack(fill=tk.BOTH, expand=True)
-        # Hide the notebook tab bar
-        style = ttk.Style()
-        style.layout("TNotebook", [])  # Remove tab bar layout
-        
-        # Create sections as notebook pages
-        self.create_download_tab()
-        self.create_batch_tab()
-        self.create_live_tab()
-        self.create_history_tab()
-        self.create_about_tab()
-        
-        # Map section names to tab indices
-        self._section_map = {
-            "download": 0,
-            "batch": 1,
-            "live": 2,
-            "history": 3,
-            "about": 4,
-        }
+
+        # Section container (stacked frames)
+        self.section_container = ttk.Frame(self.content_area)
+        self.section_container.pack(fill=tk.BOTH, expand=True)
+        self.section_container.grid_rowconfigure(0, weight=1)
+        self.section_container.grid_columnconfigure(0, weight=1)
+
+        # Create sections as stacked frames
+        self.section_frames["download"] = self.create_download_tab()
+        self.section_frames["batch"] = self.create_batch_tab()
+        self.section_frames["live"] = self.create_live_tab()
+        self.section_frames["history"] = self.create_history_tab()
+        self.section_frames["about"] = self.create_about_tab()
         
         # Select initial section
         self._switch_section("download")
@@ -208,7 +184,7 @@ class EasyCutApp:
             "status_ready": tr("status_ready", "Ready"),
             "login_not_logged": tr("status_not_logged_in", "Not logged in"),
             "login_logged_prefix": tr("status_logged_in", "Logged in as"),
-            "version_label": f"v{tr('version', '1.0.0')}",
+            "version_label": f"v{tr('version', '1.1.1')}",
         }
         self.status_bar = StatusBar(root_frame, theme=self.theme, labels=status_labels)
         self.status_bar.pack(fill=tk.X)
@@ -260,18 +236,21 @@ class EasyCutApp:
         for key, icon, label in nav_items:
             btn_frame = tk.Frame(nav_container, bg=bg, cursor="hand2")
             btn_frame.pack(fill=tk.X, pady=1)
+            btn_frame.pack_propagate(False)
+            btn_frame.config(height=40)
+            btn_frame.grid_columnconfigure(2, weight=1)
             
             # Active indicator (left accent bar)
             indicator = tk.Frame(btn_frame, bg=bg, width=3)
-            indicator.pack(side=tk.LEFT, fill=tk.Y)
+            indicator.grid(row=0, column=0, sticky="ns")
             
             # Icon
             icon_lbl = tk.Label(
                 btn_frame, text=icon, bg=bg, fg=fg,
-                font=(Typography.FONT_FAMILY, 14),
-                padx=Spacing.MD, pady=Spacing.SM
+                font=("Segoe UI Emoji", 14),
+                width=2, anchor="center"
             )
-            icon_lbl.pack(side=tk.LEFT)
+            icon_lbl.grid(row=0, column=1, padx=(Spacing.MD, Spacing.SM), pady=Spacing.SM)
             
             # Label
             text_lbl = tk.Label(
@@ -279,7 +258,7 @@ class EasyCutApp:
                 font=(Typography.FONT_FAMILY, Typography.SIZE_BODY),
                 anchor="w"
             )
-            text_lbl.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            text_lbl.grid(row=0, column=2, sticky="w", pady=Spacing.SM)
             
             # Store refs
             self.nav_buttons[key] = {
@@ -298,25 +277,80 @@ class EasyCutApp:
         # Footer
         footer = tk.Frame(self.sidebar_frame, bg=bg)
         footer.pack(side=tk.BOTTOM, fill=tk.X, padx=Spacing.SM, pady=Spacing.SM)
-        
-        # Version
-        tk.Label(
-            footer, text="v1.0.0", bg=bg, fg=fg_sec,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_TINY)
-        ).pack(anchor="w", pady=(0, Spacing.SM))
-        
+
         # Folder buttons
-        ModernButton(
-            footer, text=tr("header_open_folder", "Open Folder"),
+        open_label = tr("header_open_folder", "Open Folder")
+        select_label = tr("header_select_folder", "Select Folder")
+
+        # Open Folder button/frame
+        open_btn_frame = tk.Frame(footer, bg=bg)
+        open_btn_frame.pack(fill=tk.X, pady=(0, Spacing.XS))
+        
+        open_btn = ModernButton(
+            open_btn_frame, text=open_label,
             icon_name="folder", command=self.open_output_folder,
             variant="outline", width=18
-        ).pack(fill=tk.X, pady=(0, Spacing.XS))
+        )
+        open_btn.pack(fill=tk.X)
         
-        ModernButton(
-            footer, text=tr("header_select_folder", "Select Folder"),
+        # Icon-only version for collapsed state
+        border_color = self.design.get_color("border_primary")
+        open_icon = get_ui_icon("folder", size=20)
+        open_icon_lbl = tk.Label(
+            open_btn_frame, image=open_icon, bg=bg, 
+            cursor="hand2", borderwidth=1, relief="solid",
+            highlightthickness=1, highlightbackground=border_color,
+            padx=Spacing.SM, pady=Spacing.SM
+        )
+        open_icon_lbl.image = open_icon
+        open_icon_lbl.bind("<Button-1>", lambda e: self.open_output_folder())
+        open_icon_lbl.bind("<Enter>", lambda e: open_icon_lbl.config(bg=self.design.get_color("bg_hover")))
+        open_icon_lbl.bind("<Leave>", lambda e: open_icon_lbl.config(bg=bg))
+        
+        # Select Folder button/frame
+        select_btn_frame = tk.Frame(footer, bg=bg)
+        select_btn_frame.pack(fill=tk.X)
+        
+        select_btn = ModernButton(
+            select_btn_frame, text=select_label,
             icon_name="folder-plus", command=self.select_output_folder,
             variant="outline", width=18
-        ).pack(fill=tk.X)
+        )
+        select_btn.pack(fill=tk.X)
+        
+        # Icon-only version for collapsed state
+        select_icon = get_ui_icon("folder-plus", size=20)
+        select_icon_lbl = tk.Label(
+            select_btn_frame, image=select_icon, bg=bg,
+            cursor="hand2", borderwidth=1, relief="solid",
+            highlightthickness=1, highlightbackground=border_color,
+            padx=Spacing.SM, pady=Spacing.SM
+        )
+        select_icon_lbl.image = select_icon
+        select_icon_lbl.bind("<Button-1>", lambda e: self.select_output_folder())
+        select_icon_lbl.bind("<Enter>", lambda e: select_icon_lbl.config(bg=self.design.get_color("bg_hover")))
+        select_icon_lbl.bind("<Leave>", lambda e: select_icon_lbl.config(bg=bg))
+
+        # Version (moved below buttons)
+        version_lbl = tk.Label(
+            footer, text="v1.1.2", bg=bg, fg=fg_sec,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_TINY)
+        )
+        version_lbl.pack(anchor="w", pady=(Spacing.SM, 0))
+
+        self.footer_buttons = {
+            "open": {
+                "button": open_btn,
+                "icon_label": open_icon_lbl,
+                "text": open_label
+            },
+            "select": {
+                "button": select_btn,
+                "icon_label": select_icon_lbl,
+                "text": select_label
+            },
+            "version": version_lbl,
+        }
     
     def _switch_section(self, key):
         """Switch active content section"""
@@ -339,9 +373,10 @@ class EasyCutApp:
                 refs["icon"].config(bg=bg)
                 refs["text"].config(bg=bg, fg=fg_sec)
         
-        # Switch notebook tab
-        idx = self._section_map.get(key, 0)
-        self.notebook.select(idx)
+        # Switch visible section frame
+        frame = self.section_frames.get(key)
+        if frame:
+            frame.tkraise()
     
     def _nav_hover(self, key, entering):
         """Handle sidebar nav hover effects"""
@@ -361,11 +396,30 @@ class EasyCutApp:
         if self.sidebar_expanded:
             self.sidebar_frame.config(width=200)
             for refs in self.nav_buttons.values():
-                refs["text"].pack(side=tk.LEFT, fill=tk.X, expand=True)
+                refs["icon"].grid_remove()
+                refs["icon"].grid(row=0, column=1, padx=(Spacing.MD, Spacing.SM), pady=Spacing.SM)
+                refs["text"].grid(row=0, column=2, sticky="w", pady=Spacing.SM)
+
+            # Show buttons, hide icon labels
+            for data in ("open", "select"):
+                self.footer_buttons[data]["button"].pack(fill=tk.X)
+                self.footer_buttons[data]["icon_label"].pack_forget()
+
+            self.footer_buttons["version"].pack_configure(anchor="w")
         else:
             self.sidebar_frame.config(width=50)
             for refs in self.nav_buttons.values():
-                refs["text"].pack_forget()
+                refs["text"].grid_remove()
+                refs["icon"].grid_remove()
+                refs["icon"].config(anchor="center")
+                refs["icon"].grid(row=0, column=1, columnspan=2, sticky="nsew", pady=Spacing.SM)
+
+            # Hide buttons, show centered icon labels
+            for data in ("open", "select"):
+                self.footer_buttons[data]["button"].pack_forget()
+                self.footer_buttons[data]["icon_label"].pack(pady=Spacing.XS, expand=True)
+
+            self.footer_buttons["version"].pack_configure(anchor="center")
     
     # ──────────────────────────────────────────
     # LOG PANEL (collapsible)
@@ -481,14 +535,15 @@ class EasyCutApp:
         right = tk.Frame(inner, bg=bg)
         right.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Theme toggle
-        theme_icon_key = "theme_dark" if self.dark_mode else "theme_light"
-        ModernButton(
-            right, text=tr("header_theme", "Theme"),
-            icon_name=theme_icon_key,
-            command=self.toggle_theme,
-            variant="outline", width=8
-        ).pack(side=tk.LEFT, padx=Spacing.XS)
+        # Theme toggle (icon only — compact)
+        theme_icon = "🌙" if self.dark_mode else "☀️"
+        theme_btn = tk.Label(
+            right, text=theme_icon, bg=bg, fg=fg_sec,
+            font=("Segoe UI Emoji", 14), cursor="hand2",
+            padx=Spacing.SM
+        )
+        theme_btn.pack(side=tk.LEFT, padx=Spacing.XS)
+        theme_btn.bind("<Button-1>", lambda e: self.toggle_theme())
         
         # Language selector
         lang_options = [
@@ -506,65 +561,429 @@ class EasyCutApp:
         lang_combo.bind("<<ComboboxSelected>>", lambda e: self.change_language(lang_codes[lang_combo.current()]))
         lang_combo.pack(side=tk.LEFT, padx=Spacing.XS)
         
-        # Login status / button
-        if not self.logged_in:
-            ModernButton(
-                right, text=tr("header_login", "Login"),
-                icon_name="login",
-                command=self.open_login_popup,
-                variant="outline", width=8
-            ).pack(side=tk.LEFT, padx=Spacing.XS)
+
         
         # Bottom border
         tk.Frame(parent, bg=self.design.get_color("border"), height=1).pack(fill=tk.X)
     
     def create_login_banner(self, parent):
-        """Create slim login status banner (when not logged in)"""
+        """Create browser authentication banner"""
         tr = self.translator.get
         bg = self.design.get_color("bg_secondary")
+        fg = self.design.get_color("fg_primary")
         fg_sec = self.design.get_color("fg_secondary")
-        accent = self.design.get_color("accent_primary")
         
-        banner = tk.Frame(parent, bg=bg, height=32)
-        banner.pack(fill=tk.X)
-        banner.pack_propagate(False)
+        banner = tk.Frame(parent, bg=bg)
+        banner.pack(fill=tk.X, padx=Spacing.LG, pady=Spacing.SM)
         
-        inner = tk.Frame(banner, bg=bg)
-        inner.pack(fill=tk.BOTH, expand=True, padx=Spacing.LG)
-        
-        # Info icon + message
+        # Title
         tk.Label(
-            inner, text="ℹ️", bg=bg, font=("Segoe UI Emoji", 10)
+            banner, 
+            text=tr("browser_cookies_title", "Browser Authentication"),
+            bg=bg, fg=fg,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_H3, "bold")
+        ).pack(anchor="w", pady=(0, Spacing.XS))
+        
+        # Info text
+        tk.Label(
+            banner,
+            text=tr("browser_cookies_info", "EasyCut uses cookies from your browser"),
+            bg=bg, fg=fg_sec,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION),
+            justify=tk.LEFT
+        ).pack(anchor="w", pady=(0, Spacing.SM))
+        
+        # Browser selector
+        selector_frame = tk.Frame(banner, bg=bg)
+        selector_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        tk.Label(
+            selector_frame,
+            text=tr("browser_select_label", "Select Browser:"),
+            bg=bg, fg=fg,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_BODY)
         ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
         
-        tk.Label(
-            inner,
-            text=f"{tr('login_banner_title', 'Not connected')} — {tr('login_banner_note', 'Login is only used by yt-dlp')}",
-            bg=bg, fg=fg_sec,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION)
-        ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        # Browser dropdown
+        browsers = [
+            ("chrome", tr("browser_chrome", "Chrome")),
+            ("firefox", tr("browser_firefox", "Firefox")),
+            ("edge", tr("browser_edge", "Edge")),
+            ("opera", tr("browser_opera", "Opera")),
+            ("brave", tr("browser_brave", "Brave")),
+            ("safari", tr("browser_safari", "Safari")),
+            ("file", tr("browser_cookies_file", "Cookies File")),
+            ("none", tr("browser_none", "None"))
+        ]
         
-        # Login button (small outline)
+        current_browser = self.config_manager.get("browser_cookies", "chrome")
+        self.browser_var = tk.StringVar(value=current_browser)
+        
+        browser_combo = ttk.Combobox(
+            selector_frame,
+            textvariable=self.browser_var,
+            values=[b[1] for b in browsers],
+            state="readonly",
+            width=25,
+            font=(LOADED_FONT_FAMILY, Typography.SIZE_BODY)
+        )
+        browser_combo.pack(side=tk.LEFT)
+        
+        # Set current value
+        for i, (code, name) in enumerate(browsers):
+            if code == current_browser:
+                browser_combo.current(i)
+                break
+        
+        # Save on change
+        def on_browser_change(event):
+            selected_index = browser_combo.current()
+            browser_code = browsers[selected_index][0]
+            self.config_manager.set("browser_cookies", browser_code)
+            if hasattr(self, 'download_log') and self.download_log:
+                self.download_log.add_log(f"Browser changed to: {browsers[selected_index][1]}")
+            
+            # Show/hide profile selector or file selector
+            if browser_code == "file":
+                profile_frame.pack_forget()
+                cookies_file_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+                cookies_help_frame.pack(fill=tk.X, pady=(Spacing.SM, 0))
+            elif browser_code == "none":
+                profile_frame.pack_forget()
+                cookies_file_frame.pack_forget()
+                cookies_help_frame.pack_forget()
+            else:
+                cookies_file_frame.pack_forget()
+                cookies_help_frame.pack_forget()
+                profile_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+                # Refresh profiles when browser changes
+                self.refresh_browser_profiles()
+        
+        browser_combo.bind("<<ComboboxSelected>>", on_browser_change)
+        
+        # Cookies file selector (hidden by default)
+        cookies_file_frame = tk.Frame(banner, bg=bg)
+        
+        tk.Label(
+            cookies_file_frame,
+            text=tr("browser_cookies_file_label", "Cookies File:"),
+            bg=bg, fg=fg,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_BODY)
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        self.cookies_file_var = tk.StringVar(value=self.config_manager.get("cookies_file", ""))
+        
+        cookies_file_label = tk.Label(
+            cookies_file_frame,
+            textvariable=self.cookies_file_var,
+            bg=bg, fg=fg_sec,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION),
+            width=30,
+            anchor="w"
+        )
+        cookies_file_label.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        def select_cookies_file():
+            from tkinter import filedialog
+            filepath = filedialog.askopenfilename(
+                title=tr("browser_cookies_file_button", "Select Cookies File"),
+                filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+            )
+            if filepath:
+                self.cookies_file_var.set(filepath)
+                self.config_manager.set("cookies_file", filepath)
+                if hasattr(self, 'download_log') and self.download_log:
+                    self.download_log.add_log(f"Cookies file: {Path(filepath).name}")
+        
         ModernButton(
-            inner,
-            text=tr("login_banner_button", "Login"),
-            icon_name="login",
-            command=self.open_login_popup,
+            cookies_file_frame,
+            text=tr("browser_cookies_file_button", "Select File"),
+            icon_name="file",
+            command=select_cookies_file,
             variant="outline",
             size="sm",
-            width=8
-        ).pack(side=tk.RIGHT, pady=2)
+            width=12
+        ).pack(side=tk.LEFT)
+        
+        # Help text for exporting cookies (shown when file mode is selected)
+        cookies_help_frame = tk.Frame(banner, bg=bg)
+        help_text = f"{tr('browser_cookies_export_help', 'How to export cookies:')}\n" \
+                   f"{tr('browser_cookies_export_step1', '1. Install browser extension Get cookies.txt LOCALLY')}\n" \
+                   f"{tr('browser_cookies_export_step2', '2. Go to youtube.com and click the extension')}\n" \
+                   f"{tr('browser_cookies_export_step3', '3. Click Export and save the cookies.txt file')}\n" \
+                   f"{tr('browser_cookies_export_step4', '4. Select the saved file here')}"
+        
+        tk.Label(
+            cookies_help_frame,
+            text=help_text,
+            bg=bg, fg=fg_sec,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION),
+            justify=tk.LEFT
+        ).pack(anchor="w", padx=(0, 0))
+        
+        # Profile/Account selector with auto-detection
+        profile_frame = tk.Frame(banner, bg=bg)
+        profile_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        tk.Label(
+            profile_frame,
+            text=tr("browser_profile_auto_label", "YouTube Account:"),
+            bg=bg, fg=fg,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_BODY)
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        # Profile dropdown (will be populated by detect function)
+        self.detected_accounts = []
+        self.profile_var = tk.StringVar()
+        
+        self.profile_combo = ttk.Combobox(
+            profile_frame,
+            textvariable=self.profile_var,
+            values=[tr("browser_profile_select", "Select account...")],
+            state="readonly",
+            width=25,
+            font=(LOADED_FONT_FAMILY, Typography.SIZE_BODY)
+        )
+        self.profile_combo.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self.profile_combo.current(0)
+        
+        # Save on change
+        def on_profile_change(event):
+            selected_index = self.profile_combo.current()
+            if selected_index >= 0 and selected_index < len(self.detected_accounts):
+                display_name, browser_name, profile_name = self.detected_accounts[selected_index]
+                self.config_manager.set("browser_profile", profile_name)
+                if hasattr(self, 'download_log') and self.download_log:
+                    self.download_log.add_log(f"Account set to: {display_name}")
+        
+        self.profile_combo.bind("<<ComboboxSelected>>", on_profile_change)
+        
+        # Refresh button
+        ModernButton(
+            profile_frame,
+            text=tr("browser_profile_refresh", "Refresh"),
+            icon_name="refresh-cw",
+            command=self.refresh_browser_profiles,
+            variant="ghost",
+            size="sm",
+            width=10
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        # Test Connection Button
+        ModernButton(
+            profile_frame,
+            text=tr("browser_test_button", "Test Connection"),
+            icon_name="check-circle",
+            command=self.test_browser_connection,
+            variant="outline",
+            size="sm",
+            width=15
+        ).pack(side=tk.LEFT)
+        
+        # Show appropriate frame based on browser selection
+        if current_browser == "file":
+            cookies_file_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+            cookies_help_frame.pack(fill=tk.X, pady=(Spacing.SM, 0))
+        elif current_browser != "none":
+            profile_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        # Account Status
+        status_frame = tk.Frame(banner, bg=bg)
+        status_frame.pack(fill=tk.X, pady=(Spacing.SM, 0))
+        
+        tk.Label(
+            status_frame,
+            text=tr("browser_account_status", "Account Status:"),
+            bg=bg, fg=fg_sec,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION, "bold")
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        self.account_status_label = tk.Label(
+            status_frame,
+            text=tr("browser_account_none", "No account detected"),
+            bg=bg, fg=fg_sec,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION)
+        )
+        self.account_status_label.pack(side=tk.LEFT)
         
         # Bottom border
         tk.Frame(parent, bg=self.design.get_color("border"), height=1).pack(fill=tk.X)
+    
+    def create_login_banner(self, parent):
+        """Create OAuth authentication banner"""
+        tr = self.translator.get
+        bg = self.design.get_color("bg_secondary")
+        fg = self.design.get_color("fg_primary")
+        fg_sec = self.design.get_color("fg_secondary")
+        
+        banner = tk.Frame(parent, bg=bg)
+        banner.pack(fill=tk.X, padx=Spacing.LG, pady=Spacing.SM)
+        
+        # Title
+        tk.Label(
+            banner, 
+            text="YouTube Authentication",
+            bg=bg, fg=fg,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_H3, "bold")
+        ).pack(anchor="w", pady=(0, Spacing.XS))
+        
+        # Info text
+        info_text = (
+            "Authenticate with Google to download videos and live streams.\n"
+            "Your browser stays free to browse YouTube while downloads happen."
+        )
+        tk.Label(
+            banner,
+            text=info_text,
+            bg=bg, fg=fg_sec,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION),
+            justify=tk.LEFT
+        ).pack(anchor="w", pady=(0, Spacing.SM))
+        
+        # Control frame
+        control_frame = tk.Frame(banner, bg=bg)
+        control_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        # Sync button
+        def handle_sync():
+            """Handle clicking the sync button"""
+            if self.oauth_manager.is_authenticated():
+                # Already authenticated
+                result = messagebox.askyesno(
+                    "Info",
+                    "Already authenticated! Re-authenticate?"
+                )
+                if not result:
+                    return
+            
+            # Show loading state
+            sync_btn.config(state="disabled")
+            self.account_status_label.config(
+                text="Opening browser...",
+                fg=self.design.get_color("warning")
+            )
+            self.root.update()
+            
+            # Perform authentication in background thread
+            def auth_thread():
+                try:
+                    success = self.oauth_manager.authenticate()
+                    
+                    if success:
+                        # Get cookies for yt-dlp
+                        cookies_path = self.oauth_manager.get_youtube_cookies()
+                        if cookies_path:
+                            self.account_status_label.config(
+                                text="✓ Authenticated! Ready to download",
+                                fg=self.design.get_color("success")
+                            )
+                            if hasattr(self, 'download_log') and self.download_log:
+                                self.download_log.add_log("✓ YouTube authentication successful!")
+                        else:
+                            self.account_status_label.config(
+                                text="✗ Failed to get cookies",
+                                fg=self.design.get_color("error")
+                            )
+                    else:
+                        self.account_status_label.config(
+                            text="✗ Authentication failed",
+                            fg=self.design.get_color("error")
+                        )
+                
+                except OAuthError as e:
+                    # User-friendly OAuth error messages
+                    error_msg = str(e)
+                    self.account_status_label.config(
+                        text="✗ OAuth Error (see popup)",
+                        fg=self.design.get_color("error")
+                    )
+                    # Show detailed error in popup
+                    self.root.after(0, lambda: messagebox.showerror("OAuth Error", error_msg))
+                    if hasattr(self, 'download_log') and self.download_log:
+                        self.download_log.add_log("OAuth error - check popup for details", "ERROR")
+                
+                
+                finally:
+                    sync_btn.config(state="normal")
+            
+            thread = threading.Thread(target=auth_thread, daemon=True)
+            thread.start()
+        
+        sync_btn = ModernButton(
+            control_frame,
+            text="Sync with YouTube",
+            icon_name="log-in",
+            command=handle_sync,
+            variant="primary",
+            size="sm",
+            width=18
+        )
+        sync_btn.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        # Logout button
+        def handle_logout():
+            """Handle logout"""
+            result = messagebox.askyesno(
+                "Confirm",
+                "Remove YouTube authentication?"
+            )
+            if result:
+                self.oauth_manager.logout()
+                self.account_status_label.config(
+                    text="Not authenticated",
+                    fg=self.design.get_color("fg_secondary")
+                )
+                if hasattr(self, 'download_log') and self.download_log:
+                    self.download_log.add_log("Logged out from YouTube")
+        
+        ModernButton(
+            control_frame,
+            text="Logout",
+            icon_name="log-out",
+            command=handle_logout,
+            variant="ghost",
+            size="sm",
+            width=10
+        ).pack(side=tk.LEFT)
+        
+        # Account Status
+        status_frame = tk.Frame(banner, bg=bg)
+        status_frame.pack(fill=tk.X, pady=(Spacing.SM, 0))
+        
+        tk.Label(
+            status_frame,
+            text="Status:",
+            bg=bg, fg=fg_sec,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION, "bold")
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        # Status label
+        if self.oauth_manager.is_authenticated():
+            status_text = "✓ Authenticated and ready"
+            status_color = self.design.get_color("success")
+        else:
+            status_text = "Not authenticated yet"
+            status_color = self.design.get_color("fg_secondary")
+        
+        self.account_status_label = tk.Label(
+            status_frame,
+            text=status_text,
+            bg=bg, fg=status_color,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION)
+        )
+        self.account_status_label.pack(side=tk.LEFT)
+        
+        # Bottom border
+        tk.Frame(parent, bg=self.design.get_color("border"), height=1).pack(fill=tk.X)
+    
     
     def create_download_tab(self):
         """Create download section"""
         tr = self.translator.get
         
         # Create tab
-        frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text="Download")
+        frame = ttk.Frame(self.section_container)
+        frame.grid(row=0, column=0, sticky="nsew")
         
         # Main scrollable container
         main_canvas = tk.Canvas(frame, bg=self.design.get_color("bg_primary"), highlightthickness=0)
@@ -580,9 +999,6 @@ class EasyCutApp:
         
         main_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
-        # Enable mouse wheel scroll for download tab
-        self.enable_mousewheel_scroll(main_canvas, main)
         
         # === SECTION HEADER ===
         hdr = tk.Frame(main, bg=self.design.get_color("bg_primary"))
@@ -790,13 +1206,18 @@ class EasyCutApp:
             size="lg",
             width=14
         ).pack(side=tk.LEFT)
+
+        # Enable mouse wheel scroll AFTER all widgets are created
+        self.enable_mousewheel_scroll(main_canvas, main)
+
+        return frame
     
     def create_batch_tab(self):
         """Create batch download section"""
         tr = self.translator.get
         
-        frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text="Batch")
+        frame = ttk.Frame(self.section_container)
+        frame.grid(row=0, column=0, sticky="nsew")
         
         main = ttk.Frame(frame, padding=Spacing.LG)
         main.pack(fill=tk.BOTH, expand=True)
@@ -854,6 +1275,7 @@ class EasyCutApp:
             icon_name="paste",
             command=self.batch_paste,
             variant="outline",
+            size="sm",
             width=20
         ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
         
@@ -863,6 +1285,7 @@ class EasyCutApp:
             icon_name="clear",
             command=lambda: self.batch_text.delete(1.0, tk.END),
             variant="ghost",
+            size="sm",
             width=12
         ).pack(side=tk.LEFT)
         
@@ -877,7 +1300,7 @@ class EasyCutApp:
             command=self.start_batch_download,
             variant="primary",
             size="lg",
-            width=20
+            width=22
         ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
         
         ModernButton(
@@ -886,14 +1309,17 @@ class EasyCutApp:
             icon_name="stop",
             command=self.stop_download,
             variant="danger",
+            size="lg",
             width=12
         ).pack(side=tk.LEFT)
+
+        return frame
     
     def create_live_tab(self):
         """Create live stream recording section"""
         tr = self.translator.get
-        frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text="Live")
+        frame = ttk.Frame(self.section_container)
+        frame.grid(row=0, column=0, sticky="nsew")
         
         main = ttk.Frame(frame, padding=Spacing.LG)
         main.pack(fill=tk.BOTH, expand=True)
@@ -1019,14 +1445,17 @@ class EasyCutApp:
             icon_name="stop",
             command=self.stop_live_recording,
             variant="danger",
+            size="lg",
             width=12
         ).pack(side=tk.LEFT)
+
+        return frame
     
     def create_history_tab(self):
         """Create download history section"""
         tr = self.translator.get
-        frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text="History")
+        frame = ttk.Frame(self.section_container)
+        frame.grid(row=0, column=0, sticky="nsew")
         
         main = ttk.Frame(frame, padding=Spacing.LG)
         main.pack(fill=tk.BOTH, expand=True)
@@ -1096,12 +1525,14 @@ class EasyCutApp:
         self.enable_mousewheel_scroll(canvas, self.history_records_frame)
         
         self.refresh_history()
+
+        return frame
     
     def create_about_tab(self):
         """Create about section"""
         tr = self.translator.get
-        frame = ttk.Frame(self.notebook)
-        self.notebook.add(frame, text="About")
+        frame = ttk.Frame(self.section_container)
+        frame.grid(row=0, column=0, sticky="nsew")
         
         # Scrollable container
         canvas = tk.Canvas(frame, bg=self.design.get_color("bg_primary"), highlightthickness=0)
@@ -1149,7 +1580,7 @@ class EasyCutApp:
         info_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         info_data = [
-            ("Version", "1.0.0"),
+            ("Version", "1.1.1"),
             ("Author", "Deko Costa"),
             ("License", "GPL-3.0"),
             ("Release", "2026")
@@ -1184,29 +1615,6 @@ class EasyCutApp:
                 variant="outline",
                 width=30
             ).pack(pady=(0, Spacing.SM), fill=tk.X)
-        
-        # === FEATURES CARD ===
-        features_card = ModernCard(main, title=tr("about_section_features", "Features"), dark_mode=self.dark_mode)
-        features_card.pack(fill=tk.X, pady=(0, Spacing.MD))
-        
-        features = [
-            "Download videos in multiple qualities (4K to 144p)",
-            "Extract audio in MP3, WAV, M4A, OPUS formats",
-            "Batch download multiple videos simultaneously",
-            "Record live streams with customizable duration",
-            "Time range selection for video trimming",
-            "Dark and Light theme support",
-            "Multi-language support (EN, PT, ES)",
-            "Professional icon set (Feather Icons)",
-            "Download history tracking"
-        ]
-        
-        for feature in features:
-            ttk.Label(
-                features_card.body,
-                text=feature,
-                style="Caption.TLabel"
-            ).pack(anchor=tk.W, pady=(0, Spacing.XS))
         
         # === TECHNOLOGIES CARD ===
         tech_card = ModernCard(main, title=tr("about_section_tech", "Technologies & Credits"), dark_mode=self.dark_mode)
@@ -1252,40 +1660,8 @@ class EasyCutApp:
             text=tr("about_footer", "Made with Python | GPL-3.0 License | 2026 Deko Costa"),
             style="Caption.TLabel"
         ).pack(pady=Spacing.MD)
-    
-    def create_screens_new_architecture(self):
-        """Create screens using new modular architecture
-        
-        This method instantiates all screen classes, which represent tabs
-        in the Notebook. Each screen handles its own UI layout and delegates
-        business logic back to this app instance.
-        
-        NOTE: LoginScreen is not included here as login is currently handled
-        via popup and banner in the header. Can be added to notebook if needed.
-        """
-        # Prepare kwargs for screen initialization
-        screen_kwargs = {
-            "translator": self.translator,
-            "design": self.design,
-            "app": self  # Reference back to main app for business logic calls
-        }
-        
-        # Create all screens with the notebook and theme
-        # These replace the monolithic create_*_tab() methods
-        self.screens = {
-            "download": DownloadScreen(self.notebook, self.design, **screen_kwargs),
-            "batch": BatchScreen(self.notebook, self.design, **screen_kwargs),
-            "live": LiveScreen(self.notebook, self.design, **screen_kwargs),
-            "history": HistoryScreen(self.notebook, self.design, **screen_kwargs),
-            "about": AboutScreen(self.notebook, self.design, **screen_kwargs)
-        }
-        
-        # Build each screen (creates UI and binds events)
-        for screen_name, screen in self.screens.items():
-            screen.build()
-            logging.info(f"✓ {screen.__class__.__name__} built")
-        
-        logging.info(f"✓ All 5 screens created using new modular architecture")
+
+        return frame
     
     def apply_theme(self):
         """Apply modern theme to window"""
@@ -1326,6 +1702,7 @@ class EasyCutApp:
         self.design.toggle_mode()
         self.dark_mode = not self.dark_mode
         self.config_manager.set("dark_mode", self.dark_mode)
+        set_icon_theme(self.dark_mode)  # Update icon colors
         self.apply_theme()
         self.setup_ui()
         self.log_app("✓ Theme changed instantly")
@@ -1338,84 +1715,263 @@ class EasyCutApp:
             self.log_app(f"✓ Language changed to {lang.upper()}")
     
     def open_login_popup(self):
-        """Open login popup"""
+        """Deprecated: Login popup replaced by browser authentication"""
         tr = self.translator.get
-        def handle_login(creds):
-            email = creds["email"]
-            password = creds["password"]
-            remember = creds["remember"]
-            
-            self.logged_in = True
-            self.current_email = email
-            
-            if remember and KEYRING_AVAILABLE:
-                try:
-                    keyring.set_password("easycut", "user_email", email)
-                    keyring.set_password("easycut", "password", password)
-                except Exception as e:
-                    self.logger.warning(f"Could not save credentials: {e}")
-            
-            self.update_login_status()
-            self.log_app(f"✓ Logged in as {email}")
-        
-        labels = {
-            "email_label": tr("login_email", "Email/Username") + " (YouTube):",
-            "password_label": tr("login_password", "Password") + ":",
-            "notice": tr("login_banner_note", "Login is only used by yt-dlp."),
-            "button_ok": tr("login_btn", "Login"),
-            "button_cancel": tr("msg_cancel", "Cancel"),
-            "warning_title": tr("msg_warning", "Warning"),
-            "warning_message": tr("login_validation_error", "Please fill all fields."),
-        }
-        popup = LoginPopup(self.root, title=tr("header_login", "YouTube Login"), callback=handle_login, labels=labels)
-        popup.show()
+        messagebox.showinfo(
+            tr("browser_cookies_title", "Browser Authentication"),
+            tr("browser_cookies_info", "EasyCut now uses cookies from your browser.\nSelect your browser in the settings above.")
+        )
     
-    def do_logout(self):
-        """Logout user"""
-        tr = self.translator.get
-        if messagebox.askyesno(tr("msg_confirm", "Confirm"), tr("login_logout", "Logout") + "?"):
-            self.logged_in = False
-            self.current_email = ""
+    def check_saved_credentials(self):
+        """Deprecated: Credential saving replaced by browser cookies"""
+        pass
+    
+    def update_login_status(self):
+        """Deprecated: Login status replaced by browser selection"""
+        pass
+    
+    def get_browser_profile_paths(self, browser):
+        """Get list of profile directories for a browser
+        
+        Args:
+            browser (str): Browser name (chrome, firefox, edge, etc.)
             
-            if KEYRING_AVAILABLE:
+        Returns:
+            list: List of (profile_name, profile_path) tuples
+        """
+        profiles = []
+        
+        try:
+            if browser == "chrome":
+                base = Path.home() / "AppData" / "Local" / "Google" / "Chrome" / "User Data"
+            elif browser == "edge":
+                base = Path.home() / "AppData" / "Local" / "Microsoft" / "Edge" / "User Data"
+            elif browser == "brave":
+                base = Path.home() / "AppData" / "Local" / "BraveSoftware" / "Brave-Browser" / "User Data"
+            elif browser == "opera":
+                base = Path.home() / "AppData" / "Roaming" / "Opera Software" / "Opera Stable"
+            elif browser == "firefox":
+                base = Path.home() / "AppData" / "Roaming" / "Mozilla" / "Firefox" / "Profiles"
+            else:
+                return profiles
+            
+            if not base.exists():
+                return profiles
+            
+            # For Chromium-based browsers
+            if browser in ["chrome", "edge", "brave", "opera"]:
+                # Check Default profile
+                if (base / "Default").exists():
+                    profiles.append(("Default", str(base / "Default")))
+                
+                # Check Profile 1, Profile 2, etc.
+                for i in range(1, 20):  # Check up to Profile 19
+                    profile_dir = base / f"Profile {i}"
+                    if profile_dir.exists():
+                        profiles.append((f"Profile {i}", str(profile_dir)))
+            
+            # For Firefox
+            elif browser == "firefox":
+                for profile_dir in base.iterdir():
+                    if profile_dir.is_dir() and not profile_dir.name.startswith('.'):
+                        profiles.append((profile_dir.name, str(profile_dir)))
+        
+        except Exception as e:
+            print(f"Error getting browser profiles: {e}")
+        
+        return profiles
+    
+    def detect_youtube_accounts(self):
+        """Detect YouTube accounts from browser profiles
+        
+        Returns:
+            list: List of (display_name, browser, profile_name) tuples
+        """
+        tr = self.translator.get
+        accounts = []
+        
+        browser = self.config_manager.get("browser_cookies", "chrome")
+        if browser == "none":
+            return accounts
+        
+        # Update status
+        if hasattr(self, 'account_status_label'):
+            self.account_status_label.config(
+                text=tr("browser_profile_detecting", "Detecting accounts..."),
+                fg=self.design.get_color("fg_secondary")
+            )
+            self.root.update()
+        
+        profiles = self.get_browser_profile_paths(browser)
+        
+        # Try to get account names from browser preferences
+        for profile_name, profile_path in profiles:
+            account_name = None
+            
+            # Try to read account info from Chrome/Edge Preferences file
+            if browser in ["chrome", "edge", "brave"]:
                 try:
-                    keyring.delete_password("easycut", "user_email")
-                    keyring.delete_password("easycut", "password")
+                    import json as json_module
+                    prefs_file = Path(profile_path) / "Preferences"
+                    if prefs_file.exists():
+                        with open(prefs_file, 'r', encoding='utf-8') as f:
+                            prefs = json_module.load(f)
+                            # Try to get Google account info
+                            account_info = prefs.get('account_info', [])
+                            if account_info and len(account_info) > 0:
+                                account_name = account_info[0].get('full_name') or account_info[0].get('email', '').split('@')[0]
                 except Exception:
                     pass
             
-            self.update_login_status()
-            self.log_app("✓ Logged out")
+            # Build display name
+            if account_name:
+                display_name = f"{account_name} ({browser.capitalize()} - {profile_name})"
+            else:
+                display_name = f"{browser.capitalize()} - {profile_name}"
+            
+            accounts.append((display_name, browser, profile_name))
+        
+        return accounts
     
-    def check_saved_credentials(self):
-        """Check for saved credentials"""
-        if not KEYRING_AVAILABLE:
+    def refresh_browser_profiles(self):
+        """Refresh the browser profile dropdown with detected accounts"""
+        tr = self.translator.get
+        
+        if not hasattr(self, 'profile_combo'):
             return
         
-        try:
-            email = keyring.get_password("easycut", "user_email")
-            password = keyring.get_password("easycut", "password")
-            if email and password:
-                self.logged_in = True
-                self.current_email = email
-                self.update_login_status()
-        except Exception as e:
-            self.logger.warning(f"Could not retrieve credentials: {e}")
+        # Run detection in background thread
+        def detect_thread():
+            accounts = self.detect_youtube_accounts()
+            
+            # Update UI in main thread
+            def update_ui():
+                if not accounts:
+                    self.profile_combo['values'] = [tr("browser_profile_none_found", "No accounts found")]
+                    self.profile_combo.current(0)
+                    if hasattr(self, 'account_status_label'):
+                        self.account_status_label.config(
+                            text=tr("browser_profile_none_found", "No accounts found"),
+                            fg=self.design.get_color("warning")
+                        )
+                else:
+                    # Store account mapping
+                    self.detected_accounts = accounts
+                    display_names = [acc[0] for acc in accounts]
+                    self.profile_combo['values'] = display_names
+                    self.profile_combo.current(0)
+                    
+                    # Update account status
+                    if hasattr(self, 'account_status_label'):
+                        self.account_status_label.config(
+                            text=f"✓ {len(accounts)} account(s) found",
+                            fg=self.design.get_color("success")
+                        )
+                    
+                    # Auto-select based on saved config
+                    saved_profile = self.config_manager.get("browser_profile", "")
+                    if saved_profile:
+                        for i, (_, _, profile_name) in enumerate(accounts):
+                            if profile_name == saved_profile:
+                                self.profile_combo.current(i)
+                                break
+            
+            self.root.after(0, update_ui)
+        
+        thread = threading.Thread(target=detect_thread, daemon=True)
+        thread.start()
     
-    def update_login_status(self):
-        """Update login status display"""
-        if self.status_bar:
-            if self.logged_in:
-                self.status_bar.set_login_status(True, self.current_email)
-            else:
-                self.status_bar.set_login_status(False)
+    def get_ydl_opts_with_cookies(self, base_opts=None):
+        """Get yt-dlp options with OAuth cookies configured
+        
+        Args:
+            base_opts (dict): Base options to extend
+            
+        Returns:
+            dict: yt-dlp options with OAuth cookies file configured
+        """
+        opts = base_opts.copy() if base_opts else {}
+        
+        # Get OAuth cookies file
+        cookies_file = Path("config") / "yt_cookies.txt"
+        
+        if cookies_file.exists():
+            opts['cookiefile'] = str(cookies_file)
+        
+        return opts
     
-    def get_login_status(self):
-        """Get login status text"""
+    def test_browser_connection(self):
+        """Test if browser authentication is working"""
         tr = self.translator.get
-        if self.logged_in:
-            return f"{tr('status_logged_in', 'Logged in as')}: {self.current_email}"
-        return tr("status_not_logged_in", "Not logged in")
+        
+        if not YT_DLP_AVAILABLE:
+            messagebox.showerror(tr("msg_error", "Error"), "yt-dlp not available")
+            return
+        
+        # Update status to "checking"
+        self.account_status_label.config(
+            text=tr("browser_test_checking", "Testing connection..."),
+            fg=self.design.get_color("fg_secondary")
+        )
+        self.root.update()
+        
+        def test_thread():
+            try:
+                # Try to extract info from a YouTube URL that requires authentication
+                # Using youtube.com/feed/subscriptions or a simple public video
+                test_url = "https://www.youtube.com/watch?v=jNQXAC9IVRw"  # "Me at the zoo" - first YouTube video
+                
+                ydl_opts = self.get_ydl_opts_with_cookies({
+                    'quiet': True,
+                    'no_warnings': True,
+                    'extract_flat': True,
+                    'skip_download': True
+                })
+                
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(test_url, download=False)
+                    
+                    # Check if we got auth info
+                    uploader = info.get('uploader', '')
+                    channel = info.get('channel', '')
+                    
+                    # Try to get user info if authenticated
+                    # Note: yt-dlp doesn't easily expose the logged-in username,
+                    # but we can check if we have access to private features
+                    
+                    if uploader or channel:
+                        self.account_status_label.config(
+                            text=f"{tr('browser_test_success', '✓ Connected to YouTube')}",
+                            fg=self.design.get_color("success")
+                        )
+                        if hasattr(self, 'download_log') and self.download_log:
+                            self.download_log.add_log(tr("browser_test_success", "✓ Connection successful"))
+                    else:
+                        self.account_status_label.config(
+                            text=tr("browser_test_no_auth", "⚠ Not authenticated"),
+                            fg=self.design.get_color("warning")
+                        )
+                
+            except Exception as e:
+                error_msg = str(e)
+                # Check if error is due to browser being open
+                if "Could not copy" in error_msg and "cookie database" in error_msg:
+                    self.account_status_label.config(
+                        text=tr("browser_test_browser_open", "⚠️ Browser is open! Close it first."),
+                        fg=self.design.get_color("warning")
+                    )
+                    if hasattr(self, 'download_log') and self.download_log:
+                        self.download_log.add_log(tr("browser_test_browser_open", "⚠️ Browser is open! Close it first."), "WARNING")
+                else:
+                    self.account_status_label.config(
+                        text=f"{tr('browser_test_failed', '✗ Connection failed')}: {error_msg[:50]}",
+                        fg=self.design.get_color("error")
+                    )
+                    if hasattr(self, 'download_log') and self.download_log:
+                        self.download_log.add_log(f"Connection test failed: {error_msg}", "ERROR")
+        
+        thread = threading.Thread(target=test_thread, daemon=True)
+        thread.start()
     
     def verify_video(self):
         """Verify video URL"""
@@ -1482,11 +2038,12 @@ class EasyCutApp:
                     'audio': 'bestaudio/best'
                 }.get(quality, 'best')
                 
-                ydl_opts = {
+                base_opts = {
                     'format': format_str,
                     'outtmpl': output_template,
                     'quiet': False,
                 }
+                ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
                 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     info = ydl.extract_info(url, download=True)
@@ -1503,7 +2060,12 @@ class EasyCutApp:
                     self.refresh_history()
             
             except Exception as e:
-                self.download_log.add_log(f"{tr('msg_error', 'Error')}: {str(e)}", "ERROR")
+                error_msg = str(e)
+                # Check if error is due to browser being open
+                if "Could not copy" in error_msg and "cookie database" in error_msg:
+                    self.download_log.add_log(tr("browser_test_browser_open", "⚠️ Browser is open! Close it first."), "WARNING")
+                else:
+                    self.download_log.add_log(f"{tr('msg_error', 'Error')}: {error_msg}", "ERROR")
             
             finally:
                 self.is_downloading = False
@@ -1543,11 +2105,12 @@ class EasyCutApp:
                 
                 try:
                     output_template = str(self.output_dir / "%(title)s.%(ext)s")
-                    ydl_opts = {
+                    base_opts = {
                         'format': 'best',
                         'outtmpl': output_template,
                         'quiet': True,
                     }
+                    ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
                     
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         info = ydl.extract_info(url, download=True)
@@ -1555,7 +2118,13 @@ class EasyCutApp:
                         self.batch_log.add_log(f"[{i}/{len(urls)}] {info.get('title', 'Video')[:30]}")
                 
                 except Exception as e:
-                    self.batch_log.add_log(f"[{i}/{len(urls)}] ✗ Error: {str(e)[:50]}", "ERROR")
+                    error_msg = str(e)
+                    # Check if error is due to browser being open
+                    if "Could not copy" in error_msg and "cookie database" in error_msg:
+                        self.batch_log.add_log(f"[{i}/{len(urls)}] {tr('browser_test_browser_open', '⚠️ Browser is open! Close it first.')}", "WARNING")
+                        break  # Stop batch if browser is open
+                    else:
+                        self.batch_log.add_log(f"[{i}/{len(urls)}] ✗ Error: {error_msg[:50]}", "ERROR")
             
             self.batch_log.add_log(f"Batch complete: {success}/{len(urls)} successful")
             self.refresh_history()
@@ -1675,7 +2244,6 @@ class EasyCutApp:
         """Let user select output folder"""
         tr = self.translator.get
         try:
-            from tkinter import filedialog
             selected_dir = filedialog.askdirectory(
                 title=tr("header_select_folder", "Select Folder"),
                 initialdir=str(self.output_dir)
@@ -1783,7 +2351,7 @@ class EasyCutApp:
                 else:
                     max_duration = None
                 
-                ydl_opts = {
+                base_opts = {
                     'format': format_str,
                     'outtmpl': str(self.output_dir / '%(title)s-%(id)s.%(ext)s'),
                     'quiet': False,
@@ -1792,7 +2360,9 @@ class EasyCutApp:
                 }
                 
                 if max_duration:
-                    ydl_opts['max_filesize'] = max_duration * 100000  # Approximate
+                    base_opts['max_filesize'] = max_duration * 100000  # Approximate
+                
+                ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
                 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     self.live_log.add_log(tr("download_progress", "Downloading..."))
@@ -1811,7 +2381,12 @@ class EasyCutApp:
                     self.refresh_history()
             
             except Exception as e:
-                self.live_log.add_log(f"{tr('msg_error', 'Error')}: {str(e)}", "ERROR")
+                error_msg = str(e)
+                # Check if error is due to browser being open
+                if "Could not copy" in error_msg and "cookie database" in error_msg:
+                    self.live_log.add_log(tr("browser_test_browser_open", "⚠️ Browser is open! Close it first."), "WARNING")
+                else:
+                    self.live_log.add_log(f"{tr('msg_error', 'Error')}: {error_msg}", "ERROR")
             
             finally:
                 self.is_downloading = False
@@ -1853,8 +2428,13 @@ class EasyCutApp:
         
         Args:
             canvas: Canvas widget to enable scrolling for
-            frame: Optional parent frame to also bind scroll events
+            frame: Optional parent frame to also bind scroll events (recursively to all children)
         """
+        # Store canvas reference for later use
+        if not hasattr(self, '_scroll_canvases'):
+            self._scroll_canvases = []
+        self._scroll_canvases.append(canvas)
+        
         # Track mouse entering/leaving canvas area for global scroll handling
         def on_canvas_enter(e):
             self.active_scroll_canvas = canvas
@@ -1868,26 +2448,16 @@ class EasyCutApp:
         canvas.bind("<Enter>", on_canvas_enter)
         canvas.bind("<Leave>", on_canvas_leave)
         
-        # Bind scroll events to canvas (Linux uses Button-4 and Button-5)
-        canvas.bind("<Button-4>", lambda e: self._on_mousewheel(e, canvas))
-        canvas.bind("<Button-5>", lambda e: self._on_mousewheel(e, canvas))
+        # Use bind_all with a check to only scroll the active canvas
+        # This captures events even when over child widgets
+        def scroll_handler(event):
+            # Only scroll if mouse is over this canvas
+            if self.active_scroll_canvas is canvas:
+                self._on_mousewheel(event, canvas)
+                return "break"  # Prevent event propagation
         
-        # Bind scroll events for Windows and macOS
-        canvas.bind("<MouseWheel>", lambda e: self._on_mousewheel(e, canvas))
-        
-        # Also bind to parent frame if provided - enables scroll when over widgets in frame
-        if frame:
-            frame.bind("<Button-4>", lambda e: self._on_mousewheel(e, canvas))
-            frame.bind("<Button-5>", lambda e: self._on_mousewheel(e, canvas))
-            frame.bind("<MouseWheel>", lambda e: self._on_mousewheel(e, canvas))
+        # Bind at application level but check if over our canvas
+        canvas.bind_all("<MouseWheel>", scroll_handler, "+")
+        canvas.bind_all("<Button-4>", scroll_handler, "+")
+        canvas.bind_all("<Button-5>", scroll_handler, "+")
 
-
-def main():
-    """Main function"""
-    root = tk.Tk()
-    app = EasyCutApp(root)
-    root.mainloop()
-
-
-if __name__ == "__main__":
-    main()

@@ -1,6 +1,6 @@
 # 🎬 EasyCut - Professional YouTube Downloader
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
 ![Author](https://img.shields.io/badge/author-Deko%20Costa-brightgreen.svg)
 
@@ -9,13 +9,38 @@
 **Author:** Deko Costa  
 **Repository:** [github.com/dekouninter/EasyCut](https://github.com/dekouninter/EasyCut)
 
+---
+
+## 📥 Getting Started
+
+### For End Users (Recommended)
+
+**Download the latest release** - no installation needed!
+
+1. Go to [Releases](https://github.com/dekouninter/EasyCut/releases)
+2. Download `EasyCut.exe`
+3. Run it - that's it! ✨
+
+The standalone executable includes everything:
+- ✅ No Python installation required
+- ✅ No OAuth setup needed
+- ✅ Just download and run
+- ✅ Works on any Windows PC
+
+### For Developers
+
+Want to contribute or run from source? See [Installation](#-installation) below.
+
+---
+
 ### ✨ Key Features
 
 - ✅ **Video Download**: Download YouTube videos individually or in batch
+- ✅ **Live Stream Recording**: Record YouTube live streams with monitoring
 - ✅ **Audio Extraction**: Convert videos to MP3, WAV, M4A, or OPUS
 - ✅ **Time Range**: Extract only specific parts of videos
 - ✅ **Multiple Formats**: Support for different qualities and formats
-- ✅ **Credential Management**: Store credentials securely via keyring
+- ✅ **YouTube OAuth**: One-click authentication with Google (no manual setup)
 - ✅ **Light/Dark Theme**: Customizable interface themes (instant hot-reload)
 - ✅ **Multi-Language**: Support for English and Portuguese (instant hot-reload)
 - ✅ **Download History**: Track your recent downloads
@@ -38,12 +63,15 @@
 yt-dlp>=2024.3.10
 keyring>=24.0.0
 pillow>=10.0.0
+google-auth-oauthlib>=1.2.0
+google-auth-httplib2>=0.3.0
+requests>=2.32.0
 ```
 
 **Default Settings:**
-- Language: **English** (can switch to Portuguese instantly)
-- Theme: **Light** (can toggle to Dark instantly)
-- Login: **Pop-up only** (clean and simple)
+- Language: **Portuguese** (can switch to English instantly)
+- Theme: **Dark** (can toggle to Light instantly)
+- Authentication: **OAuth 2.0** (one-click sync with YouTube)
 
 Tkinter usually comes pre-installed with Python.
 
@@ -95,6 +123,15 @@ winget install FFmpeg
 ```
 
 **Or download manually:** [ffmpeg.org](https://ffmpeg.org/download.html)
+
+### 5. OAuth Setup (Developers Only)
+
+If you're running from source, you need to create OAuth credentials:
+
+1. **Quick Setup**: Follow [OAUTH_SETUP.md](OAUTH_SETUP.md) to create your own Google OAuth credentials
+2. **Create** `config/credentials.json` with your credentials (see `config/credentials_template.json`)
+
+**Note**: End users who download releases don't need this - OAuth is embedded in the executable.
 
 ---
 
@@ -331,7 +368,7 @@ Report bugs or suggest features:
 
 ## 🔄 Version History
 
-### v1.0.0 - Current
+### v1.1.1 - Current
 - ✨ Complete UI redesign with modern design system
 - 🎨 Professional color palette (dark/light themes)
 - 🔤 Inter Display font integration
@@ -352,9 +389,26 @@ Report bugs or suggest features:
 
 ---
 
-## 📖 Additional Resources
+## � Building Releases
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) — Architecture overview and module map
+Want to create standalone executables? See [BUILD.md](BUILD.md) for complete instructions.
+
+**Quick build:**
+```bash
+pip install pyinstaller
+python build.py
+```
+
+This creates `dist/EasyCut.exe` with embedded OAuth credentials - ready to distribute!
+
+---
+
+## �📖 Additional Resources
+- [BUILD.md](BUILD.md) — Building standalone executables with PyInstaller
+- [OAUTH_SETUP.md](OAUTH_SETUP.md) — Creating Google OAuth credentials (developers)
+- [VERIFICATION_CHECKLIST.md](VERIFICATION_CHECKLIST.md) — Google OAuth verification guide
+- [PRIVACY.md](PRIVACY.md) — Privacy policy for OAuth users
+- [TERMS.md](TERMS.md) — Terms of service- [ARCHITECTURE.md](ARCHITECTURE.md) — Architecture overview and module map
 - [TECHNICAL.md](TECHNICAL.md) — Technical deep dive (threading, config, security)
 - [REFACTORING_SUMMARY.md](REFACTORING_SUMMARY.md) — Refactoring status and metrics
 - [QUICKSTART.md](QUICKSTART.md) — 5-minute setup guide

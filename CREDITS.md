@@ -129,7 +129,12 @@ If you find EasyCut useful, consider:
 
 ## 📝 Version History
 
-### v1.0.0 (Current)
+### v1.1.2 (Current)
+- 🎯 Fixed footer button alignment in collapsed sidebar with icon-only labels
+- 🔧 Improved sidebar icon centering using clickable label solution
+- ✨ Enhanced hover effects for footer icon buttons
+
+### v1.1.1
 - ✨ Complete UI redesign with modern design system
 - 🎨 Professional color palette (dark/light themes)
 - 🔤 Inter font integration for better typography

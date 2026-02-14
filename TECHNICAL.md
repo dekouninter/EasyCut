@@ -1,7 +1,7 @@
 # 🔧 EasyCut - Technical Documentation
 
 **Author:** Deko Costa  
-**Version:** 2.0.0  
+**Version:** 1.1.2  
 **Python:** 3.8+  
 **Repository:** [github.com/dekouninter/EasyCut](https://github.com/dekouninter/EasyCut)
 
@@ -30,7 +30,7 @@
 The central orchestrator. Contains `EasyCutApp` class which:
 - Creates the main window with sidebar navigation layout (no tab bar)
 - Implements 5 sections: Download, Batch, Live, History, About
-- Uses hidden `ttk.Notebook` for section switching (tab bar removed via style layout)
+- Uses stacked section frames for section switching (no tab bar)
 - Contains all download/batch/live-stream business logic
 - Manages threading for non-blocking operations
 - Handles theme toggle and language switching (full UI rebuild)

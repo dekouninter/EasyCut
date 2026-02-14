@@ -1,10 +1,33 @@
 # 🚀 EasyCut - Quick Start
 
-## ⚡ Installation in 5 Minutes
+## 📥 For End Users (Recommended)
 
-### Windows (Recommended)
+**The easiest way: Download the standalone executable!**
 
-#### Option 1: Automatic Script
+1. Go to [Releases](https://github.com/dekouninter/EasyCut/releases)
+2. Download `EasyCut.exe`
+3. Run it - that's all! ✨
+
+**No installation needed:**
+- ✅ No Python required
+- ✅ No dependencies to install
+- ✅ No OAuth setup
+- ✅ Just download and use
+
+**First time using?**
+- Click "Sync with YouTube" when prompted
+- Authorize once in your browser
+- Done! Start downloading
+
+---
+
+## 👨‍💻 For Developers (Running from Source)
+
+### ⚡ Installation in 5 Minutes
+
+#### Windows (Recommended)
+
+##### Option 1: Automatic Script
 
 1. Open the EasyCut folder in File Explorer
 2. Double-click `START.bat`
@@ -14,7 +37,7 @@ It will automatically:
 - Install dependencies
 - Launch the application
 
-#### Option 2: Manual
+##### Option 2: Manual
 
 1. **Install Python 3.8+** if you don't have it:
    - Download from: https://www.python.org
@@ -24,24 +47,13 @@ It will automatically:
    ```powershell
    # Create virtual environment
    python -m venv venv
-   
-   # Activate
-   .\venv\Scripts\Activate.ps1
-   
-   # Install dependencies
-   pip install -r requirements.txt
-   ```
+4. **Setup OAuth** (Developers only - see [OAUTH_SETUP.md](OAUTH_SETUP.md)):
+   - Create Google Cloud project
+   - Enable YouTube Data API
+   - Download credentials.json
+   - Place in `config/` folder
 
-3. **Install FFmpeg** (optional, but required for audio conversion):
-   ```powershell
-   # Using Chocolatey
-   choco install ffmpeg
-   
-   # Or using winget
-   winget install FFmpeg
-   ```
-
-4. **Run the application:**
+5. **Run the application:**
    ```powershell
    python main.py
    ```
@@ -50,10 +62,12 @@ It will automatically:
 
 ## 📝 First Use
 
-### 1. **Login** (Optional)
-- Open the "Login" tab
-- Enter your YouTube credentials
-- Click "Login"
+### 1. **Sync with YouTube** (First time)
+- Click "Sync with YouTube" button at the top
+- Your browser opens automatically
+- Sign in with your Google account
+- Click "Allow" when asked
+- Done! You're authenticated ✅
 
 ### 2. **Download Video**
 - Open the "Download" tab
@@ -90,11 +104,21 @@ It will automatically:
 ### Q: Can I download playlists?
 **A:** Not directly, but use the "Batch" tab for multiple URLs.
 
-### Q: Is my YouTube login safe?
+### Q: Is YouTube authentication safe?
 **A:** 
-- Yes, credentials are stored in Windows Credential Manager (via keyring)
-- We never save passwords to files
-- You can logout anytime
+- Yes! We use official Google OAuth 2.0
+- You authenticate directly with Google
+- We never see your password
+- Tokens are stored locally and encrypted
+- You can revoke access anytime at [myaccount.google.com](https://myaccount.google.com/permissions)
+
+### Q: Do I need OAuth credentials?
+**A:**
+- **End users (releases):** No! Everything is embedded
+- **Developers (from source):** Yes, see [OAUTH_SETUP.md](OAUTH_SETUP.md)
+
+### Q: "Google hasn't verified this app" warning?
+**A:** Normal for unverified apps. Click "Advanced" → "Go to EasyCut (unsafe)" to continue. See [OAUTH_FIX.md](OAUTH_FIX.md) for details.
 
 ### Q: Which sites work?
 **A:** yt-dlp supports many sites beyond YouTube:
@@ -102,7 +126,7 @@ It will automatically:
 - Vimeo
 - TikTok
 - Instagram
-- And many more...
+- And 1000+ more sites
 
 ---
 

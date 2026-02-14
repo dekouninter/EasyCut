@@ -17,7 +17,7 @@ TRANSLATIONS = {
     "en": {
         # Application Titles and Headers
         "app_title": "EasyCut",
-        "version": "1.0.0",
+        "version": "1.1.2",
         
         # Menu and Shortcuts
         "menu_file": "File",
@@ -43,7 +43,7 @@ TRANSLATIONS = {
         "tab_login": "Login",
         "tab_download": "Download",
         "tab_batch": "Batch",
-        "tab_live": "Live Stream",
+        "tab_live": "Live",
         "tab_history": "History",
         "tab_about": "About",
 
@@ -52,6 +52,44 @@ TRANSLATIONS = {
         "header_login": "YouTube Login",
         "header_open_folder": "Open Folder",
         "header_select_folder": "Select Folder",
+        
+        # Browser Cookies
+        "browser_cookies_title": "Browser Authentication",
+        "browser_cookies_info": "EasyCut can use cookies from your browser or a cookies file.\n\nOption 1: Browser (requires closing browser)\nOption 2: Cookies file (works with browser open)",
+        "browser_select_label": "Select Browser:",
+        "browser_chrome": "Chrome",
+        "browser_firefox": "Firefox",
+        "browser_edge": "Edge",
+        "browser_opera": "Opera",
+        "browser_brave": "Brave",
+        "browser_safari": "Safari",
+        "browser_none": "None (No Authentication)",
+        "browser_profile_label": "Profile (optional):",
+        "browser_profile_placeholder": "Default, Profile 1, etc.",
+        "browser_profile_auto_label": "YouTube Account:",
+        "browser_profile_detecting": "Detecting accounts...",
+        "browser_profile_refresh": "Refresh",
+        "browser_profile_none_found": "No accounts found",
+        "browser_profile_select": "Select account...",
+        "browser_test_button": "Test Connection",
+        "browser_test_checking": "Testing connection...",
+        "browser_test_success": "✓ Connected to YouTube",
+        "browser_test_success_as": "✓ Logged in as:",
+        "browser_test_failed": "✗ Connection failed",
+        "browser_test_no_auth": "⚠ Not authenticated",
+        "browser_test_browser_open": "⚠️ Browser is open! Close it first.",
+        "browser_cookies_file": "Cookies File (works with browser open)",
+        "browser_cookies_file_label": "Cookies File:",
+        "browser_cookies_file_button": "Select File",
+        "browser_cookies_file_none": "No file selected",
+        "browser_cookies_file_selected": "File: {}",
+        "browser_cookies_export_help": "How to export cookies:",
+        "browser_cookies_export_step1": "1. Install browser extension 'Get cookies.txt LOCALLY'",
+        "browser_cookies_export_step2": "2. Go to youtube.com and click the extension",
+        "browser_cookies_export_step3": "3. Click 'Export' and save the cookies.txt file",
+        "browser_cookies_export_step4": "4. Select the saved file here",
+        "browser_account_status": "Account Status:",
+        "browser_account_none": "No account detected",
         
         # Login Tab
         "login_tab_title": "Authentication",
@@ -184,7 +222,7 @@ TRANSLATIONS = {
         "about_section_features": "Features",
         "about_section_tech": "Technologies & Credits",
         "about_section_thanks": "Special Thanks",
-        "about_footer": "Made with Python | MIT License | © 2026 Deko Costa",
+        "about_footer": "Made with Python | GPL-3.0 License | © 2026 Deko Costa",
         "about_link_github": "GitHub Repository",
         "about_link_coffee": "Buy Me a Coffee",
         "about_link_livepix": "Livepix Donate",
@@ -245,7 +283,7 @@ TRANSLATIONS = {
     "pt": {
         # Títulos e cabeçalhos
         "app_title": "EasyCut",
-        "version": "1.0.0",
+        "version": "1.1.1",
         
         # Menu e atalhos
         "menu_file": "Arquivo",
@@ -271,7 +309,7 @@ TRANSLATIONS = {
         "tab_login": "Entrar",
         "tab_download": "Download",
         "tab_batch": "Lote",
-        "tab_live": "Transmissão Ao Vivo",
+        "tab_live": "Live",
         "tab_history": "Histórico",
         "tab_about": "Sobre",
 
@@ -281,6 +319,42 @@ TRANSLATIONS = {
         "header_open_folder": "Abrir pasta",
         "header_select_folder": "Selecionar pasta",
         
+        # Browser Cookies
+        "browser_cookies_title": "Autenticação por Navegador",
+        "browser_cookies_info": "O EasyCut pode usar cookies do navegador ou arquivo de cookies.\n\nOpção 1: Navegador (requer fechar navegador)\nOpção 2: Arquivo de cookies (funciona com navegador aberto)",
+        "browser_select_label": "Selecione o Navegador:",
+        "browser_chrome": "Chrome",
+        "browser_firefox": "Firefox",
+        "browser_edge": "Edge",
+        "browser_opera": "Opera",
+        "browser_brave": "Brave",
+        "browser_safari": "Safari",
+        "browser_none": "Nenhum (Sem Autenticação)",        "browser_profile_label": "Perfil (opcional):",
+        "browser_profile_placeholder": "Default, Profile 1, etc.",
+        "browser_profile_auto_label": "Conta do YouTube:",
+        "browser_profile_detecting": "Detectando contas...",
+        "browser_profile_refresh": "Atualizar",
+        "browser_profile_none_found": "Nenhuma conta encontrada",
+        "browser_profile_select": "Selecione a conta...",
+        "browser_test_button": "Testar Conex\u00e3o",
+        "browser_test_checking": "Testando conex\u00e3o...",
+        "browser_test_success": "\u2713 Conectado ao YouTube",
+        "browser_test_success_as": "\u2713 Logado como:",
+        "browser_test_failed": "\u2717 Falha na conex\u00e3o",
+        "browser_test_no_auth": "\u26a0 N\u00e3o autenticado",
+        "browser_test_browser_open": "\u26a0\ufe0f Navegador est\u00e1 aberto! Feche-o primeiro.",
+        "browser_cookies_file": "Arquivo de Cookies (funciona com navegador aberto)",
+        "browser_cookies_file_label": "Arquivo de Cookies:",
+        "browser_cookies_file_button": "Selecionar Arquivo",
+        "browser_cookies_file_none": "Nenhum arquivo selecionado",
+        "browser_cookies_file_selected": "Arquivo: {}",
+        "browser_cookies_export_help": "Como exportar cookies:",
+        "browser_cookies_export_step1": "1. Instale a extens\u00e3o 'Get cookies.txt LOCALLY'",
+        "browser_cookies_export_step2": "2. V\u00e1 para youtube.com e clique na extens\u00e3o",
+        "browser_cookies_export_step3": "3. Clique em 'Export' e salve o arquivo cookies.txt",
+        "browser_cookies_export_step4": "4. Selecione o arquivo salvo aqui",
+        "browser_account_status": "Status da Conta:",
+        "browser_account_none": "Nenhuma conta detectada",        
         # Aba de Login
         "login_tab_title": "Autenticação",
         "login_tab_info": "Use login popup para autenticação segura\nCredenciais são armazenadas com segurança no Keyring do Windows",
@@ -412,7 +486,7 @@ TRANSLATIONS = {
         "about_section_features": "Recursos",
         "about_section_tech": "Tecnologias e creditos",
         "about_section_thanks": "Agradecimentos",
-        "about_footer": "Feito com Python | Licenca MIT | © 2026 Deko Costa",
+        "about_footer": "Feito com Python | Licenca GPL-3.0 | © 2026 Deko Costa",
         "about_link_github": "Repositorio GitHub",
         "about_link_coffee": "Buy Me a Coffee",
         "about_link_livepix": "Doar via Livepix",
@@ -511,22 +585,6 @@ class Translator:
             str: Translated string or default value
         """
         return self.translations.get(key, default)
-    
-    def get_language(self):
-        """Get currently active language code
-        
-        Returns:
-            str: Current language ('en' or 'pt')
-        """
-        return self.language
-    
-    def get_available_languages(self):
-        """Get list of all available languages
-        
-        Returns:
-            list: Available language codes
-        """
-        return list(TRANSLATIONS.keys())
     
     def __call__(self, key, default=""):
         """Allow using translator instance as callable function

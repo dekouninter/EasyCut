@@ -7,7 +7,6 @@ Repository: https://github.com/dekouninter/EasyCut
 """
 
 import sys
-import os
 from pathlib import Path
 import tkinter.font as tkfont
 import logging

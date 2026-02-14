@@ -1,7 +1,8 @@
 # 🚀 EasyCut Refactoring - Status Report
 
 **Author:** Deko Costa  
-**Last Updated:** 2025  
+**Last Updated:** February 2026  
+**Version:** 1.2.0 (OAuth Authentication Release)  
 **Repository:** [github.com/dekouninter/EasyCut](https://github.com/dekouninter/EasyCut)
 
 ---
@@ -146,6 +147,29 @@ Only `BaseService` (abstract) and `ServiceResult` exist. Zero concrete service i
 
 All business logic remains in `easycut.py` methods.
 
+### v1.2.0 Updates — OAuth Authentication & Build System
+
+**New in February 2026:**
+
+| Module | Lines | Purpose |
+|--------|------:|---------|
+| `oauth_manager.py` | 291 | Google OAuth 2.0 authentication manager |
+| `build.py` | ~200 | PyInstaller build script for standalone executables |
+
+**Features Added:**
+
+- ✅ OAuth 2.0 authentication with YouTube (replaces manual login)
+- ✅ Standalone executable builds with embedded credentials
+- ✅ Source-clean approach (no credentials in GitHub)
+- ✅ Complete OAuth verification documentation
+- ✅ Privacy policy and terms of service
+- ✅ Professional distribution workflow
+
+**Architecture Pattern:**
+- **Development:** OAuth credentials loaded from `config/credentials.json`
+- **Production:** Credentials embedded in compiled executable via `build.py`
+- **Security:** `build_config.json` gitignored, only releases contain credentials
+
 ---
 
 ## ❌ Remaining Work
@@ -191,6 +215,7 @@ Consolidate three theme systems into one:
 | `theme/theme_manager.py` | 376 | Complete (replacement) |
 | `ui/factories/widget_factory.py` | 336 | Complete |
 | `ui/screens/download_screen.py` | 317 | Complete |
+| **`oauth_manager.py`** | **291** | **Complete (v1.2.0)** |
 | `icon_manager.py` | 290 | Complete |
 | `core/constants.py` | 272 | Complete |
 | `ui/factories/tab_factory.py` | 272 | Complete |
@@ -208,7 +233,7 @@ Consolidate three theme systems into one:
 | `ui/screens/login_screen.py` | 123 | Complete |
 | `core/logger.py` | 119 | Complete |
 | `core/exceptions.py` | 55 | Complete |
-| **Total src/** | **~8,450** | |
+| **Total src/** | **~8,740** | |
 
 ### Architecture Summary
 

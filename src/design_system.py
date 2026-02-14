@@ -6,7 +6,7 @@ Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
 """
 
-from typing import Dict, Tuple
+from typing import Dict
 
 try:
     from font_loader import LOADED_FONT_FAMILY
@@ -125,28 +125,12 @@ class Typography:
     SIZE_CAPTION = 11    # Captions, timestamps
     SIZE_TINY    = 9     # Badges, version numbers
     
-    # Legacy aliases (backward compat with existing code)
-    SIZE_XXXL = SIZE_HERO
-    SIZE_XXL  = SIZE_H1
-    SIZE_XL   = SIZE_H2
-    SIZE_LG   = SIZE_H3
+    # Legacy alias used by batch_text font reference
     SIZE_MD   = SIZE_BODY
-    SIZE_SM   = SIZE_CAPTION
-    SIZE_XS   = SIZE_TINY
     
     # Weights
     WEIGHT_BOLD     = "bold"
-    WEIGHT_SEMIBOLD = "bold"   # Tkinter only has normal/bold
     WEIGHT_NORMAL   = "normal"
-    WEIGHT_REGULAR  = "normal"
-    WEIGHT_MEDIUM   = "bold"
-    WEIGHT_EXTRABOLD = "bold"
-    WEIGHT_LIGHT    = "normal"
-    
-    # Line heights (reference only — Tkinter doesn't support)
-    LINE_HEIGHT_TIGHT  = 1.2
-    LINE_HEIGHT_NORMAL = 1.5
-    LINE_HEIGHT_RELAXED = 1.75
 
 
 class Spacing:
@@ -163,17 +147,8 @@ class Spacing:
     XXL  = 32    # Page margins
     XXXL = 48    # Large page gaps
     
-    # Padding shortcuts
-    PADDING_COMPACT     = (SM, MD)       # 8, 12
+    # Padding shortcut (used by button styles)
     PADDING_NORMAL      = (MD, LG)       # 12, 16
-    PADDING_COMFORTABLE = (LG, XL)       # 16, 24
-    
-    # Border radius
-    RADIUS_SM   = 4
-    RADIUS_MD   = 8
-    RADIUS_LG   = 12
-    RADIUS_XL   = 16
-    RADIUS_FULL = 9999
 
 
 class Icons:
@@ -187,15 +162,6 @@ class Icons:
     SIZE_XXL = 52
 
 
-class Shadows:
-    """Shadow values (simulated via frames in Tkinter)"""
-    
-    NONE = 0
-    SM   = 1     # 1px offset shadow frame
-    MD   = 2     # 2px offset shadow frame
-    LG   = 3     # 3px offset shadow frame
-
-
 class DesignTokens:
     """Complete design system — single access point"""
     
@@ -204,7 +170,6 @@ class DesignTokens:
         self.colors = ColorPalette.DARK if dark_mode else ColorPalette.LIGHT
         self.typography = Typography
         self.spacing = Spacing
-        self.shadows = Shadows
         self.icons = Icons
     
     def get_color(self, key: str) -> str:
@@ -216,15 +181,6 @@ class DesignTokens:
         self.dark_mode = not self.dark_mode
         self.colors = ColorPalette.DARK if self.dark_mode else ColorPalette.LIGHT
     
-    @staticmethod
-    def get_font_config(size: int = 13, weight: str = "normal", family: str = None) -> Dict:
-        """Get font configuration dictionary"""
-        return {
-            "family": family or Typography.FONT_FAMILY,
-            "size": size,
-            "weight": weight
-        }
-
 
 class ModernTheme:
     """Theme implementation for ttk widgets"""
@@ -340,7 +296,28 @@ class ModernTheme:
                 },
                 "map": {
                     "background": [
-                        ("active", colors["accent_muted"].replace("20", "30") if "20" in colors["accent_muted"] else colors["bg_secondary"]),
+                        ("active", colors["bg_hover"]),
+                        ("pressed", colors["bg_tertiary"]),
+                    ],
+                    "foreground": [
+                        ("disabled", colors["fg_disabled"]),
+                    ],
+                }
+            },
+
+            "IconOnly.Outline.TButton": {
+                "configure": {
+                    "background": colors["bg_primary"],
+                    "foreground": colors["accent_primary"],
+                    "bordercolor": colors["accent_primary"],
+                    "borderwidth": 2,
+                    "padding": (sp.XS, sp.XS),
+                    "anchor": "center",
+                },
+                "map": {
+                    "background": [
+                        ("active", colors["bg_hover"]),
+                        ("pressed", colors["bg_tertiary"]),
                     ],
                     "foreground": [
                         ("disabled", colors["fg_disabled"]),
@@ -503,39 +480,12 @@ class ModernTheme:
                 }
             },
             
-            # === TNotebook ===
+            # === TNotebook (tabs hidden — sidebar handles navigation) ===
             "TNotebook": {
                 "configure": {
                     "background": colors["bg_primary"],
                     "borderwidth": 0,
-                    "tabmargins": (sp.SM, sp.SM, sp.SM, 0),
-                }
-            },
-            
-            "TNotebook.Tab": {
-                "configure": {
-                    "background": colors["bg_tertiary"],
-                    "foreground": colors["fg_secondary"],
-                    "padding": (sp.LG, sp.MD),
-                    "font": self._font(ty.SIZE_BODY, "bold"),
-                    "borderwidth": 1,
-                    "relief": "flat",
-                },
-                "map": {
-                    "background": [
-                        ("selected", colors["accent_primary"]),
-                        ("active", colors["bg_hover"]),
-                        ("!selected", colors["bg_tertiary"]),
-                    ],
-                    "foreground": [
-                        ("selected", "#FFFFFF"),
-                        ("active", colors["fg_primary"]),
-                        ("!selected", colors["fg_tertiary"]),
-                    ],
-                    "bordercolor": [
-                        ("selected", colors["accent_primary"]),
-                        ("!selected", colors["border"]),
-                    ],
+                    "tabmargins": (0, 0, 0, 0),
                 }
             },
             

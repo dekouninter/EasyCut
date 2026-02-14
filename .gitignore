@@ -132,6 +132,16 @@ dmypy.json
 
 # EasyCut specific
 config/app.log
+config/credentials.json
+config/youtube_token.pickle
+config/yt_cookies.txt
 downloads/
 .config/
 debug.txt
+
+# Build configuration (contains OAuth secrets!)
+build_config.json
+
+# Build artifacts
+build_temp/
+*.spec

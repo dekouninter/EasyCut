@@ -28,6 +28,7 @@ EasyCut is a professional desktop YouTube downloader and audio converter built w
 | UI infrastructure | `ui_enhanced.py` | 534 |
 | Design tokens & palette | `design_system.py` | 515 |
 | Theme engine (unified) | `theme/theme_manager.py` | 376 |
+| **OAuth authentication** | **`oauth_manager.py`** | **291** |
 | Widget factories | `ui/factories/` | 646 |
 | Screen classes (7 tabs) | `ui/screens/` | 1,612 |
 | Core foundation | `core/` | 675 |
@@ -36,7 +37,7 @@ EasyCut is a professional desktop YouTube downloader and audio converter built w
 | Color extraction | `color_extractor.py` | 197 |
 | Service base class | `services/base_service.py` | 193 |
 | Font loading | `font_loader.py` | 147 |
-| **Total src/** | | **~8,450** |
+| **Total src/** | | **~8,740** |
 
 ### Key Principles
 
@@ -53,7 +54,8 @@ EasyCut is a professional desktop YouTube downloader and audio converter built w
 ```
 EasyCut/
 ├── main.py                         # Entry point (sets window icon, launches app)
-├── requirements.txt                # Dependencies: yt-dlp, keyring, pillow
+├── build.py                        # Build script for standalone executables (PyInstaller)
+├── requirements.txt                # Dependencies: yt-dlp, keyring, pillow, oauth
 ├── setup.py                        # Packaging script (setuptools)
 ├── START.bat                       # Windows launcher (auto-creates venv)
 ├── run.bat                         # Alternative launcher (checks FFmpeg)
@@ -63,6 +65,7 @@ EasyCut/
 ├── src/                            # All application source code
 │   ├── __init__.py                 # Package init (version, author)
 │   ├── easycut.py                  # Main application class (EasyCutApp)
+│   ├── oauth_manager.py            # OAuth 2.0 authentication manager
 │   ├── i18n.py                     # Translation engine (EN + PT, 150+ keys)
 │   ├── design_system.py            # Design tokens, palettes, typography
 │   ├── modern_components.py        # Custom widgets (Button, Card, Alert, etc.)
@@ -107,12 +110,28 @@ EasyCut/
 │
 ├── config/                         # Runtime configuration (auto-created)
 │   ├── config.json                 # User settings (theme, language, paths)
+│   ├── credentials.json            # OAuth credentials (developers only - gitignored)
+│   ├── credentials_template.json   # Template for OAuth credentials
+│   ├── youtube_token.pickle        # Saved OAuth tokens (gitignored)
 │   ├── history_downloads.json      # Download history entries
 │   └── app.log                     # Application log file
 │
 ├── downloads/                      # Default output folder
 ├── scripts/convert_icons.py        # Utility: convert SVG icons to PNG
-└── examples/demo_icons.py          # Demo: icon system showcase
+├── examples/demo_icons.py          # Demo: icon system showcase
+│
+└── docs/                           # Documentation
+    ├── README.md                   # Main documentation
+    ├── BUILD.md                    # Building standalone executables
+    ├── OAUTH_SETUP.md              # OAuth credentials setup (developers)
+    ├── VERIFICATION_CHECKLIST.md   # Google OAuth verification guide
+    ├── PRIVACY.md                  # Privacy policy
+    ├── TERMS.md                    # Terms of service
+    ├── OAUTH_FIX.md               # OAuth troubleshooting
+    ├── ARCHITECTURE.md             # This file
+    ├── TECHNICAL.md                # Technical deep dive
+    ├── QUICKSTART.md               # 5-minute quick start
+    └── CREDITS.md                  # Credits and licenses
 ```
 
 ---

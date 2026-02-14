@@ -2,11 +2,9 @@
 Icon Manager - Carrega ícones Feather e outros assets
 Versão simplificada usando apenas emojis/unicode como fallback
 """
-import os
 from pathlib import Path
 from tkinter import PhotoImage
 from PIL import Image, ImageTk, ImageDraw, ImageFont
-import io
 
 class IconManager:
     """Gerenciador de ícones Feather"""
@@ -43,7 +41,7 @@ class IconManager:
         
         # Fallback para emoji/unicode
         try:
-            icon = self._get_emoji_icon(name, size)
+            icon = self._get_emoji_icon(name, size, color)
             
             if icon:
                 self.cache[cache_key] = icon
@@ -86,7 +84,7 @@ class IconManager:
         
         return None
     
-    def _get_emoji_icon(self, name: str, size: int) -> PhotoImage:
+    def _get_emoji_icon(self, name: str, size: int, color: str = None) -> PhotoImage:
         """Cria ícone usando emoji/unicode como fallback"""
         emoji_map = {
             "download": "⬇",
@@ -94,6 +92,7 @@ class IconManager:
             "search": "🔍",
             "settings": "⚙",
             "folder": "📁",
+            "folder-plus": "📂",
             "file": "📄",
             "music": "🎵",
             "video": "🎬",
@@ -169,8 +168,17 @@ class IconManager:
                 # Fallback se textbbox não funcionar
                 position = (size // 4, size // 4)
             
-            # Desenhar com cor padrão
-            draw.text(position, emoji, font=font, fill=(150, 150, 150, 255))
+            # Desenhar com cor do tema (ou padrão)
+            if color:
+                # Converter hex para RGBA tuple
+                try:
+                    c = color.lstrip('#')
+                    fill_color = tuple(int(c[i:i+2], 16) for i in (0, 2, 4)) + (255,)
+                except:
+                    fill_color = (150, 150, 150, 255)
+            else:
+                fill_color = (150, 150, 150, 255)
+            draw.text(position, emoji, font=font, fill=fill_color)
             
             photo = ImageTk.PhotoImage(img)
             return photo
@@ -185,35 +193,6 @@ class IconManager:
             except:
                 return None
     
-    def get_app_icon(self) -> PhotoImage:
-        """Retorna o ícone do app"""
-        icon_path = self.assets_dir / "app_icon.png"
-        
-        if icon_path.exists():
-            try:
-                img = Image.open(icon_path)
-                photo = ImageTk.PhotoImage(img)
-                return photo
-            except:
-                pass
-        
-        return None
-    
-    def has_icon(self, name: str) -> bool:
-        """Verifica se um ícone existe"""
-        return (self.feather_dir / f"{name}.svg").exists()
-    
-    def list_icons(self) -> list:
-        """Lista todos os ícones disponíveis"""
-        if not self.feather_dir.exists():
-            return []
-        
-        icons = []
-        for icon_file in self.feather_dir.glob("*.svg"):
-            icons.append(icon_file.stem)
-        
-        return sorted(icons)
-
 
 # Singleton global
 icon_manager = IconManager()
@@ -268,6 +247,17 @@ ICON_MAP = {
 }
 
 
+# Estado global do tema para ícones
+_current_dark_mode = True
+
+def set_icon_theme(dark_mode: bool):
+    """Atualiza o tema global usado para cores de ícones"""
+    global _current_dark_mode
+    _current_dark_mode = dark_mode
+    # Limpar cache para recarregar ícones com novas cores
+    icon_manager.cache.clear()
+
+
 def get_ui_icon(icon_key: str, size: int = 16, color: str = None, theme: str = None) -> PhotoImage:
     """
     Atalho para pegar ícone mapeado da UI com cores inteligentes
@@ -276,21 +266,20 @@ def get_ui_icon(icon_key: str, size: int = 16, color: str = None, theme: str = N
         icon_key: Chave do ICON_MAP (ex: "download", "theme_dark")
         size: Tamanho em pixels
         color: Cor opcional (se None, usa cor padrão do tema)
-        theme: Tema ("dark" ou "light") - se None, tenta detectar
+        theme: Tema ("dark" ou "light") - se None, usa estado global
     
     Returns:
         PhotoImage ou None se não encontrado
     """
     feather_name = ICON_MAP.get(icon_key, icon_key)
     
-    # Se não teve cor e tema especificado, usar cor padrão melhorada
-    if not color and not theme:
-        # Importar apenas se needed para evitar circular imports
+    # Se não teve cor e tema especificado, usar cor padrão do tema atual
+    if not color:
         try:
             from design_system import DesignTokens
-            tokens = DesignTokens(dark_mode=True)  # Padrão dark
-            # Usar cor principal do ícone (mais visível que cinza)
-            color = tokens.get_color("icon_primary")  # #2E2E2E para light, #E8EAED para dark
+            is_dark = _current_dark_mode if theme is None else (theme == "dark")
+            tokens = DesignTokens(dark_mode=is_dark)
+            color = tokens.get_color("icon_primary")
         except:
             pass
     
