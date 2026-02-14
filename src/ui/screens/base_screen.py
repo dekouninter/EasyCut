@@ -17,7 +17,7 @@ from abc import ABC, abstractmethod
 from tkinter import ttk
 from typing import Dict, Any, Optional
 
-from theme import ThemeManager
+from design_system import DesignTokens
 from ui.factories import TabFactory
 from core.logger import get_logger
 
@@ -36,7 +36,7 @@ class BaseScreen(ABC):
     def __init__(
         self,
         notebook: ttk.Notebook,
-        theme: ThemeManager,
+        theme: DesignTokens,
         services: Dict[str, Any] = None,
         **kwargs
     ):
@@ -45,7 +45,7 @@ class BaseScreen(ABC):
         
         Args:
             notebook: ttk.Notebook to add this screen to
-            theme: ThemeManager for colors/fonts
+            theme: DesignTokens for colors/fonts
             services: Dictionary of service instances
             **kwargs: Additional arguments
         """

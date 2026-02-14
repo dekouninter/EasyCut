@@ -19,6 +19,16 @@ from tkinter import ttk
 import webbrowser
 from i18n import translator as t
 
+try:
+    from font_loader import LOADED_FONT_FAMILY
+except ImportError:
+    LOADED_FONT_FAMILY = "Segoe UI"
+
+try:
+    from design_system import DesignTokens
+except ImportError:
+    DesignTokens = None
+
 
 class DonationWindow:
     """Professional Donation Support Window
@@ -71,7 +81,7 @@ class DonationWindow:
         title_label = ttk.Label(
             main_frame,
             text=t("donation_title"),
-            font=("Arial", 14, "bold")
+            font=(LOADED_FONT_FAMILY, 14, "bold")
         )
         title_label.pack(pady=(0, 10))
         
@@ -88,15 +98,26 @@ class DonationWindow:
         buttons_frame = ttk.Frame(main_frame)
         buttons_frame.pack(pady=10)
         
+        # Get accent color from theme
+        accent = "#4A90D9"
+        accent_hover = "#3A7BC8"
+        if DesignTokens:
+            try:
+                tokens = DesignTokens()
+                accent = tokens.get_color("accent_primary")
+                accent_hover = tokens.get_color("accent_hover")
+            except Exception:
+                pass
+        
         # Donation platform buttons
         for key, donation in self.donation_links.items():
             btn = tk.Button(
                 buttons_frame,
                 text=f"{donation['icon']} {donation['name']}",
                 command=lambda url=donation['url']: self.open_link(url),
-                bg="#4CAF50",
+                bg=accent,
                 fg="white",
-                font=("Arial", 11, "bold"),
+                font=(LOADED_FONT_FAMILY, 11, "bold"),
                 cursor="hand2",
                 padx=15,
                 pady=10,
@@ -106,8 +127,8 @@ class DonationWindow:
             btn.pack(pady=8, fill=tk.X)
             
             # Hover effects
-            btn.bind("<Enter>", lambda e, b=btn: self.on_hover(b, True))
-            btn.bind("<Leave>", lambda e, b=btn: self.on_hover(b, False))
+            btn.bind("<Enter>", lambda e, b=btn, h=accent_hover: b.config(bg=h))
+            btn.bind("<Leave>", lambda e, b=btn, a=accent: b.config(bg=a))
         
         # Thank you message
         thanks_label = ttk.Label(
@@ -115,21 +136,9 @@ class DonationWindow:
             text="Thank you for supporting EasyCut Development!",
             wraplength=360,
             justify=tk.CENTER,
-            font=("Arial", 9, "italic")
+            font=(LOADED_FONT_FAMILY, 9, "italic")
         )
         thanks_label.pack(pady=(20, 0))
-    
-    def on_hover(self, button, hover):
-        """Apply hover effects to buttons
-        
-        Args:
-            button: Button widget
-            hover (bool): True if entering, False if leaving
-        """
-        if hover:
-            button.config(bg="#45a049")
-        else:
-            button.config(bg="#4CAF50")
     
     def open_link(self, url):
         """Open donation link in default web browser
@@ -166,6 +175,17 @@ class DonationButton:
         Args:
             root_window: Root window for button placement
         """
+        # Get accent color from theme
+        accent = "#4A90D9"
+        accent_hover = "#3A7BC8"
+        if DesignTokens:
+            try:
+                tokens = DesignTokens()
+                accent = tokens.get_color("accent_primary")
+                accent_hover = tokens.get_color("accent_hover")
+            except Exception:
+                pass
+        
         # Floating button frame
         floating_frame = ttk.Frame(root_window)
         floating_frame.pack(side=tk.BOTTOM, anchor=tk.SE, padx=10, pady=10)
@@ -175,9 +195,9 @@ class DonationButton:
             floating_frame,
             text="❤️ Support Development",
             command=self.open_donation,
-            bg="#FF6B6B",
+            bg=accent,
             fg="white",
-            font=("Arial", 9, "bold"),
+            font=(LOADED_FONT_FAMILY, 9, "bold"),
             cursor="hand2",
             padx=12,
             pady=6,
@@ -187,19 +207,8 @@ class DonationButton:
         self.button.pack()
         
         # Hover effects
-        self.button.bind("<Enter>", lambda e: self.on_hover(True))
-        self.button.bind("<Leave>", lambda e: self.on_hover(False))
-    
-    def on_hover(self, hover):
-        """Apply hover effects to button
-        
-        Args:
-            hover (bool): True if entering, False if leaving
-        """
-        if hover:
-            self.button.config(bg="#E63946")
-        else:
-            self.button.config(bg="#FF6B6B")
+        self.button.bind("<Enter>", lambda e: self.button.config(bg=accent_hover))
+        self.button.bind("<Leave>", lambda e: self.button.config(bg=accent))
     
     def open_donation(self):
         """Open donation window when button clicked"""

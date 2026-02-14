@@ -1,199 +1,203 @@
 """
 EasyCut Design System
-Modern, Clean, Professional UI Design Tokens
+Clean Minimal Design Tokens — Steel Blue Accent
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
 """
 
-from pathlib import Path
 from typing import Dict, Tuple
-import tkinter.font as tkfont
 
-# Import icon colors for theme integration
 try:
-    from color_extractor import extract_vibrant_colors, get_icon_path
-    _ICON_COLORS = extract_vibrant_colors(get_icon_path())
-    ICON_PRIMARY = _ICON_COLORS.get("primary", "#f85451")
-except:
-    ICON_PRIMARY = "#f85451"  # Fallback coral red from icon
+    from font_loader import LOADED_FONT_FAMILY
+except ImportError:
+    LOADED_FONT_FAMILY = "Segoe UI"
 
 
 class ColorPalette:
-    """Modern color palette with accessibility in mind"""
+    """Clean Minimal color palette — VS Code inspired"""
     
-    # === DARK THEME - Deep, Rich Colors ===
+    # === DARK THEME — VS Code Dark ===
     DARK = {
         # Backgrounds
-        "bg_primary": "#0A0E27",          # Deep navy blue
-        "bg_secondary": "#131829",        # Slightly lighter navy
-        "bg_tertiary": "#1A1F3A",         # Card/panel background
-        "bg_elevated": "#20264D",         # Elevated elements
-        "bg_hover": "#252B54",            # Hover state
+        "bg_primary":    "#1E1E1E",    # Main background
+        "bg_secondary":  "#252526",    # Sidebar, secondary panels
+        "bg_tertiary":   "#2D2D2D",    # Cards, elevated surfaces
+        "bg_elevated":   "#333333",    # Hover states, modals
+        "bg_hover":      "#3C3C3C",    # Hover highlight
         
         # Foregrounds
-        "fg_primary": "#E8EAED",          # Main text
-        "fg_secondary": "#A8B1D6",        # Secondary text
-        "fg_tertiary": "#6B7AA8",         # Tertiary text
-        "fg_disabled": "#4A5578",         # Disabled text
+        "fg_primary":    "#E4E4E4",    # Main text
+        "fg_secondary":  "#A0A0A0",    # Secondary text, labels
+        "fg_tertiary":   "#6A6A6A",    # Placeholders, disabled text
+        "fg_disabled":   "#4A4A4A",    # Disabled elements
         
-        # Accents & Semantics (derived from app icon colors)
-        "accent_primary": ICON_PRIMARY,     # Primary accent from icon (coral red)
-        "accent_secondary": "#FF9A9A",     # Lighter variant
-        "accent_hover": "#E83E3A",         # Darker hover state
+        # Accent — Steel Blue
+        "accent_primary": "#4A90D9",   # Buttons, links, focus
+        "accent_secondary": "#5BA0E9", # Lighter variant
+        "accent_hover":   "#5BA0E9",   # Accent hover state
+        "accent_pressed": "#3A80C9",   # Accent pressed state
+        "accent_muted":   "#4A90D920", # 12% opacity for backgrounds
         
-        "success": "#10B981",             # Green
-        "success_bg": "#064E3B",          # Success background
-        "warning": "#F59E0B",             # Amber
-        "warning_bg": "#78350F",          # Warning background
-        "error": "#EF4444",               # Red
-        "error_bg": "#7F1D1D",            # Error background
-        "info": "#3B82F6",                # Blue
-        "info_bg": "#1E3A8A",             # Info background
+        # Semantics
+        "success":     "#4CAF50",
+        "success_bg":  "#1B3A1F",
+        "warning":     "#FFA726",
+        "warning_bg":  "#3E2E1A",
+        "error":       "#EF5350",
+        "error_bg":    "#3A1F1F",
+        "info":        "#42A5F5",
+        "info_bg":     "#1A2E3E",
         
-        # UI Elements
-        "border": "#2D3555",              # Default border
-        "border_focus": ICON_PRIMARY,      # Focused border (icon color)
-        "border_hover": "#384071",        # Hover border
+        # Borders
+        "border":       "#3C3C3C",
+        "border_focus":  "#4A90D9",
+        "border_hover":  "#505050",
         
-        "shadow": "rgba(0, 0, 0, 0.5)",   # Shadow color
-        "overlay": "rgba(10, 14, 39, 0.95)",  # Modal overlay
+        # Shadow
+        "shadow":       "#00000040",
         
-        # Icon colors (bright for visibility in dark theme)
-        "icon_primary": "#E8EAED",         # Main icon color
-        "icon_muted": "#9CA3AF",           # Muted icon
-        "icon_accent": ICON_PRIMARY,       # Accent icon color
+        # Icons
+        "icon_primary": "#E4E4E4",
+        "icon_muted":   "#A0A0A0",
+        "icon_accent":  "#4A90D9",
     }
     
-    # === LIGHT THEME - Professional, Clean, Neutral Colors ===
+    # === LIGHT THEME — Clean White ===
     LIGHT = {
-        # Backgrounds - Pure whites and true grays (NO blue tones)
-        "bg_primary": "#FFFFFF",          # Pure white
-        "bg_secondary": "#FAFAFA",        # Almost white
-        "bg_tertiary": "#F3F3F3",         # Light gray (neutral)
-        "bg_elevated": "#FFFFFF",         # Elevated white
-        "bg_hover": "#EFEFEF",            # Hover gray (neutral)
+        # Backgrounds
+        "bg_primary":    "#FFFFFF",
+        "bg_secondary":  "#F5F5F5",
+        "bg_tertiary":   "#FAFAFA",
+        "bg_elevated":   "#FFFFFF",
+        "bg_hover":      "#EEEEEE",
         
-        # Foregrounds - Maximum contrast
-        "fg_primary": "#0D0D0D",          # Almost black
-        "fg_secondary": "#404040",        # Dark gray
-        "fg_tertiary": "#717171",         # Medium gray
-        "fg_disabled": "#AAAAAA",         # Disabled gray
+        # Foregrounds
+        "fg_primary":    "#1A1A1A",
+        "fg_secondary":  "#555555",
+        "fg_tertiary":   "#888888",
+        "fg_disabled":   "#BBBBBB",
         
-        # Accents & Semantics (from app icon)
-        "accent_primary": ICON_PRIMARY,     # Coral red from icon
-        "accent_secondary": "#FF8680",      # Lighter coral
-        "accent_hover": "#E84037",          # Darker coral
+        # Accent — Steel Blue (same in both themes)
+        "accent_primary": "#4A90D9",
+        "accent_secondary": "#3A80C9",
+        "accent_hover":   "#3A80C9",
+        "accent_pressed": "#2A70B9",
+        "accent_muted":   "#4A90D915",
         
-        "success": "#0F7938",              # Dark green (better contrast)
-        "success_bg": "#E8F5E9",            # Light green background
-        "warning": "#C67C1B",              # Dark amber (better contrast)
-        "warning_bg": "#FFF8E1",            # Light amber background
-        "error": "#C62828",                # Dark red (better contrast)
-        "error_bg": "#FFEBEE",              # Light red background
-        "info": "#1565C0",                 # Dark blue (better contrast)
-        "info_bg": "#E3F2FD",               # Light blue background
+        # Semantics (darker for contrast on white)
+        "success":     "#2E7D32",
+        "success_bg":  "#E8F5E9",
+        "warning":     "#E65100",
+        "warning_bg":  "#FFF3E0",
+        "error":       "#C62828",
+        "error_bg":    "#FFEBEE",
+        "info":        "#1565C0",
+        "info_bg":     "#E3F2FD",
         
-        # UI Elements - Neutral grays
-        "border": "#CCCCCC",               # Default border (visible)
-        "border_focus": ICON_PRIMARY,       # Focused border (accent color)
-        "border_hover": "#BBBBBB",         # Hover border
+        # Borders
+        "border":       "#E0E0E0",
+        "border_focus":  "#4A90D9",
+        "border_hover":  "#CCCCCC",
         
-        "shadow": "rgba(0, 0, 0, 0.12)",   # Subtle shadow
-        "overlay": "rgba(255, 255, 255, 0.95)",  # Modal overlay
+        # Shadow
+        "shadow":       "#00000015",
+        
+        # Icons
+        "icon_primary": "#1A1A1A",
+        "icon_muted":   "#555555",
+        "icon_accent":  "#4A90D9",
     }
 
 
 class Typography:
-    """Modern typography system with proper hierarchy"""
+    """Typography scale — Clean Minimal hierarchy"""
     
-    # Font families with fallbacks
-    FONT_SANS = "Inter, Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif"
-    FONT_MONO = "JetBrains Mono, Consolas, Monaco, Courier New, monospace"
+    FONT_FAMILY = LOADED_FONT_FAMILY
+    FONT_MONO = "Consolas"
     
-    # Font sizes (in pixels) - Improved for better readability
-    SIZE_XXXL = 36   # Hero titles (was 32)
-    SIZE_XXL = 28    # Page titles (was 24)
-    SIZE_XL = 22     # Section titles (was 20)
-    SIZE_LG = 18     # Large text (was 16)
-    SIZE_MD = 15     # Body text (was 14) - more readable
-    SIZE_SM = 13     # Small text (was 12)
-    SIZE_XS = 11     # Extra small text (was 10)
+    # Sizes
+    SIZE_HERO    = 32    # App title only
+    SIZE_H1      = 24    # Section headers
+    SIZE_H2      = 18    # Card titles
+    SIZE_H3      = 15    # Subsection titles
+    SIZE_BODY    = 13    # Default body text, buttons, inputs
+    SIZE_CAPTION = 11    # Captions, timestamps
+    SIZE_TINY    = 9     # Badges, version numbers
     
-    # Font weights - Better hierarchy
-    WEIGHT_LIGHT = "300"
-    WEIGHT_REGULAR = "400"
-    WEIGHT_MEDIUM = "500"
-    WEIGHT_SEMIBOLD = "600"
-    WEIGHT_BOLD = "700"
-    WEIGHT_EXTRABOLD = "800"
+    # Legacy aliases (backward compat with existing code)
+    SIZE_XXXL = SIZE_HERO
+    SIZE_XXL  = SIZE_H1
+    SIZE_XL   = SIZE_H2
+    SIZE_LG   = SIZE_H3
+    SIZE_MD   = SIZE_BODY
+    SIZE_SM   = SIZE_CAPTION
+    SIZE_XS   = SIZE_TINY
     
-    # Line heights
-    LINE_HEIGHT_TIGHT = 1.2
+    # Weights
+    WEIGHT_BOLD     = "bold"
+    WEIGHT_SEMIBOLD = "bold"   # Tkinter only has normal/bold
+    WEIGHT_NORMAL   = "normal"
+    WEIGHT_REGULAR  = "normal"
+    WEIGHT_MEDIUM   = "bold"
+    WEIGHT_EXTRABOLD = "bold"
+    WEIGHT_LIGHT    = "normal"
+    
+    # Line heights (reference only — Tkinter doesn't support)
+    LINE_HEIGHT_TIGHT  = 1.2
     LINE_HEIGHT_NORMAL = 1.5
     LINE_HEIGHT_RELAXED = 1.75
-    
-    # Letter spacing
-    LETTER_SPACING_TIGHT = "-0.02em"
-    LETTER_SPACING_NORMAL = "0"
-    LETTER_SPACING_WIDE = "0.05em"
 
 
 class Spacing:
-    """Consistent spacing system based on 4px grid"""
+    """4px grid spacing system"""
     
-    # Base unit (4px)
     BASE = 4
     
-    # Spacing scale
-    XS = BASE * 1      # 4px
-    SM = BASE * 2      # 8px
-    MD = BASE * 3      # 12px
-    LG = BASE * 4      # 16px
-    XL = BASE * 6      # 24px
-    XXL = BASE * 8     # 32px
-    XXXL = BASE * 12   # 48px
+    XXS  = 2     # Micro gaps
+    XS   = 4     # Icon padding, tight
+    SM   = 8     # Between inline elements
+    MD   = 12    # Card internal padding, rows
+    LG   = 16    # Section gaps, sidebar padding
+    XL   = 24    # Between major sections
+    XXL  = 32    # Page margins
+    XXXL = 48    # Large page gaps
     
     # Padding shortcuts
-    PADDING_COMPACT = (SM, MD)      # (8, 12)
-    PADDING_NORMAL = (MD, LG)       # (12, 16)
-    PADDING_COMFORTABLE = (LG, XL)  # (16, 24)
+    PADDING_COMPACT     = (SM, MD)       # 8, 12
+    PADDING_NORMAL      = (MD, LG)       # 12, 16
+    PADDING_COMFORTABLE = (LG, XL)       # 16, 24
     
     # Border radius
-    RADIUS_SM = 4
-    RADIUS_MD = 8
-    RADIUS_LG = 12
-    RADIUS_XL = 16
+    RADIUS_SM   = 4
+    RADIUS_MD   = 8
+    RADIUS_LG   = 12
+    RADIUS_XL   = 16
     RADIUS_FULL = 9999
 
 
-class Shadows:
-    """Modern shadow system for depth"""
-    
-    NONE = "0 0 0 rgba(0, 0, 0, 0)"
-    SM = "0 1px 2px 0 rgba(0, 0, 0, 0.05)"
-    MD = "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
-    LG = "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
-    XL = "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-    XXL = "0 25px 50px -12px rgba(0, 0, 0, 0.25)"
-    
-    # Inner shadows
-    INNER = "inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)"
-
-
 class Icons:
-    """Icon sizing system - Improved for better visibility"""
+    """Icon sizing"""
     
-    SIZE_XS = 14        # Extra small (was 12)
-    SIZE_SM = 18        # Small (was 16) - MUCH improved for light theme visibility
-    SIZE_MD = 22        # Medium (was 20)
-    SIZE_LG = 26        # Large (was 24)
-    SIZE_XL = 36        # Extra large (was 32)
-    SIZE_XXL = 52       # Extra extra large (was 48)
+    SIZE_XS  = 14
+    SIZE_SM  = 18
+    SIZE_MD  = 22
+    SIZE_LG  = 26
+    SIZE_XL  = 36
+    SIZE_XXL = 52
+
+
+class Shadows:
+    """Shadow values (simulated via frames in Tkinter)"""
+    
+    NONE = 0
+    SM   = 1     # 1px offset shadow frame
+    MD   = 2     # 2px offset shadow frame
+    LG   = 3     # 3px offset shadow frame
 
 
 class DesignTokens:
-    """Complete design system tokens"""
+    """Complete design system — single access point"""
     
     def __init__(self, dark_mode: bool = True):
         self.dark_mode = dark_mode
@@ -213,29 +217,22 @@ class DesignTokens:
         self.colors = ColorPalette.DARK if self.dark_mode else ColorPalette.LIGHT
     
     @staticmethod
-    def get_font_config(size: int = 14, weight: str = "400", family: str = None) -> Dict:
+    def get_font_config(size: int = 13, weight: str = "normal", family: str = None) -> Dict:
         """Get font configuration dictionary"""
         return {
-            "family": family or Typography.FONT_SANS,
+            "family": family or Typography.FONT_FAMILY,
             "size": size,
             "weight": weight
         }
 
 
 class ModernTheme:
-    """Modern theme implementation for ttk widgets"""
+    """Theme implementation for ttk widgets"""
     
-    def __init__(self, dark_mode: bool = True, font_family: str = "Segoe UI"):
-        """
-        Initialize modern theme
-        
-        Args:
-            dark_mode: Use dark color scheme
-            font_family: Font family to use throughout the app
-        """
+    def __init__(self, dark_mode: bool = True, font_family: str = None):
         self.tokens = DesignTokens(dark_mode)
         self.dark_mode = dark_mode
-        self.font_family = font_family
+        self.font_family = font_family or Typography.FONT_FAMILY
     
     def _font(self, size, weight="normal"):
         """Helper to create font tuple"""
@@ -244,7 +241,8 @@ class ModernTheme:
     def get_ttk_style_config(self) -> Dict:
         """Get complete ttk style configuration"""
         colors = self.tokens.colors
-        spacing = self.tokens.spacing
+        sp = Spacing
+        ty = Typography
         
         return {
             # === TFrame ===
@@ -260,7 +258,6 @@ class ModernTheme:
                     "background": colors["bg_tertiary"],
                     "borderwidth": 1,
                     "relief": "solid",
-                    "bordercolor": colors["border"],
                 }
             },
             
@@ -269,27 +266,27 @@ class ModernTheme:
                 "configure": {
                     "background": colors["bg_primary"],
                     "foreground": colors["fg_primary"],
-                    "font": self._font(Typography.SIZE_MD, "normal"),
+                    "font": self._font(ty.SIZE_BODY),
                 }
             },
             
             "Title.TLabel": {
                 "configure": {
-                    "font": self._font(Typography.SIZE_XXL, "bold"),
+                    "font": self._font(ty.SIZE_H1, "bold"),
                     "foreground": colors["fg_primary"],
                 }
             },
             
             "Subtitle.TLabel": {
                 "configure": {
-                    "font": self._font(Typography.SIZE_LG, "bold"),
+                    "font": self._font(ty.SIZE_H3, "bold"),
                     "foreground": colors["fg_secondary"],
                 }
             },
             
             "Caption.TLabel": {
                 "configure": {
-                    "font": self._font(Typography.SIZE_SM, "normal"),
+                    "font": self._font(ty.SIZE_CAPTION),
                     "foreground": colors["fg_tertiary"],
                 }
             },
@@ -305,13 +302,13 @@ class ModernTheme:
                     "borderwidth": 0,
                     "focusthickness": 0,
                     "focuscolor": "none",
-                    "padding": (spacing.LG, spacing.MD),
-                    "font": self._font(Typography.SIZE_MD, "bold"),
+                    "padding": (sp.LG, sp.MD),
+                    "font": self._font(ty.SIZE_BODY, "bold"),
                 },
                 "map": {
                     "background": [
                         ("active", colors["accent_hover"]),
-                        ("pressed", colors["accent_hover"]),
+                        ("pressed", colors["accent_pressed"]),
                         ("disabled", colors["bg_hover"]),
                     ],
                     "foreground": [
@@ -343,8 +340,93 @@ class ModernTheme:
                 },
                 "map": {
                     "background": [
-                        ("active", colors["bg_secondary"]),
+                        ("active", colors["accent_muted"].replace("20", "30") if "20" in colors["accent_muted"] else colors["bg_secondary"]),
                     ],
+                    "foreground": [
+                        ("disabled", colors["fg_disabled"]),
+                    ],
+                }
+            },
+            
+            "Ghost.TButton": {
+                "configure": {
+                    "background": colors["bg_primary"],
+                    "foreground": colors["accent_primary"],
+                    "bordercolor": colors["bg_primary"],
+                    "borderwidth": 0,
+                    "focusthickness": 0,
+                    "focuscolor": "none",
+                    "padding": (sp.MD, sp.SM),
+                    "font": self._font(ty.SIZE_BODY),
+                },
+                "map": {
+                    "background": [
+                        ("active", colors["bg_hover"]),
+                        ("pressed", colors["bg_hover"]),
+                    ],
+                    "foreground": [
+                        ("disabled", colors["fg_disabled"]),
+                    ],
+                }
+            },
+            
+            "Danger.TButton": {
+                "configure": {
+                    "background": colors["bg_primary"],
+                    "foreground": colors["error"],
+                    "bordercolor": colors["error"],
+                    "borderwidth": 2,
+                    "focusthickness": 0,
+                    "focuscolor": "none",
+                    "padding": (sp.LG, sp.MD),
+                    "font": self._font(ty.SIZE_BODY, "bold"),
+                },
+                "map": {
+                    "background": [
+                        ("active", colors["error_bg"]),
+                        ("pressed", colors["error_bg"]),
+                    ],
+                    "foreground": [
+                        ("disabled", colors["fg_disabled"]),
+                    ],
+                }
+            },
+            
+            "DangerFilled.TButton": {
+                "configure": {
+                    "background": colors["error"],
+                    "foreground": "#FFFFFF",
+                    "bordercolor": colors["error"],
+                    "borderwidth": 0,
+                    "focusthickness": 0,
+                    "focuscolor": "none",
+                    "padding": (sp.LG, sp.MD),
+                    "font": self._font(ty.SIZE_BODY, "bold"),
+                },
+                "map": {
+                    "background": [
+                        ("active", "#D32F2F"),
+                        ("pressed", "#B71C1C"),
+                        ("disabled", colors["bg_hover"]),
+                    ],
+                    "foreground": [
+                        ("disabled", colors["fg_disabled"]),
+                    ],
+                }
+            },
+            
+            # Size variants
+            "Small.TButton": {
+                "configure": {
+                    "padding": (sp.SM, sp.XS),
+                    "font": self._font(ty.SIZE_CAPTION, "bold"),
+                }
+            },
+            
+            "Large.TButton": {
+                "configure": {
+                    "padding": (sp.XL, sp.LG),
+                    "font": self._font(ty.SIZE_H3, "bold"),
                 }
             },
             
@@ -358,8 +440,8 @@ class ModernTheme:
                     "lightcolor": colors["bg_secondary"],
                     "insertcolor": colors["fg_primary"],
                     "borderwidth": 1,
-                    "padding": (spacing.MD, spacing.SM),
-                    "font": self._font(Typography.SIZE_MD, "normal"),
+                    "padding": (sp.MD, sp.SM),
+                    "font": self._font(ty.SIZE_BODY),
                 },
                 "map": {
                     "bordercolor": [
@@ -383,8 +465,8 @@ class ModernTheme:
                     "insertcolor": colors["fg_primary"],
                     "selectbackground": colors["accent_primary"],
                     "selectforeground": "#FFFFFF",
-                    "padding": (spacing.MD, spacing.SM),
-                    "font": self._font(Typography.SIZE_MD, "normal"),
+                    "padding": (sp.MD, sp.SM),
+                    "font": self._font(ty.SIZE_BODY),
                 },
                 "map": {
                     "bordercolor": [
@@ -407,8 +489,8 @@ class ModernTheme:
                 "configure": {
                     "background": colors["bg_primary"],
                     "foreground": colors["fg_primary"],
-                    "font": self._font(Typography.SIZE_MD, "normal"),
-                    "padding": (spacing.SM, spacing.XS),
+                    "font": self._font(ty.SIZE_BODY),
+                    "padding": (sp.SM, sp.XS),
                 }
             },
             
@@ -416,8 +498,8 @@ class ModernTheme:
                 "configure": {
                     "background": colors["bg_primary"],
                     "foreground": colors["fg_primary"],
-                    "font": self._font(Typography.SIZE_MD, "normal"),
-                    "padding": (spacing.SM, spacing.XS),
+                    "font": self._font(ty.SIZE_BODY),
+                    "padding": (sp.SM, sp.XS),
                 }
             },
             
@@ -426,7 +508,7 @@ class ModernTheme:
                 "configure": {
                     "background": colors["bg_primary"],
                     "borderwidth": 0,
-                    "tabmargins": (spacing.SM, spacing.SM, spacing.SM, 0),
+                    "tabmargins": (sp.SM, sp.SM, sp.SM, 0),
                 }
             },
             
@@ -434,8 +516,8 @@ class ModernTheme:
                 "configure": {
                     "background": colors["bg_tertiary"],
                     "foreground": colors["fg_secondary"],
-                    "padding": (spacing.LG, spacing.MD),
-                    "font": self._font(Typography.SIZE_MD, "bold"),
+                    "padding": (sp.LG, sp.MD),
+                    "font": self._font(ty.SIZE_BODY, "bold"),
                     "borderwidth": 1,
                     "relief": "flat",
                 },
@@ -471,24 +553,24 @@ class ModernTheme:
                 "configure": {
                     "background": colors["bg_tertiary"],
                     "foreground": colors["fg_primary"],
-                    "font": self._font(Typography.SIZE_MD, "bold"),
+                    "font": self._font(ty.SIZE_BODY, "bold"),
                 }
             },
             
-            # === TScrollbar ===
+            # === TScrollbar (thin, rounded feel) ===
             "TScrollbar": {
                 "configure": {
-                    "background": colors["accent_primary"],
+                    "background": colors["bg_hover"],
                     "bordercolor": colors["bg_primary"],
-                    "troughcolor": colors["bg_tertiary"],
-                    "arrowcolor": colors["fg_primary"],
+                    "troughcolor": colors["bg_secondary"],
+                    "arrowcolor": colors["fg_secondary"],
                     "borderwidth": 0,
                     "relief": "flat",
-                    "width": 12,
+                    "width": 10,
                 },
                 "map": {
                     "background": [
-                        ("active", colors["accent_hover"]),
+                        ("active", colors["accent_primary"]),
                         ("pressed", colors["accent_hover"]),
                         ("!active", colors["bg_hover"]),
                     ],
@@ -511,7 +593,7 @@ class ModernTheme:
                     "lightcolor": colors["accent_primary"],
                     "darkcolor": colors["accent_primary"],
                     "borderwidth": 0,
-                    "thickness": 8,
+                    "thickness": 6,
                 }
             },
         }

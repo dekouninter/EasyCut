@@ -44,7 +44,6 @@ TRANSLATIONS = {
         "tab_download": "Download",
         "tab_batch": "Batch",
         "tab_live": "Live Stream",
-        "tab_audio": "Audio",
         "tab_history": "History",
         "tab_about": "About",
 
@@ -163,21 +162,7 @@ TRANSLATIONS = {
         "live_minutes": "Minutes",
         "live_seconds": "Seconds",
         
-        # Audio Conversion
-        "audio_url": "YouTube URL",
-        "audio_format": "Audio Format",
-        "audio_format_mp3": "MP3",
-        "audio_format_wav": "WAV",
-        "audio_format_m4a": "M4A",
-        "audio_format_opus": "OPUS",
-        "audio_bitrate": "Bitrate",
-        "audio_bitrate_128": "128 kbps",
-        "audio_bitrate_192": "192 kbps",
-        "audio_bitrate_256": "256 kbps",
-        "audio_bitrate_320": "320 kbps",
-        "audio_convert": "Convert",
-        "audio_success": "Audio conversion completed!",
-        "audio_error": "Audio conversion failed.",
+
         
         # Download History
         "history_title": "Download History",
@@ -287,7 +272,6 @@ TRANSLATIONS = {
         "tab_download": "Download",
         "tab_batch": "Lote",
         "tab_live": "Transmissão Ao Vivo",
-        "tab_audio": "Áudio",
         "tab_history": "Histórico",
         "tab_about": "Sobre",
 
@@ -406,21 +390,7 @@ TRANSLATIONS = {
         "live_minutes": "Minutos",
         "live_seconds": "Segundos",
         
-        # Áudio
-        "audio_url": "URL do YouTube",
-        "audio_format": "Formato de Áudio",
-        "audio_format_mp3": "MP3",
-        "audio_format_wav": "WAV",
-        "audio_format_m4a": "M4A",
-        "audio_format_opus": "OPUS",
-        "audio_bitrate": "Taxa de Bits",
-        "audio_bitrate_128": "128 kbps",
-        "audio_bitrate_192": "192 kbps",
-        "audio_bitrate_256": "256 kbps",
-        "audio_bitrate_320": "320 kbps",
-        "audio_convert": "Converter",
-        "audio_success": "Conversão de áudio concluída!",
-        "audio_error": "Falha na conversão de áudio.",
+
         
         # Histórico
         "history_title": "Histórico de Downloads",

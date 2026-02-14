@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 EasyCut Theme System
-Unified theme management for consistent UI styling
+Unified theme management using design_system.py
 """
 
-from .theme_manager import ThemeManager
+# Theme is now managed entirely by design_system.py
+# This package is kept for backwards-compatible imports
 
-__all__ = ["ThemeManager"]
+try:
+    from design_system import DesignTokens, ModernTheme, ColorPalette, Typography, Spacing, Icons, Shadows
+    # Backward-compatible alias — ThemeManager was removed in favor of DesignTokens
+    ThemeManager = DesignTokens
+    __all__ = ["DesignTokens", "ModernTheme", "ColorPalette", "Typography", "Spacing", "Icons", "Shadows", "ThemeManager"]
+except ImportError:
+    __all__ = []

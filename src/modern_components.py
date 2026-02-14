@@ -36,6 +36,7 @@ EMOJI_ICONS = {
     "alert-triangle": "⚠️",
     "info": "ℹ️",
     "log-in": "🔑",
+    "login": "🔑",
     "log-out": "🚪",
     "refresh": "🔄",
     "trash-2": "🗑️",
@@ -65,10 +66,25 @@ EMOJI_ICONS = {
 
 
 class ModernButton(ttk.Button):
-    """Modern button with icon support and variants"""
+    """Modern button with icon support, variants, and size options"""
+    
+    VARIANTS = {
+        "primary": "TButton",
+        "secondary": "Secondary.TButton",
+        "outline": "Outline.TButton",
+        "ghost": "Ghost.TButton",
+        "danger": "Danger.TButton",
+        "danger-filled": "DangerFilled.TButton",
+    }
+    
+    SIZE_STYLES = {
+        "sm": "Small.TButton",
+        "md": None,  # default
+        "lg": "Large.TButton",
+    }
     
     def __init__(self, parent, text="", icon_name=None, variant="primary", 
-                 command=None, width=None, **kwargs):
+                 size="md", command=None, width=None, **kwargs):
         """
         Create a modern button
         
@@ -76,7 +92,8 @@ class ModernButton(ttk.Button):
             parent: Parent widget
             text: Button text
             icon_name: Icon name from icon_manager
-            variant: "primary", "secondary", or "outline"
+            variant: "primary", "secondary", "outline", "ghost", "danger", "danger-filled"
+            size: "sm", "md", "lg"
             command: Callback function
             width: Button width
         """
@@ -85,7 +102,7 @@ class ModernButton(ttk.Button):
         emoji_prefix = ""
         
         if icon_name:
-            icon_size = Icons.SIZE_SM if width and width < 15 else Icons.SIZE_MD
+            icon_size = Icons.SIZE_SM if size == "sm" else Icons.SIZE_MD
             try:
                 self.icon = get_ui_icon(icon_name, size=icon_size)
             except:
@@ -95,13 +112,15 @@ class ModernButton(ttk.Button):
             if not self.icon and icon_name in EMOJI_ICONS:
                 emoji_prefix = EMOJI_ICONS[icon_name] + " "
         
-        # Apply style variant
-        style_map = {
-            "primary": "TButton",
-            "secondary": "Secondary.TButton",
-            "outline": "Outline.TButton",
-        }
-        style = style_map.get(variant, "TButton")
+        # Resolve style: variant base, but size prefixes for sm/lg
+        base_style = self.VARIANTS.get(variant, "TButton")
+        style = base_style
+        
+        # For size variants, combine: e.g. "Small.Outline.TButton" 
+        # But ttk needs separate style configs; use size style override for default variant
+        size_style = self.SIZE_STYLES.get(size)
+        if size_style and variant == "primary":
+            style = size_style
         
         # Create button with icon or emoji
         button_text = f"{emoji_prefix}{text}"
@@ -122,36 +141,57 @@ class ModernButton(ttk.Button):
             self.image = self.icon
 
 
-class ModernCard(ttk.Frame):
-    """Card component for grouping content"""
+class ModernCard(tk.Frame):
+    """Elevated card component with optional shadow and title"""
     
-    def __init__(self, parent, title=None, padding=None, **kwargs):
+    def __init__(self, parent, title=None, subtitle=None, padding=None, 
+                 dark_mode=None, shadow=True, **kwargs):
         """
-        Create a modern card
+        Create an elevated card
         
         Args:
             parent: Parent widget
-            title: Optional card title
-            padding: Custom padding (default: comfortable)
+            title: Optional card title (SIZE_H3, bold)
+            subtitle: Optional subtitle (SIZE_CAPTION, fg_secondary)
+            padding: Custom padding (default: PADDING_NORMAL)
+            dark_mode: Theme mode (auto-detects if None)
+            shadow: Whether to show shadow simulation
         """
-        # Force Card.TFrame style
-        if "style" not in kwargs:
-            kwargs["style"] = "Card.TFrame"
+        if dark_mode is None:
+            dark_mode = True
+        self._design = DesignTokens(dark_mode=dark_mode)
         
-        super().__init__(parent, **kwargs)
+        bg = self._design.get_color("bg_tertiary")
+        border_color = self._design.get_color("border")
         
-        # Use comfortable padding by default
-        pad = padding or Spacing.PADDING_COMFORTABLE
-        self.configure(padding=pad)
+        super().__init__(parent, bg=bg, highlightbackground=border_color, 
+                         highlightthickness=1, **kwargs)
         
-        # Add title if specified
+        pad = padding or Spacing.MD
+        self._inner = tk.Frame(self, bg=bg)
+        self._inner.pack(fill=tk.BOTH, expand=True, padx=pad, pady=pad)
+        
+        # Title area
         if title:
-            title_label = ttk.Label(
-                self,
-                text=title,
-                style="Subtitle.TLabel"
-            )
-            title_label.pack(anchor="w", pady=(0, Spacing.MD))
+            fg = self._design.get_color("fg_primary")
+            tk.Label(
+                self._inner, text=title, bg=bg, fg=fg,
+                font=(Typography.FONT_FAMILY, Typography.SIZE_H3, "bold"),
+                anchor="w"
+            ).pack(fill=tk.X, pady=(0, Spacing.XS))
+        
+        if subtitle:
+            fg_sec = self._design.get_color("fg_secondary")
+            tk.Label(
+                self._inner, text=subtitle, bg=bg, fg=fg_sec,
+                font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION),
+                anchor="w"
+            ).pack(fill=tk.X, pady=(0, Spacing.SM))
+    
+    @property
+    def body(self):
+        """Access the inner body frame for adding content"""
+        return self._inner
 
 
 class ModernInput(ttk.Frame):
@@ -276,7 +316,7 @@ class ModernBadge(ttk.Label):
 class ModernAlert(tk.Frame):  # Changed from ttk.Frame to tk.Frame
     """Alert/notification component"""
     
-    def __init__(self, parent, message="", variant="info", dismissible=True, **kwargs):
+    def __init__(self, parent, message="", variant="info", dismissible=True, dark_mode=None, **kwargs):
         """
         Create an alert
         
@@ -285,9 +325,12 @@ class ModernAlert(tk.Frame):  # Changed from ttk.Frame to tk.Frame
             message: Alert message
             variant: "info", "success", "warning", "error"
             dismissible: Whether alert can be dismissed
+            dark_mode: Theme mode (auto-detects if None)
         """
         # Get design before calling super().__init__
-        design = DesignTokens()
+        if dark_mode is None:
+            dark_mode = True  # Default fallback
+        design = DesignTokens(dark_mode=dark_mode)
         
         # Call super with background color to prevent style inheritance
         super().__init__(parent, bg=design.get_color("bg_primary"), **kwargs)
@@ -573,7 +616,7 @@ class ModernIconButton(ttk.Button):
 class ModernTabHeader(tk.Frame):
     """Professional tab header with icon"""
     
-    def __init__(self, parent, title, icon_name=None, subtitle=None, actions=None, **kwargs):
+    def __init__(self, parent, title, icon_name=None, subtitle=None, actions=None, dark_mode=None, **kwargs):
         """
         Create tab header
         
@@ -583,9 +626,12 @@ class ModernTabHeader(tk.Frame):
             icon_name: Optional icon
             subtitle: Optional subtitle
             actions: List of action buttons [{"icon": "name", "command": func, "tooltip": "text"}]
+            dark_mode: Theme mode (auto-detects if None)
         """
         # Get colors from design system BEFORE super init
-        design = DesignTokens()
+        if dark_mode is None:
+            dark_mode = True  # Default fallback
+        design = DesignTokens(dark_mode=dark_mode)
         bg_color = design.get_color("bg_primary")
         fg_color = design.get_color("fg_primary")
         
@@ -645,3 +691,135 @@ class ModernTabHeader(tk.Frame):
                     tooltip=action.get("tooltip")
                 )
                 btn.pack(side="left", padx=(Spacing.SM, 0))
+
+
+class Toast(tk.Frame):
+    """Single toast notification"""
+    
+    VARIANTS = {
+        "success": {"emoji": "✅", "color_key": "success"},
+        "warning": {"emoji": "⚠️", "color_key": "warning"},
+        "error":   {"emoji": "❌", "color_key": "error"},
+        "info":    {"emoji": "ℹ️", "color_key": "info"},
+    }
+    
+    def __init__(self, parent, title="", message="", variant="info", 
+                 duration=4000, dark_mode=True, on_dismiss=None, **kwargs):
+        self._design = DesignTokens(dark_mode=dark_mode)
+        bg = self._design.get_color("bg_elevated")
+        border_color = self._design.get_color("border")
+        
+        super().__init__(parent, bg=bg, highlightbackground=border_color,
+                         highlightthickness=1, **kwargs)
+        
+        vdata = self.VARIANTS.get(variant, self.VARIANTS["info"])
+        accent = self._design.get_color(vdata["color_key"])
+        fg = self._design.get_color("fg_primary")
+        fg_sec = self._design.get_color("fg_secondary")
+        
+        # Left color bar
+        tk.Frame(self, width=4, bg=accent).pack(side=tk.LEFT, fill=tk.Y)
+        
+        content = tk.Frame(self, bg=bg)
+        content.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=Spacing.MD, pady=Spacing.SM)
+        
+        # Top row: emoji + title + dismiss
+        top = tk.Frame(content, bg=bg)
+        top.pack(fill=tk.X)
+        
+        tk.Label(top, text=vdata["emoji"], bg=bg, font=("Segoe UI Emoji", 12)).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        if title:
+            tk.Label(
+                top, text=title, bg=bg, fg=fg,
+                font=(Typography.FONT_FAMILY, Typography.SIZE_BODY, "bold"),
+                anchor="w"
+            ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        # Dismiss button
+        dismiss = tk.Label(top, text="✕", bg=bg, fg=fg_sec, cursor="hand2",
+                          font=(Typography.FONT_FAMILY, 10))
+        dismiss.pack(side=tk.RIGHT)
+        dismiss.bind("<Button-1>", lambda e: self._dismiss(on_dismiss))
+        
+        # Message
+        if message:
+            tk.Label(
+                content, text=message, bg=bg, fg=fg_sec,
+                font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION),
+                anchor="w", wraplength=280, justify="left"
+            ).pack(fill=tk.X, pady=(Spacing.XS, 0))
+        
+        # Auto-dismiss
+        self._timer = None
+        if duration > 0:
+            self._timer = self.after(duration, lambda: self._dismiss(on_dismiss))
+    
+    def _dismiss(self, callback=None):
+        if self._timer:
+            try:
+                self.after_cancel(self._timer)
+            except Exception:
+                pass
+        if callback:
+            callback(self)
+        self.destroy()
+
+
+class ToastManager:
+    """Manages toast notifications — top-right of content area"""
+    
+    def __init__(self, parent, dark_mode=True):
+        self.parent = parent
+        self.dark_mode = dark_mode
+        self.toasts = []
+        
+        # Container placed in parent via place (top-right)
+        self.container = tk.Frame(parent, bg="", bd=0, highlightthickness=0)
+        self.container.place(relx=1.0, rely=0.0, anchor="ne", x=-Spacing.LG, y=Spacing.LG)
+    
+    def show(self, title="", message="", variant="info", duration=4000):
+        """Show a toast notification"""
+        toast = Toast(
+            self.container, title=title, message=message,
+            variant=variant, duration=duration,
+            dark_mode=self.dark_mode,
+            on_dismiss=self._on_toast_dismiss
+        )
+        toast.pack(fill=tk.X, pady=(0, Spacing.XS))
+        self.toasts.append(toast)
+        
+        # Limit stack to 5
+        if len(self.toasts) > 5:
+            oldest = self.toasts.pop(0)
+            try:
+                oldest.destroy()
+            except Exception:
+                pass
+    
+    def success(self, title, message="", duration=4000):
+        self.show(title, message, "success", duration)
+    
+    def warning(self, title, message="", duration=4000):
+        self.show(title, message, "warning", duration)
+    
+    def error(self, title, message="", duration=4000):
+        self.show(title, message, "error", duration)
+    
+    def info(self, title, message="", duration=4000):
+        self.show(title, message, "info", duration)
+    
+    def _on_toast_dismiss(self, toast):
+        if toast in self.toasts:
+            self.toasts.remove(toast)
+    
+    def clear_all(self):
+        for t in self.toasts[:]:
+            try:
+                t.destroy()
+            except Exception:
+                pass
+        self.toasts.clear()
+    
+    def update_theme(self, dark_mode):
+        self.dark_mode = dark_mode
