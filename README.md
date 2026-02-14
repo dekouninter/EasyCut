@@ -118,10 +118,17 @@ python src/easycut.py
 ```
 EasyCut/
 ├── src/
-│   ├── easycut.py              # Main application
+│   ├── core/                   # Config, Logger, Exceptions, Constants
+│   ├── theme/                  # Unified ThemeManager (dark/light)
+│   ├── ui/
+│   │   ├── factories/          # Widget & Tab factories (DRY)
+│   │   ├── components/         # Reusable modern components
+│   │   └── screens/            # 7 screen implementations
+│   ├── services/               # Business logic (download, audio, etc.)
+│   ├── utils/                  # Helper utilities
 │   ├── i18n.py                 # Translation system (EN, PT)
-│   ├── ui_enhanced.py          # Enhanced UI components
-│   └── donation_system.py      # Donation system
+│   ├── easycut.py              # Main application (~400 lines)
+│   └── main.py                 # Entry point
 ├── config/
 │   ├── config.json             # Application settings
 │   ├── history_downloads.json  # Download history
@@ -129,6 +136,11 @@ EasyCut/
 ├── downloads/                  # Default output folder
 ├── requirements.txt            # Python dependencies
 ├── README.md                   # This file
+├── ARCHITECTURE.md             # Architecture & design patterns
+├── TECHNICAL.md                # Technical deep dive
+├── REFACTORING_SUMMARY.md      # Refactoring results & metrics
+├── QUICKSTART.md               # 5-minute setup guide
+├── CREDITS.md                  # Credits & acknowledgements
 └── setup.py                    # (Optional) For packaging
 ```
 
@@ -311,6 +323,11 @@ Report bugs or suggest features:
 
 ## 📖 Additional Resources
 
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Architecture & design patterns
+- [TECHNICAL.md](TECHNICAL.md) - Technical deep dive
+- [REFACTORING_SUMMARY.md](REFACTORING_SUMMARY.md) - Refactoring results
+- [QUICKSTART.md](QUICKSTART.md) - 5-minute setup guide
+- [CREDITS.md](CREDITS.md) - Credits & acknowledgements
 - [yt-dlp Documentation](https://github.com/yt-dlp/yt-dlp)
 - [Tkinter Documentation](https://docs.python.org/3/library/tkinter.html)
 - [FFmpeg Documentation](https://ffmpeg.org/documentation.html)
