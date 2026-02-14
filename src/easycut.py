@@ -86,6 +86,7 @@ class EasyCutApp:
         self.logged_in = False
         self.current_email = ""
         self.is_downloading = False
+        self.active_scroll_canvas = None  # Track active canvas for mouse wheel scroll
         
         # Paths
         self.output_dir = Path(self.config_manager.get("output_folder", "downloads"))
@@ -365,7 +366,7 @@ class EasyCutApp:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         # Enable mouse wheel scroll for download tab
-        self.enable_mousewheel_scroll(main_canvas)
+        self.enable_mousewheel_scroll(main_canvas, main)
         
         # === TAB HEADER ===
         ModernTabHeader(
@@ -1003,7 +1004,7 @@ class EasyCutApp:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         # Enable mouse wheel scroll for history tab
-        self.enable_mousewheel_scroll(canvas)
+        self.enable_mousewheel_scroll(canvas, self.history_records_frame)
         
         self.refresh_history()
     
@@ -1030,7 +1031,7 @@ class EasyCutApp:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         # Enable mouse wheel scroll for about tab
-        self.enable_mousewheel_scroll(canvas)
+        self.enable_mousewheel_scroll(canvas, scrollable_frame)
         
         # Content frame (no centering - just pack normally for visibility)
         main = ttk.Frame(scrollable_frame, padding=Spacing.XXL)
@@ -1767,18 +1768,48 @@ class EasyCutApp:
     
     def _on_mousewheel(self, event, canvas):
         """Handle mouse wheel scroll for canvas"""
+        # Check if canvas exists and has scrollable content
+        if not canvas or not hasattr(canvas, 'yview'):
+            return
+        
+        # Determine scroll direction
         if event.num == 5 or event.delta < 0:  # Scroll down
             canvas.yview_scroll(3, "units")
         elif event.num == 4 or event.delta > 0:  # Scroll up
             canvas.yview_scroll(-3, "units")
     
-    def enable_mousewheel_scroll(self, canvas):
-        """Enable mouse wheel scrolling for a canvas"""
-        # Linux uses Button-4 and Button-5
+    def enable_mousewheel_scroll(self, canvas, frame=None):
+        """Enable mouse wheel scrolling for a canvas anywhere within its area
+        
+        Args:
+            canvas: Canvas widget to enable scrolling for
+            frame: Optional parent frame to also bind scroll events
+        """
+        # Track mouse entering/leaving canvas area for global scroll handling
+        def on_canvas_enter(e):
+            self.active_scroll_canvas = canvas
+        
+        def on_canvas_leave(e):
+            # Only unset if this is still the active canvas
+            if self.active_scroll_canvas is canvas:
+                self.active_scroll_canvas = None
+        
+        # Bind to canvas
+        canvas.bind("<Enter>", on_canvas_enter)
+        canvas.bind("<Leave>", on_canvas_leave)
+        
+        # Bind scroll events to canvas (Linux uses Button-4 and Button-5)
         canvas.bind("<Button-4>", lambda e: self._on_mousewheel(e, canvas))
         canvas.bind("<Button-5>", lambda e: self._on_mousewheel(e, canvas))
-        # Windows and macOS use MouseWheel
+        
+        # Bind scroll events for Windows and macOS
         canvas.bind("<MouseWheel>", lambda e: self._on_mousewheel(e, canvas))
+        
+        # Also bind to parent frame if provided - enables scroll when over widgets in frame
+        if frame:
+            frame.bind("<Button-4>", lambda e: self._on_mousewheel(e, canvas))
+            frame.bind("<Button-5>", lambda e: self._on_mousewheel(e, canvas))
+            frame.bind("<MouseWheel>", lambda e: self._on_mousewheel(e, canvas))
 
 
 def main():
