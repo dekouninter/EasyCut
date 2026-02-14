@@ -570,7 +570,7 @@ class ModernIconButton(ttk.Button):
             ModernTooltip(self, tooltip)
 
 
-class ModernTabHeader(ttk.Frame):
+class ModernTabHeader(tk.Frame):
     """Professional tab header with icon"""
     
     def __init__(self, parent, title, icon_name=None, subtitle=None, actions=None, **kwargs):
@@ -584,16 +584,17 @@ class ModernTabHeader(ttk.Frame):
             subtitle: Optional subtitle
             actions: List of action buttons [{"icon": "name", "command": func, "tooltip": "text"}]
         """
-        super().__init__(parent, **kwargs)
-        self.pack(fill="x", padx=Spacing.LG, pady=Spacing.LG)
-        
-        # Get colors from design system
+        # Get colors from design system BEFORE super init
         design = DesignTokens()
         bg_color = design.get_color("bg_primary")
         fg_color = design.get_color("fg_primary")
         
+        super().__init__(parent, bg=bg_color, **kwargs)
+        self.configure(bg=bg_color, highlightthickness=0, relief="flat")
+        self.pack(fill="x", padx=Spacing.LG, pady=Spacing.LG)
+        
         # Left side (icon + text)
-        left_frame = ttk.Frame(self)
+        left_frame = tk.Frame(self, bg=bg_color)
         left_frame.pack(side="left", fill="x", expand=True)
         
         # Icon or emoji
@@ -615,7 +616,7 @@ class ModernTabHeader(ttk.Frame):
                 emoji_label.pack(side="left", padx=(0, Spacing.MD))
         
         # Text
-        text_frame = ttk.Frame(left_frame)
+        text_frame = tk.Frame(left_frame, bg=bg_color)
         text_frame.pack(side="left", fill="x", expand=True)
         
         title_label = tk.Label(text_frame, text=title,
@@ -633,7 +634,7 @@ class ModernTabHeader(ttk.Frame):
         
         # Right side (actions)
         if actions:
-            right_frame = ttk.Frame(self)
+            right_frame = tk.Frame(self, bg=bg_color)
             right_frame.pack(side="right")
             
             for action in actions:
