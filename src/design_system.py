@@ -58,43 +58,48 @@ class ColorPalette:
         
         "shadow": "rgba(0, 0, 0, 0.5)",   # Shadow color
         "overlay": "rgba(10, 14, 39, 0.95)",  # Modal overlay
+        
+        # Icon colors (bright for visibility in dark theme)
+        "icon_primary": "#E8EAED",         # Main icon color
+        "icon_muted": "#9CA3AF",           # Muted icon
+        "icon_accent": ICON_PRIMARY,       # Accent icon color
     }
     
-    # === LIGHT THEME - Soft, Clean Colors ===
+    # === LIGHT THEME - Professional, Clean, Neutral Colors ===
     LIGHT = {
-        # Backgrounds
-        "bg_primary": "#FAFBFC",          # Pure white
-        "bg_secondary": "#FFFFFF",        # Pure white
-        "bg_tertiary": "#F5F5F5",         # Neutral light gray
+        # Backgrounds - Pure whites and true grays (NO blue tones)
+        "bg_primary": "#FFFFFF",          # Pure white
+        "bg_secondary": "#FAFAFA",        # Almost white
+        "bg_tertiary": "#F3F3F3",         # Light gray (neutral)
         "bg_elevated": "#FFFFFF",         # Elevated white
-        "bg_hover": "#EEEEEE",            # Hover gray
+        "bg_hover": "#EFEFEF",            # Hover gray (neutral)
         
-        # Foregrounds
-        "fg_primary": "#161616",          # Dark text
-        "fg_secondary": "#424242",        # Medium gray text
-        "fg_tertiary": "#666666",         # Light gray text
-        "fg_disabled": "#BDBDBD",         # Disabled gray
+        # Foregrounds - Maximum contrast
+        "fg_primary": "#0D0D0D",          # Almost black
+        "fg_secondary": "#404040",        # Dark gray
+        "fg_tertiary": "#717171",         # Medium gray
+        "fg_disabled": "#AAAAAA",         # Disabled gray
         
-        # Accents & Semantics (derived from app icon colors)  
-        "accent_primary": ICON_PRIMARY,     # Primary accent from icon (coral red)
-        "accent_secondary": "#FF9A9A",     # Lighter variant
-        "accent_hover": "#E83E3A",         # Darker hover state
+        # Accents & Semantics (from app icon)
+        "accent_primary": ICON_PRIMARY,     # Coral red from icon
+        "accent_secondary": "#FF8680",      # Lighter coral
+        "accent_hover": "#E84037",          # Darker coral
         
-        "success": "#10B981",             # Green
-        "success_bg": "#D1FAE5",          # Success background
-        "warning": "#F59E0B",             # Amber
-        "warning_bg": "#FEF3C7",          # Warning background
-        "error": "#EF4444",               # Red
-        "error_bg": "#FEE2E2",            # Error background
-        "info": "#3B82F6",                # Blue
-        "info_bg": "#E3F2FD",             # Info background (neutral blue)
+        "success": "#0F7938",              # Dark green (better contrast)
+        "success_bg": "#E8F5E9",            # Light green background
+        "warning": "#C67C1B",              # Dark amber (better contrast)
+        "warning_bg": "#FFF8E1",            # Light amber background
+        "error": "#C62828",                # Dark red (better contrast)
+        "error_bg": "#FFEBEE",              # Light red background
+        "info": "#1565C0",                 # Dark blue (better contrast)
+        "info_bg": "#E3F2FD",               # Light blue background
         
-        # UI Elements
-        "border": "#E0E0E0",              # Default border
-        "border_focus": ICON_PRIMARY,      # Focused border (icon color)
-        "border_hover": "#BDBDBD",        # Hover border
+        # UI Elements - Neutral grays
+        "border": "#CCCCCC",               # Default border (visible)
+        "border_focus": ICON_PRIMARY,       # Focused border (accent color)
+        "border_hover": "#BBBBBB",         # Hover border
         
-        "shadow": "rgba(0, 0, 0, 0.1)",   # Shadow color
+        "shadow": "rgba(0, 0, 0, 0.12)",   # Subtle shadow
         "overlay": "rgba(255, 255, 255, 0.95)",  # Modal overlay
     }
 
@@ -106,21 +111,22 @@ class Typography:
     FONT_SANS = "Inter, Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif"
     FONT_MONO = "JetBrains Mono, Consolas, Monaco, Courier New, monospace"
     
-    # Font sizes (in pixels)
-    SIZE_XXXL = 32   # Hero titles
-    SIZE_XXL = 24    # Page titles
-    SIZE_XL = 20     # Section titles
-    SIZE_LG = 16     # Large text
-    SIZE_MD = 14     # Body text (default)
-    SIZE_SM = 12     # Small text
-    SIZE_XS = 10     # Extra small text
+    # Font sizes (in pixels) - Improved for better readability
+    SIZE_XXXL = 36   # Hero titles (was 32)
+    SIZE_XXL = 28    # Page titles (was 24)
+    SIZE_XL = 22     # Section titles (was 20)
+    SIZE_LG = 18     # Large text (was 16)
+    SIZE_MD = 15     # Body text (was 14) - more readable
+    SIZE_SM = 13     # Small text (was 12)
+    SIZE_XS = 11     # Extra small text (was 10)
     
-    # Font weights
+    # Font weights - Better hierarchy
     WEIGHT_LIGHT = "300"
     WEIGHT_REGULAR = "400"
     WEIGHT_MEDIUM = "500"
     WEIGHT_SEMIBOLD = "600"
     WEIGHT_BOLD = "700"
+    WEIGHT_EXTRABOLD = "800"
     
     # Line heights
     LINE_HEIGHT_TIGHT = 1.2
@@ -176,14 +182,14 @@ class Shadows:
 
 
 class Icons:
-    """Icon sizing system"""
+    """Icon sizing system - Improved for better visibility"""
     
-    SIZE_XS = 12
-    SIZE_SM = 16
-    SIZE_MD = 20
-    SIZE_LG = 24
-    SIZE_XL = 32
-    SIZE_XXL = 48
+    SIZE_XS = 14        # Extra small (was 12)
+    SIZE_SM = 18        # Small (was 16) - MUCH improved for light theme visibility
+    SIZE_MD = 22        # Medium (was 20)
+    SIZE_LG = 26        # Large (was 24)
+    SIZE_XL = 36        # Extra large (was 32)
+    SIZE_XXL = 52       # Extra extra large (was 48)
 
 
 class DesignTokens:

@@ -268,17 +268,30 @@ ICON_MAP = {
 }
 
 
-def get_ui_icon(icon_key: str, size: int = 16, color: str = None) -> PhotoImage:
+def get_ui_icon(icon_key: str, size: int = 16, color: str = None, theme: str = None) -> PhotoImage:
     """
-    Atalho para pegar ícone mapeado da UI
+    Atalho para pegar ícone mapeado da UI com cores inteligentes
     
     Args:
         icon_key: Chave do ICON_MAP (ex: "download", "theme_dark")
         size: Tamanho em pixels
-        color: Cor opcional
+        color: Cor opcional (se None, usa cor padrão do tema)
+        theme: Tema ("dark" ou "light") - se None, tenta detectar
     
     Returns:
         PhotoImage ou None se não encontrado
     """
     feather_name = ICON_MAP.get(icon_key, icon_key)
+    
+    # Se não teve cor e tema especificado, usar cor padrão melhorada
+    if not color and not theme:
+        # Importar apenas se needed para evitar circular imports
+        try:
+            from design_system import DesignTokens
+            tokens = DesignTokens(dark_mode=True)  # Padrão dark
+            # Usar cor principal do ícone (mais visível que cinza)
+            color = tokens.get_color("icon_primary")  # #2E2E2E para light, #E8EAED para dark
+        except:
+            pass
+    
     return icon_manager.get_icon(feather_name, size, color)
