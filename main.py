@@ -25,7 +25,7 @@ def main():
     
     # Set window icon BEFORE creating the app
     try:
-        icon_path = Path(__file__).parent / "assets" / "app_icon.ico"
+        icon_path = Path(__file__).parent / "assets" / "headerapp_icon.ico"
         if icon_path.exists():
             # Use forward slashes for Windows iconbitmap (important!)
             icon_str = str(icon_path).replace("\\", "/")

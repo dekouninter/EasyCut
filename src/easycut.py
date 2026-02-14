@@ -192,7 +192,7 @@ class EasyCutApp:
         # Load app icon from assets
         try:
             from PIL import Image, ImageTk
-            icon_path = Path(__file__).parent.parent / "assets" / "app_icon.ico"
+            icon_path = Path(__file__).parent.parent / "assets" / "headerapp_icon.ico"
             if icon_path.exists():
                 img = Image.open(icon_path)
                 img = img.resize((64, 64), Image.Resampling.LANCZOS)
