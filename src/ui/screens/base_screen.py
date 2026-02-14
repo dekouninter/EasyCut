@@ -17,7 +17,7 @@ from abc import ABC, abstractmethod
 from tkinter import ttk
 from typing import Dict, Any, Optional
 
-from ..theme import ThemeManager
+from ...theme import ThemeManager
 from ..factories import TabFactory
 from ...core.logger import get_logger
 

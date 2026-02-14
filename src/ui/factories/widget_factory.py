@@ -17,8 +17,8 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Callable, Optional, Dict, Any
 
-from ..theme import ThemeManager
-from ..core.logger import get_logger
+from ...theme import ThemeManager
+from ...core.logger import get_logger
 
 logger = get_logger(__name__)
 

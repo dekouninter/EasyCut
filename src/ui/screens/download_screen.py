@@ -12,7 +12,7 @@ from typing import Dict, Any
 
 from .base_screen import BaseScreen
 from ..factories import TabFactory, CanvasScrollFactory
-from ..theme import ThemeManager
+from ...theme import ThemeManager
 from ...core.logger import get_logger
 from ...core.constants import Constants, TranslationKeys
 
