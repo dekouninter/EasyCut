@@ -10,11 +10,11 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Dict, Any
 
-from .base_screen import BaseScreen
-from ..factories import TabFactory
-from ...theme import ThemeManager
-from ...core.logger import get_logger
-from ...core.constants import Constants, TranslationKeys
+from ui.screens.base_screen import BaseScreen
+from ui.factories import TabFactory
+from theme import ThemeManager
+from core.logger import get_logger
+from core.constants import Constants, TranslationKeys
 
 # Third-party
 from design_system import Typography, Spacing

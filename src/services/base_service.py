@@ -16,8 +16,8 @@ Best Practices:
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
-from ..core.logger import get_logger
-from ..core.exceptions import EasyCutException
+from core.logger import get_logger
+from core.exceptions import EasyCutException
 
 logger = get_logger(__name__)
 

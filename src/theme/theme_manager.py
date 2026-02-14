@@ -18,12 +18,12 @@ from tkinter import ttk
 from typing import Dict, Tuple
 from pathlib import Path
 
-from ..core.logger import get_logger
-from ..core.constants import Constants
+from core.logger import get_logger
+from core.constants import Constants
 
 # Try to import icon colors for branding
 try:
-    from ..design_system import ColorPalette
+    from design_system import ColorPalette
     ICON_PRIMARY = ColorPalette.DARK.get("accent_primary", "#f85451")
 except:
     ICON_PRIMARY = "#f85451"  # Fallback coral red
