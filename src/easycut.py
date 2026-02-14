@@ -43,6 +43,12 @@ from modern_components import (
 )
 from font_loader import setup_fonts, LOADED_FONT_FAMILY
 
+# Import UI Screens (new modular architecture)
+from ui.screens import (
+    LoginScreen, DownloadScreen, BatchScreen, LiveScreen,
+    AudioScreen, HistoryScreen, AboutScreen
+)
+
 # Import external libraries
 try:
     import yt_dlp
@@ -81,6 +87,9 @@ class EasyCutApp:
         
         # UI Components (will be created)
         self.ui_components = {}
+        
+        # Screen instances (will be created in setup_ui)
+        self.screens = {}  # {screen_name: screen_instance}
         
         # State
         self.logged_in = False
@@ -1165,6 +1174,41 @@ class EasyCutApp:
             text=tr("about_footer", "💜 Made with Python | GPL-3.0 License | © 2026 Deko Costa"),
             style="Caption.TLabel"
         ).pack(pady=Spacing.MD)
+    
+    def create_screens_new_architecture(self):
+        """Create screens using new modular architecture
+        
+        This method instantiates all screen classes, which represent tabs
+        in the Notebook. Each screen handles its own UI layout and delegates
+        business logic back to this app instance.
+        
+        NOTE: LoginScreen is not included here as login is currently handled
+        via popup and banner in the header. Can be added to notebook if needed.
+        """
+        # Prepare kwargs for screen initialization
+        screen_kwargs = {
+            "translator": self.translator,
+            "design": self.design,
+            "app": self  # Reference back to main app for business logic calls
+        }
+        
+        # Create all screens with the notebook and theme
+        # These replace the monolithic create_*_tab() methods
+        self.screens = {
+            "download": DownloadScreen(self.notebook, self.theme, **screen_kwargs),
+            "batch": BatchScreen(self.notebook, self.theme, **screen_kwargs),
+            "live": LiveScreen(self.notebook, self.theme, **screen_kwargs),
+            "audio": AudioScreen(self.notebook, self.theme, **screen_kwargs),
+            "history": HistoryScreen(self.notebook, self.theme, **screen_kwargs),
+            "about": AboutScreen(self.notebook, self.theme, **screen_kwargs)
+        }
+        
+        # Build each screen (creates UI and binds events)
+        for screen_name, screen in self.screens.items():
+            screen.build()
+            logging.info(f"✓ {screen.__class__.__name__} built")
+        
+        logging.info(f"✓ All 6 screens created using new modular architecture")
     
     def apply_theme(self):
         """Apply modern theme to window"""
