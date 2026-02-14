@@ -1,65 +1,66 @@
-# 🏗️ EasyCut - Arquitetura Refatorada Profissional
+# 🏗️ EasyCut - Professional Refactored Architecture
 
-## 📋 Índice
-1. [Visão Geral](#visão-geral)
-2. [Estrutura de Pastas](#estrutura-de-pastas)
-3. [Camadas Arquiteturais](#camadas-arquiteturais)
-4. [Padrões de Design](#padrões-de-design)
-5. [Fluxo de Dados](#fluxo-de-dados)
-6. [Guia de Uso](#guia-de-uso)
-7. [Exemplos Práticos](#exemplos-práticos)
+## 📋 Table of Contents
+
+1. [Overview](#overview)
+2. [Folder Structure](#folder-structure)
+3. [Architectural Layers](#architectural-layers)
+4. [Design Patterns](#design-patterns)
+5. [Data Flow](#data-flow)
+6. [Usage Guide](#usage-guide)
+7. [Practical Examples](#practical-examples)
 
 ---
 
-## 📌 Visão Geral
+## 📌 Overview
 
-### Problemas Resolvidos
+### Problems Solved
 
-| Problema | Solução | Benefício |
-|----------|---------|-----------|
-| 2 sistemas de theme duplicados | ThemeManager unificado | Sem conflitos, fácil manutenção |
-| 15+ decorações de botões repetidas | ButtonFactory | DRY, consistência visual |
-| 6 abas com código idêntico | TabFactory | Redução de 400+ linhas |
-| Logging espalhado | Logger centralizado | Rastreabilidade, estruturado |
-| Config espalhada | ConfigManager unificado | Single source of truth |
-| Sem Service Layer | Services descentralizadas | Separação de concerns |
-| easycut.py gigante (1824 linhas) | Módulos especializados | Cada arquivo <300 linhas |
-| Sem exception handling | Custom exceptions | Erros claros e estruturados |
+| Problem | Solution | Benefit |
+|---------|----------|---------|
+| 2 duplicate theme systems | Unified ThemeManager | No conflicts, easy maintenance |
+| 15+ repeated button decorations | ButtonFactory | DRY, visual consistency |
+| 6 tabs with identical code | TabFactory | Reduced 400+ lines |
+| Logging scattered everywhere | Centralized Logger | Traceability, structured |
+| Config scattered in 10+ places | Unified ConfigManager | Single source of truth |
+| No Service Layer | Decentralized Services | Separation of concerns |
+| Monolithic easycut.py (1824 lines) | Specialized modules | Each file <300 lines |
+| No exception handling | Custom exceptions | Clear, structured errors |
 
-### Princípios Aplicados
+### Principles Applied
 
 ✅ **SOLID**
-- **S**ingle Responsibility: Cada módulo uma responsabilidade
-- **O**pen/Closed: Extensível sem modificação
-- **L**iskov Substitution: Polimorfismo correto
-- **I**nterface Segregation: Interfaces pequenas e focadas
-- **D**ependency Inversion: Depender de abstrações
+- **S**ingle Responsibility: Each module one responsibility
+- **O**pen/Closed: Extensible without modification
+- **L**iskov Substitution: Correct polymorphism
+- **I**nterface Segregation: Small, focused interfaces
+- **D**ependency Inversion: Depend on abstractions
 
 ✅ **DRY** (Don't Repeat Yourself)
-- Factories eliminam repetição
-- Funções reutilizáveis
+- Factories eliminate repetition
+- Reusable functions
 
 ✅ **KISS** (Keep It Simple, Stupid)
-- Arquitetura clara e linear
-- Sem over-engineering
+- Clear, linear architecture
+- No over-engineering
 
 ✅ **YAGNI** (You Aren't Gonna Need It)
-- Apenas o necessário
-- Sem features especulativas
+- Only what's necessary
+- No speculative features
 
 ---
 
-## 🗂️ Estrutura de Pastas
+## 🗂️ Folder Structure
 
 ```
 src/
 ├── core/                                  # 🔧 FOUNDATION LAYER
 │   ├── __init__.py
 │   ├── config.py          (ConfigManager)  # Unified config system
-│   ├── constants.py       (Constants)     # Global constants & keys
-│   ├── logger.py          (Logger)        # Centralized logging
-│   ├── exceptions.py      (Exception*)    # Custom exception hierarchy
-│   └── utils.py          (Utilities)      # Helper functions
+│   ├── constants.py       (Constants)      # Global constants & keys
+│   ├── logger.py          (Logger)         # Centralized logging
+│   ├── exceptions.py      (Exception*)     # Custom exception hierarchy
+│   └── utils.py           (Utilities)      # Helper functions
 │
 ├── theme/                                 # 🎨 THEME LAYER
 │   ├── __init__.py
@@ -69,32 +70,33 @@ src/
 ├── ui/                                    # 🖼️ UI LAYER
 │   ├── __init__.py
 │   │
-│   ├── factories/                        # WIDGET FACTORIES (descentralizado)
+│   ├── factories/                        # WIDGET FACTORIES (decentralized)
 │   │   ├── __init__.py
 │   │   ├── widget_factory.py             # ButtonFactory, FrameFactory, etc
 │   │   └── tab_factory.py                # TabFactory (scrollable tabs)
 │   │
-│   ├── components/                       # MODERN COMPONENTS (reutilizáveis)
+│   ├── components/                       # MODERN COMPONENTS (reusable)
 │   │   ├── __init__.py
-│   │   ├── modern_button.py              # ModernButton (refatorado)
+│   │   ├── modern_button.py              # ModernButton
 │   │   ├── modern_card.py                # ModernCard
-│   │   ├── modern_alert.py               # ModernAlert (fixed)
+│   │   ├── modern_alert.py               # ModernAlert
 │   │   ├── modern_input.py               # ModernInput
-│   │   └── ... (outros componentes)
+│   │   └── ... (other components)
 │   │
-│   └── screens/                          # TAB SCREENS (descentralizados)
+│   └── screens/                          # TAB SCREENS (decentralized)
 │       ├── __init__.py
-│       ├── base_screen.py                # BaseScreen (classe base)
+│       ├── base_screen.py                # BaseScreen (base class)
+│       ├── login_screen.py               # Login tab
 │       ├── download_screen.py            # Download tab
 │       ├── batch_screen.py               # Batch tab
-│       ├── live_screen.py                # Live tab
-│       ├── audio_screen.py               # Audio tab
+│       ├── live_screen.py                # Live stream tab
+│       ├── audio_screen.py               # Audio conversion tab
 │       ├── history_screen.py             # History tab
 │       └── about_screen.py               # About tab
 │
-├── services/                              # 🔌 SERVICE LAYER (lógica descentralizada)
+├── services/                              # 🔌 SERVICE LAYER (decentralized logic)
 │   ├── __init__.py
-│   ├── base_service.py                   # BaseService (classe base)
+│   ├── base_service.py                   # BaseService (base class)
 │   ├── download_service.py               # Download logic
 │   ├── audio_service.py                  # Audio conversion
 │   ├── history_service.py                # History management
@@ -103,25 +105,25 @@ src/
 │
 ├── utils/                                 # 🛠️ UTILITIES
 │   ├── __init__.py
-│   ├── icon_helper.py                    # Icon loading (centralizado)
+│   ├── icon_helper.py                    # Icon loading (centralized)
 │   ├── file_helper.py                    # File operations
 │   └── validators.py                     # Input validation
 │
-├── easycut.py                            # 🎯 MAIN APP (limpo, só orquestra)
+├── easycut.py                            # 🎯 MAIN APP (~400 lines, orchestrates only)
 └── main.py                               # Entry point
 ```
 
 ---
 
-## 🏢 Camadas Arquiteturais
+## 🏢 Architectural Layers
 
 ### 1️⃣ CORE LAYER (Foundation)
 
-**Responsabilidade:** Fundações da aplicação
-- Configuração centralizada
-- Logging estruturado
-- Exceções customizadas
-- Constantes globais
+**Responsibility:** Application foundations
+- Unified configuration
+- Structured logging
+- Custom exceptions
+- Global constants
 
 ```python
 from core.config import ConfigManager
@@ -141,11 +143,11 @@ except ConfigException as e:
 
 ### 2️⃣ THEME LAYER (Visual Design)
 
-**Responsabilidade:** Tema e design do app (foi theme_manager + design_system)
-- Cores (dark/light)
-- Tipografia
-- Espaçamento
-- Estilos TTK
+**Responsibility:** App theme and design (unified from 3 systems)
+- Colors (dark/light)
+- Typography
+- Spacing
+- TTK styles
 
 ```python
 from theme.theme_manager import ThemeManager
@@ -159,7 +161,7 @@ bg = theme.get_color("bg_primary")  # "#0A0E27"
 font = theme.get_font("LG", "bold")  # ("Segoe UI", 18, "bold")
 
 # Toggle theme
-theme.toggle()  # Muda de dark ↔ light
+theme.toggle()  # Switches dark ↔ light
 
 # Apply to ttk.Style
 style = ttk.Style()
@@ -168,7 +170,7 @@ theme.apply_to_style(style)
 
 ### 3️⃣ UI FACTORIES (Widget Creation)
 
-**Responsabilidade:** Criar widgets de forma consistente, sem repetição
+**Responsibility:** Create widgets consistently without repetition
 
 ```python
 from ui.factories import (
@@ -178,11 +180,11 @@ from ui.factories import (
     TabFactory
 )
 
-# Create button (todas as variantes automáticamente estilizadas)
+# Create button (all variants automatically styled)
 btn = ButtonFactory.create_action_button(parent, "Download", on_click)
 btn.pack()
 
-# Create scrollable tab (padrão comum)
+# Create scrollable tab (common pattern)
 tab_data = create_tab(notebook, "Download", theme, "⬇️", enable_scroll)
 
 # Create section within tab
@@ -192,14 +194,15 @@ section.pack(fill=tk.BOTH, expand=True)
 
 ### 4️⃣ UI COMPONENTS (Reusable Widgets)
 
-**Responsabilidade:** Componentes modernos reutilizáveis
-- ModernButton (já existe, limpo)
-- ModernCard (ja existe, limpo)
-- ModernAlert (foi fixado)
+**Responsibility:** Modern reusable components
+- ModernButton (clean, styled)
+- ModernCard (container with title)
+- ModernAlert (notifications)
+- ModernInput (labeled input)
 - ... etc
 
 ```python
-from modern_components import ModernAlert, ModernCard
+from ui.components import ModernAlert, ModernCard
 
 # Alert
 alert = ModernAlert(
@@ -218,7 +221,8 @@ label.pack()
 
 ### 5️⃣ UI SCREENS (Tab Implementations)
 
-**Responsabilidade:** Cada tab implementa sua própria UI e lógica
+**Responsibility:** Each tab implements its own UI and logic
+- LoginScreen
 - DownloadScreen
 - BatchScreen
 - LiveScreen
@@ -237,11 +241,11 @@ screen.build()  # Builds the UI
 log_widget = screen.get_log_widget()
 ```
 
-### 6️⃣ SERVICES (Logic Descentralizada)
+### 6️⃣ SERVICES (Logic Decentralized)
 
-**Responsabilidade:** Toda lógica de negócio separada da UI
+**Responsibility:** All business logic separated from UI
 - DownloadService (download/ffmpeg)
-- AudioService (áudio conversion)
+- AudioService (audio conversion)
 - HistoryService (persistence)
 - AuthService (OAuth/keyring)
 - StreamingService (live streams)
@@ -250,7 +254,7 @@ log_widget = screen.get_log_widget()
 from services.download_service import DownloadService
 from services.audio_service import AudioService
 
-# Usar serviço
+# Use service
 download_svc = DownloadService()
 result = download_svc.download(
     url="https://youtube.com/watch?v=...",
@@ -266,10 +270,10 @@ else:
 
 ### 7️⃣ MAIN APP (Orchestrator)
 
-**Responsabilidade:** Apenas orquestração
-- Inicializa subsistemas
-- Coordena comunicação
-- Gerencia lifecycle
+**Responsibility:** Only orchestration
+- Initialize subsystems
+- Coordinate communication
+- Manage lifecycle
 
 ```python
 class EasyCutApp:
@@ -303,16 +307,16 @@ class EasyCutApp:
 
 ---
 
-## 🎯 Padrões de Design
+## 🎯 Design Patterns
 
 ### 1. Factory Pattern (Widget Creation)
 
 ```python
-# ❌ ANTES (repetido em 15+ lugares)
+# ❌ BEFORE (repeated in 15+ places)
 btn = ttk.Button(parent, text="Download", command=on_download)
 btn.pack(side=tk.LEFT, padx=8)
 
-# ✅ DEPOIS (Factory)
+# ✅ AFTER (with Factory)
 from ui.factories import ButtonFactory
 btn = ButtonFactory.create_action_button(parent, "Download", on_download)
 btn.pack(side=tk.LEFT, padx=8)
@@ -321,7 +325,7 @@ btn.pack(side=tk.LEFT, padx=8)
 ### 2. Builder Pattern (Complex Widgets)
 
 ```python
-# Criar tab scrollable com factory
+# Create scrollable tab with factory
 tab_data = TabFactory.create_scrollable_tab(
     notebook,
     tab_text="Download",
@@ -330,15 +334,15 @@ tab_data = TabFactory.create_scrollable_tab(
     enable_scroll_handler=app.enable_mousewheel_scroll
 )
 
-# Resultado:
+# Result:
 # {
-#   "frame": ttk.Frame,      ← tab frame added to notebook
-#   "canvas": tk.Canvas,      ← for scrolling
-#   "scrollbar": ttk.Scrollbar, ← scrollbar
-#   "content": ttk.Frame      ← where YOU add content
+#   "frame": ttk.Frame,         ← tab frame added to notebook
+#   "canvas": tk.Canvas,         ← for scrolling
+#   "scrollbar": ttk.Scrollbar,  ← scrollbar
+#   "content": ttk.Frame         ← where YOU add content
 # }
 
-# Use o content:
+# Use the content:
 content = tab_data["content"]
 ModernCard(content, "Settings").pack()
 ```
@@ -384,7 +388,7 @@ def handle_theme_change(self, old_value, new_value):
 
 ---
 
-## 🔄 Fluxo de Dados
+## 🔄 Data Flow
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -406,9 +410,9 @@ def handle_theme_change(self, old_value, new_value):
 │                   SERVICE LAYER                         │
 │   (DownloadService, AudioService, etc)                 │
 │      ↓                                                  │
-│   -  Execute business logic                           │
-│   - Handle errors                                      │
-│   - Log operations                                    │
+│   - Execute business logic                            │
+│   - Handle errors                                     │
+│   - Log operations                                   │
 └────────────────────────┬────────────────────────────────┘
                          │
                          ▼
@@ -418,7 +422,7 @@ def handle_theme_change(self, old_value, new_value):
 │      ↓                                                  │
 │   - Centralized config                                │
 │   - Structured logging                                │
-│   - Error handling                                    │
+│   - Error handling                                   │
 └────────────────────────┬────────────────────────────────┘
                          │
                          ▼
@@ -430,11 +434,11 @@ def handle_theme_change(self, old_value, new_value):
 
 ---
 
-## 💡 Guia de Uso
+## 💡 Usage Guide
 
-### Como Criar Nova Tela/Tab
+### How to Create a New Screen/Tab
 
-1. **Criar arquivo em `ui/screens/`**
+1. **Create file in `ui/screens/`**
 
 ```python
 # ui/screens/custom_screen.py
@@ -464,7 +468,7 @@ class CustomScreen(BaseScreen):
         return {}
 ```
 
-2. **Registrar em main app**
+2. **Register in main app**
 
 ```python
 # easycut.py
@@ -480,9 +484,9 @@ class EasyCutApp:
         self.custom_screen.build()
 ```
 
-### Como Criar Novo Service
+### How to Create a New Service
 
-1. **Criar arquivo em `services/`**
+1. **Create file in `services/`**
 
 ```python
 # services/custom_service.py
@@ -515,7 +519,7 @@ class CustomService(BaseService):
         pass
 ```
 
-2. **Registrar em main app**
+2. **Register in main app**
 
 ```python
 # easycut.py
@@ -528,12 +532,12 @@ class EasyCutApp:
 
 ---
 
-## 📚 Exemplos Práticos
+## 📚 Practical Examples
 
-### Exemplo 1: Adicionar Botão com Factory
+### Example 1: Add Button with Factory
 
 ```python
-# ❌ ANTES (sem factory)
+# ❌ BEFORE (without factory)
 btn = ttk.Button(
     parent,
     text="Download",
@@ -541,7 +545,7 @@ btn = ttk.Button(
 )
 btn.pack(side=tk.LEFT, padx=8, pady=4)
 
-# ✅ DEPOIS (com factory)
+# ✅ AFTER (with factory)
 from ui.factories import ButtonFactory
 
 btn = ButtonFactory.create_action_button(
@@ -552,10 +556,10 @@ btn = ButtonFactory.create_action_button(
 btn.pack()  # Factory handles padding
 ```
 
-### Exemplo 2: Criar Tab Scrollable
+### Example 2: Create Scrollable Tab
 
 ```python
-# ❌ ANTES (código duplicado 6 vezes)
+# ❌ BEFORE (code duplicated 6 times)
 frame = ttk.Frame(self.notebook)
 self.notebook.add(frame, text="Download")
 
@@ -571,7 +575,7 @@ scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
 self.enable_mousewheel_scroll(canvas, main)
 
-# ✅ DEPOIS (com factory)
+# ✅ AFTER (with factory)
 from ui.factories import TabFactory
 
 tab_data = TabFactory.create_scrollable_tab(
@@ -585,22 +589,22 @@ tab_data = TabFactory.create_scrollable_tab(
 content = tab_data["content"]  # ← just use this for adding widgets
 ```
 
-### Exemplo 3: Download com Service
+### Example 3: Download with Service
 
 ```python
-# ❌ ANTES (lógica misturada na UI)
+# ❌ BEFORE (logic mixed in UI)
 def start_download(self):
     url = self.url_entry.get()
     quality = self.quality_combo.get()
     
-    # Download logic aqui...
+    # Download logic here...
     import yt_dlp
     ydl_opts = {"format": quality}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
-        # ... mais lógica ...
+        # ... more logic ...
 
-# ✅ DEPOIS (service descentralizado)
+# ✅ AFTER (service decentralized)
 def start_download(self):
     url = self.url_entry.get()
     quality = self.quality_combo.get()
@@ -624,32 +628,31 @@ def start_download(self):
 
 ---
 
-## 📊 Comparação: Antes vs Depois
+## 📊 Before vs After Comparison
 
-| Aspecto | Antes | Depois |
-|---------|-------|--------|
-| **Linhas em easycut.py** | 1824 | ~400 |
-| **Duplicação de código** | ~500 linhas | Eliminada |
-| **Themes duplicados** | 2 sistemas | 1 ThemeManager |
-| **Exceções** | try/except genéricos | Exceções typed |
-| **Logging** | Disperso | Centralizado |
-| **Config** | Espalhada | ConfigManager |
-| **Teste unitário** | Difícil | Fácil (services) |
-| **Manutenção** | Alto acoplamento | Baixo acoplamento |
-| **Extensão** | Modificar código existed | Adicionar novo arquivo |
+| Aspect | Before | After |
+|--------|--------|-------|
+| **Lines in easycut.py** | 1824 | ~400 |
+| **Code Duplication** | ~500 lines | Eliminated |
+| **Theme Systems** | 2 conflicting | 1 unified |
+| **Exceptions** | Generic try/except | Typed custom |
+| **Logging** | Scattered | Centralized |
+| **Config** | Dispersed | ConfigManager |
+| **Unit Testing** | Difficult | Easy (services) |
+| **Maintenance** | High coupling | Low coupling |
+| **Extension** | Modify existing code | Add new file |
 
 ---
 
-## ✅ Conclusão
+## ✅ Conclusion
 
-A nova arquitetura oferece:
+The new architecture offers:
 
-1. **🎯 Clareza** - Cada camada tem responsabilidade clara
-2. **⚡ Performance** - Sem overhead, mesma velocidade
-3. **🧪 Testabilidade** - Services facilmente mockáveis
-4. **🔧 Manutenibilidade** - Mudanças isoladas
-5. **📈 Escalabilidade** - Fácil adicionar features
-6. **🤝 Colaboração** - Código organizado para trabalho em equipe
-7. **📚 Documentação** - Código auto-explicativo
-8. **🚀 Profissionalismo** - Padrões industry-standard
-
+1. **🎯 Clarity** - Each layer has clear responsibility
+2. **⚡ Performance** - No overhead, same speed
+3. **🧪 Testability** - Services easily mockable
+4. **🔧 Maintainability** - Changes isolated
+5. **📈 Scalability** - Easy to add features
+6. **🤝 Collaboration** - Code organized for teams
+7. **📚 Documentation** - Self-documenting code
+8. **🚀 Professionalism** - Industry-standard patterns
