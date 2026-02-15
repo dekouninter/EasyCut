@@ -174,7 +174,18 @@ class OAuthManager:
                 on_browser_open()
             
             # This opens the browser automatically
-            self.creds = flow.run_local_server(port=0, open_browser=True)
+            success_html = (
+                "<html><body>"
+                "<h1>Authentication complete</h1>"
+                "<p>You can close this window. It will close automatically in 3 seconds.</p>"
+                "<script>setTimeout(function(){window.close();}, 3000);</script>"
+                "</body></html>"
+            )
+            self.creds = flow.run_local_server(
+                port=0,
+                open_browser=True,
+                success_message=success_html
+            )
             
             # Save token for future use
             self._save_token()

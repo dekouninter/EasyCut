@@ -27,6 +27,7 @@ import logging
 import re
 import sys
 import os
+import shutil
 from pathlib import Path
 from datetime import datetime
 
@@ -173,11 +174,12 @@ class EasyCutApp:
         
         # --- STATUS BAR ---
         tr = self.translator.get
+        version_label = tr("version", "1.2.0")
         status_labels = {
             "status_ready": tr("status_ready", "Ready"),
             "login_not_logged": tr("status_not_logged_in", "Not logged in"),
             "login_logged_prefix": tr("status_logged_in", "Logged in as"),
-            "version_label": f"v{tr('version', '1.1.1')}",
+            "version_label": f"v{version_label}",
         }
         self.status_bar = StatusBar(root_frame, theme=self.theme, labels=status_labels)
         self.status_bar.pack(fill=tk.X)
@@ -326,7 +328,7 @@ class EasyCutApp:
 
         # Version (moved below buttons)
         version_lbl = tk.Label(
-            footer, text="v1.1.2", bg=bg, fg=fg_sec,
+            footer, text=f"v{tr('version', '1.2.0')}", bg=bg, fg=fg_sec,
             font=(Typography.FONT_FAMILY, Typography.SIZE_TINY)
         )
         version_lbl.pack(anchor="w", pady=(Spacing.SM, 0))
@@ -2032,6 +2034,33 @@ class EasyCutApp:
         
         thread = threading.Thread(target=verify_thread, daemon=True)
         thread.start()
+
+    @staticmethod
+    def _parse_timecode(time_text: str):
+        """Parse HH:MM:SS or MM:SS into total seconds."""
+        parts = time_text.split(":")
+        if not parts or len(parts) > 3:
+            return None
+        if any(not p.isdigit() for p in parts):
+            return None
+        nums = [int(p) for p in parts]
+        if len(nums) == 1:
+            hours, minutes, seconds = 0, 0, nums[0]
+        elif len(nums) == 2:
+            hours, minutes, seconds = 0, nums[0], nums[1]
+        else:
+            hours, minutes, seconds = nums
+        if minutes >= 60 or seconds >= 60:
+            return None
+        return hours * 3600 + minutes * 60 + seconds
+
+    @staticmethod
+    def _format_timecode(total_seconds: int) -> str:
+        """Format seconds as HH:MM:SS."""
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
     
     def start_download(self):
         """Start downloading video"""

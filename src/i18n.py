@@ -17,7 +17,7 @@ TRANSLATIONS = {
     "en": {
         # Application Titles and Headers
         "app_title": "EasyCut",
-        "version": "1.1.2",
+        "version": "1.2.0",
         
         # Menu and Shortcuts
         "menu_file": "File",
@@ -241,7 +241,7 @@ TRANSLATIONS = {
         "about_link_livepix": "Livepix Donate",
         "about_description": "EasyCut is a simple and secure YouTube video downloader with support for batch downloads and audio extraction.",
         "about_author": "Author: Deko Costa",
-        "about_version_info": "Version 1.0.0 - Professional Edition",
+        "about_version_info": "Version 1.2.0 - Professional Edition",
         "about_github": "GitHub: https://github.com/dekouninter/EasyCut",
         "about_support": "Support: buymeacoffee.com/dekocosta | livepix.gg/dekocosta",
         "about_license": "License: MIT",
@@ -296,7 +296,7 @@ TRANSLATIONS = {
     "pt": {
         # Títulos e cabeçalhos
         "app_title": "EasyCut",
-        "version": "1.1.1",
+        "version": "1.2.0",
         
         # Menu e atalhos
         "menu_file": "Arquivo",
@@ -518,7 +518,7 @@ TRANSLATIONS = {
         "about_link_livepix": "Doar via Livepix",
         "about_description": "EasyCut é um simples e seguro baixador de vídeos YouTube com suporte a downloads em lote e extração de áudio.",
         "about_author": "Autor: Equipe EasyCut",
-        "about_version_info": "Versão 1.0.0",
+        "about_version_info": "Versão 1.2.0",
         "about_github": "GitHub: https://github.com/easycut",
         "about_license": "Licença: MIT",
         "about_credits_libs": "Bibliotecas: yt-dlp, FFmpeg, Google OAuth",
