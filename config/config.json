@@ -4,5 +4,7 @@
   "output_dir": "downloads",
   "log_level": "INFO",
   "browser_cookies": "chrome",
-  "browser_profile": ""
+  "browser_profile": "",
+  "use_browser_cookies": true,
+  "cookies_file": ""
 }

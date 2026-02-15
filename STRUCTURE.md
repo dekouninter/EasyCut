@@ -66,6 +66,7 @@ EasyCut/
 ├── 📄 PRIVACY.md           # Privacy policy (Markdown)
 ├── 📄 README.md            # Main README
 ├── 📄 requirements.txt     # Python dependencies
+├── 📄 STRUCTURE.md         # Project structure (this file)
 └── 📄 TERMS.md             # Terms of service (Markdown)
 ```
 

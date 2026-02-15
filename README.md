@@ -62,8 +62,8 @@ Want to contribute or run from source? See [Installation](#installation) below.
 - ✅ **Single Video Download**: Download YouTube videos with quality presets (Best, MP4 Best, 1080p, 720p)
 - ✅ **Audio Conversion**: Extract audio as MP3, WAV, M4A, OPUS with bitrate options (128-320 kbps)
 - ✅ **Time Range Downloads**: Download specific segments (Start/End time in HH:MM:SS format)
-- ✅ **Batch Downloads**: Paste multiple URLs (up to 50) with concurrency control (max 3 simultaneous)
-- ✅ **Playlist Downloads**: Download entire YouTube playlists with progress tracking
+- ✅ **Batch Downloads**: Paste multiple URLs for sequential downloading
+- ✅ **Playlist Downloads**: Download entire YouTube playlists via yt-dlp
 - ✅ **Channel Downloads**: Download latest 10 videos from a YouTube channel
 - ✅ **Live Stream Recording**: Record live streams with quality presets (Best, 1080p, 720p, 480p)
 - ✅ **YouTube OAuth 2.0**: One-click "Sync with YouTube" authentication
@@ -72,11 +72,13 @@ Want to contribute or run from source? See [Installation](#installation) below.
 - ✅ **Output Folder Selection**: Default `downloads/`, changeable in UI
 - ✅ **Real-Time Logs**: Download, batch, and live logs in the UI with progress hooks
 - ✅ **Light/Dark Theme**: Instant theme switch
-- ✅ **Multi-Language**: English and Portuguese (200+ translated strings)
+- ✅ **Multi-Language**: English and Portuguese (230+ translated strings)
 - ✅ **Structured Logging**: RotatingFileHandler (5MB max, 3 backups) + console output
 - ✅ **Graceful Shutdown**: Config save and active download check on close
 - ✅ **Donation Buttons**: Buy Me a Coffee and Livepix links
 - ✅ **Custom Fonts**: Inter Display with Segoe UI fallback
+- ✅ **Keyboard Shortcuts**: Ctrl+1-5 (sections), Ctrl+T (theme), Ctrl+L (log), Ctrl+O (folder), Esc (close log)
+- ✅ **Collapsible Sidebar**: Hamburger menu to expand/collapse navigation
 
 ---
 
@@ -210,9 +212,11 @@ python main.py
 ## ⚠️ Known Limitations (Current Code)
 
 - These items are documented and planned, but not prioritized yet.
-- **Download Cancellation**: The stop button sets a flag but cannot cancel an in-progress yt-dlp download.
+- **Download Cancellation**: The stop button sets a flag but cannot cancel an in-progress yt-dlp download. In batch mode, the "Stop All" button also cannot interrupt the current URL being downloaded.
 - **Browser Cookie Extraction**: The browser cookie UI exists but is disabled in favor of OAuth flow.
 - **Thread Safety**: Some background operations update UI directly without `root.after()` scheduling.
+- **Batch History**: Individual batch downloads are not added to history separately; history refreshes only after the entire batch completes.
+- **Donation Window Language**: The donation popup always displays in English regardless of the app's language setting.
 
 ## 🔐 Security
 
@@ -226,7 +230,7 @@ python main.py
 ### Validations
 
 - ✅ YouTube URL validation
-- ⚠️ Time range fields are not validated or applied yet (see Known Limitations)
+- ✅ Time range validation (`_parse_timecode()`) and applied via yt-dlp `download_sections`
 
 ---
 

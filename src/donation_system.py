@@ -17,7 +17,7 @@ Features:
 import tkinter as tk
 from tkinter import ttk
 import webbrowser
-from i18n import translator as t
+from i18n import translator as _default_translator
 
 try:
     from font_loader import LOADED_FONT_FAMILY
@@ -37,13 +37,15 @@ class DonationWindow:
     and links to support the EasyCut project development.
     """
     
-    def __init__(self, parent):
+    def __init__(self, parent, translator=None):
         """Initialize donation window
         
         Args:
             parent: Parent window reference
+            translator: Optional Translator instance (uses global default if None)
         """
         self.parent = parent
+        self.t = translator or _default_translator
         self.window = None
         self.donation_links = {
             "coffee": {
@@ -65,7 +67,7 @@ class DonationWindow:
             return
         
         self.window = tk.Toplevel(self.parent)
-        self.window.title(t("donation_title"))
+        self.window.title(self.t("donation_title"))
         self.window.geometry("400x300")
         self.window.resizable(False, False)
         
@@ -80,7 +82,7 @@ class DonationWindow:
         # Title
         title_label = ttk.Label(
             main_frame,
-            text=t("donation_title"),
+            text=self.t("donation_title"),
             font=(LOADED_FONT_FAMILY, 14, "bold")
         )
         title_label.pack(pady=(0, 10))
@@ -88,7 +90,7 @@ class DonationWindow:
         # Description
         desc_label = ttk.Label(
             main_frame,
-            text=t("donation_description"),
+            text=self.t("donation_description"),
             wraplength=360,
             justify=tk.CENTER
         )
@@ -158,15 +160,16 @@ class DonationButton:
     action button placement and hover animations.
     """
     
-    def __init__(self, parent):
+    def __init__(self, parent, translator=None):
         """Initialize donation button
         
         Args:
             parent: Parent window reference
+            translator: Optional Translator instance (uses global default if None)
         """
         self.parent = parent
         self.button = None
-        self.donation_window = DonationWindow(parent)
+        self.donation_window = DonationWindow(parent, translator=translator)
     
     def create_floating_button(self, root_window):
         """Create floating donation action button

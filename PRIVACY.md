@@ -66,7 +66,7 @@ We **cannot** and **do not**:
 - OAuth tokens are stored until you click "Logout"
 - OAuth cookies file is stored until you click "Logout"
 - Download history is kept until you clear it manually
-- Application logs are stored locally (no automatic rotation in current code)
+- Application logs are stored locally with automatic rotation (5MB max, 3 backups via RotatingFileHandler)
 - You can delete all data by removing the `config/` folder
 
 ## Data Security
@@ -89,7 +89,7 @@ You have the right to:
 EasyCut uses:
 - **Google OAuth 2.0**: For YouTube authentication (see [Google's Privacy Policy](https://policies.google.com/privacy))
 - **yt-dlp**: Open-source tool for video downloads (no data collection)
-- **FFmpeg**: Optional media processing tool (not invoked by current code)
+- **FFmpeg**: Media processing for audio conversion (MP3, WAV, M4A, OPUS extraction); runs locally, no data collection
 
 ## Open Source
 

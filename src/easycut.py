@@ -217,7 +217,7 @@ class EasyCutApp:
         self.update_login_status()
         
         # --- DONATION BUTTON ---
-        donation_btn = DonationButton(self.root)
+        donation_btn = DonationButton(self.root, translator=self.translator)
         donation_btn.create_floating_button(root_frame)
         
         # --- KEYBOARD SHORTCUTS ---

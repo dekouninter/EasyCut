@@ -148,7 +148,7 @@ The `scripts/build.py` script automates the entire packaging process:
 2. **Building Release**:
    ```bash
    # Ensure build_config.json has production credentials
-   python build.py
+   python scripts/build.py
    # Creates dist/EasyCut.exe
    ```
 
@@ -253,9 +253,13 @@ Common with PyInstaller executables. Solutions:
 Before each release:
 
 - [ ] Update version in `build_config.json`
-- [ ] Update version in `src/easycut.py`
+- [ ] Update version in `src/easycut.py` (setup_logging version string)
 - [ ] Update version in `src/i18n.py` (`TRANSLATIONS['en']['version']` and `['pt']['version']`)
 - [ ] Update About tab version in `src/easycut.py` (Application Info card)
+- [ ] Update version in `src/ui_enhanced.py` (StatusBar default label and docstring)
+- [ ] Update version in `scripts/setup.py` (`version=` field)
+- [ ] Update version badge in `README.md`
+- [ ] Update version in `DOCUMENTATION.md` header
 - [ ] Test locally with `python main.py`
 - [ ] Run `python scripts/build.py`
 - [ ] Test executable on clean Windows machine

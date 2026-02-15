@@ -55,10 +55,10 @@ except ImportError:
 
 try:
     import google.auth.transport.requests
-    print(f"    ✓ google-auth-httplib2 installed")
+    print(f"    ✓ google-auth installed")
 except ImportError:
-    print("    ✗ google-auth-httplib2 not installed")
-    missing_oauth.append("google-auth-httplib2")
+    print("    ✗ google-auth not installed")
+    missing_oauth.append("google-auth")
 
 try:
     import requests
@@ -79,8 +79,17 @@ except ImportError:
     print("    ✗ Tkinter not found")
     print("    Execute: pip install tk")
 
+# Check Pillow installation
+print("\n[5] Checking Pillow installation...")
+try:
+    from PIL import Image
+    print(f"    ✓ Pillow (PIL) installed")
+except ImportError:
+    print("    ✗ Pillow not installed")
+    print("    Execute: pip install pillow")
+
 # Check FFmpeg installation
-print("\n[5] Checking FFmpeg installation...")
+print("\n[6] Checking FFmpeg installation...")
 try:
     result = subprocess.run(['ffmpeg', '-version'], capture_output=True, timeout=5)
     if result.returncode == 0:
@@ -98,7 +107,7 @@ except Exception as e:
     print(f"    ✗ Error: {e}")
 
 # Check folder structure
-print("\n[6] Checking folder structure...")
+print("\n[7] Checking folder structure...")
 required_dirs = ['src', 'config', 'downloads']
 for dir_name in required_dirs:
     dir_path = Path(dir_name)
@@ -108,7 +117,7 @@ for dir_name in required_dirs:
         print(f"    ✗ {dir_name}/ (will be created on first run)")
 
 # Check main files
-print("\n[7] Checking main files...")
+print("\n[8] Checking main files...")
 required_files = [
     'main.py',
     'src/easycut.py',

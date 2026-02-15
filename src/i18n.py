@@ -9,7 +9,7 @@ Repository: https://github.com/dekouninter/EasyCut
 License: GPL-3.0
 
 This module provides complete translation management for the EasyCut application,
-enabling seamless language switching between English and Portuguese with 150+ strings.
+enabling seamless language switching between English and Portuguese with 230+ strings.
 All translations are organized by functional category for easy maintenance.
 """
 
@@ -164,6 +164,7 @@ TRANSLATIONS = {
         "download_time_help": "Use start/end for range. Use only end for until mode.",
         "download_time_invalid": "Invalid time format. Use HH:MM:SS or MM:SS.",
         "download_time_order": "End time must be greater than start time.",
+        "download_time_range": "Time Range",
         
         # Batch Download Operations
         "batch_urls": "URLs (one per line)",
@@ -175,8 +176,9 @@ TRANSLATIONS = {
         "batch_error": "Batch download had some errors.",
         "batch_empty": "Please add at least one URL",
         "batch_log": "Batch Log",
-        
-        # Live Stream Recording
+        "batch_subtitle": "Download multiple videos at once",
+        "batch_help": "Paste one URL per line. Up to 50 URLs supported.",
+        "batch_stop": "Stop All",
         "live_title": "Live Stream Recorder",
         "live_url": "Live Stream URL",
         "live_check_stream": "Check Stream",
@@ -205,7 +207,8 @@ TRANSLATIONS = {
         "live_hours": "Hours",
         "live_minutes": "Minutes",
         "live_seconds": "Seconds",
-        
+        "live_subtitle": "Record live streams with customizable duration and quality",
+        "live_duration_settings": "Duration Settings",
 
         
         # Download History
@@ -219,6 +222,8 @@ TRANSLATIONS = {
         "history_url": "URL",
         "history_empty": "No downloads yet",
         "history_no_results": "No downloads match your search",
+        "history_subtitle": "Track all your downloads in one place",
+        "history_records": "Download Records",
         
         # About Application
         "about_tab_about": "About",
@@ -247,6 +252,8 @@ TRANSLATIONS = {
         "about_link_github": "GitHub Repository",
         "about_link_coffee": "Buy Me a Coffee",
         "about_link_livepix": "Livepix Donate",
+        "about_link_kofi": "Support on Ko-fi",
+        "about_title": "EasyCut",
         "about_description": "EasyCut is a simple and secure YouTube video downloader with support for batch downloads and audio extraction.",
         "about_author": "Author: Deko Costa",
         "about_version_info": "Version 1.2.1 - Professional Edition",
@@ -449,6 +456,7 @@ TRANSLATIONS = {
         "download_time_help": "Use inicio/fim para intervalo. Use apenas fim para modo ate o tempo.",
         "download_time_invalid": "Formato de tempo invalido. Use HH:MM:SS ou MM:SS.",
         "download_time_order": "O tempo final deve ser maior que o tempo inicial.",
+        "download_time_range": "Intervalo de Tempo",
         
         # Lote (Batch)
         "batch_urls": "URLs (uma por linha)",
@@ -460,6 +468,9 @@ TRANSLATIONS = {
         "batch_error": "Download em lote teve alguns erros.",
         "batch_empty": "Adicione pelo menos uma URL",
         "batch_log": "Log do lote",
+        "batch_subtitle": "Baixe múltiplos vídeos de uma vez",
+        "batch_help": "Cole uma URL por linha. Até 50 URLs suportadas.",
+        "batch_stop": "Parar Tudo",
         
         # Transmissão Ao Vivo
         "live_title": "Gravador de Transmissão Ao Vivo",
@@ -490,7 +501,8 @@ TRANSLATIONS = {
         "live_hours": "Horas",
         "live_minutes": "Minutos",
         "live_seconds": "Segundos",
-        
+        "live_subtitle": "Grave transmissões ao vivo com duração e qualidade personalizáveis",
+        "live_duration_settings": "Configurações de Duração",
 
         
         # Histórico
@@ -504,6 +516,8 @@ TRANSLATIONS = {
         "history_url": "URL",
         "history_empty": "Nenhum download ainda",
         "history_no_results": "Nenhum download encontrado",
+        "history_subtitle": "Acompanhe todos os seus downloads em um só lugar",
+        "history_records": "Registros de Download",
         
         # Sobre
         "about_tab_about": "Sobre",
@@ -532,6 +546,8 @@ TRANSLATIONS = {
         "about_link_github": "Repositorio GitHub",
         "about_link_coffee": "Buy Me a Coffee",
         "about_link_livepix": "Doar via Livepix",
+        "about_link_kofi": "Apoiar no Ko-fi",
+        "about_title": "EasyCut",
         "about_description": "EasyCut é um simples e seguro baixador de vídeos YouTube com suporte a downloads em lote e extração de áudio.",
         "about_author": "Autor: Deko Costa",
         "about_version_info": "Versão 1.2.1 - Edição Profissional",

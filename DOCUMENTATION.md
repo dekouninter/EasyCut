@@ -88,8 +88,8 @@ They're useful for team coordination and project management but kept locally to 
 - [ ] Sync documentation with code changes
 
 ### Annual Review
-- [ ] Strategic review of ROADMAP.md
-- [ ] Assess REFACTORING_PLAN.md effectiveness
+- [ ] Strategic review of roadmap and planning
+- [ ] Assess project direction
 - [ ] Plan next year's initiatives
 
 ---
