@@ -1357,7 +1357,48 @@ class EasyCutApp:
             sub_card.body,
             text=tr("sub_embed", "Embed in video"),
             variable=self.sub_embed_var
-        ).pack(anchor=tk.W)
+        ).pack(anchor=tk.W, pady=(0, Spacing.SM))
+        
+        # Translate subtitles (YouTube auto-translate)
+        translate_frame = ttk.Frame(sub_card.body)
+        translate_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        self.sub_translate_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            translate_frame,
+            text=tr("sub_translate", "Translate subtitles"),
+            variable=self.sub_translate_var
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        translate_lang_frame = ttk.Frame(sub_card.body)
+        translate_lang_frame.pack(fill=tk.X, pady=(0, Spacing.XS))
+        
+        ttk.Label(translate_lang_frame, text=f"{tr('sub_translate_to', 'Translate to')}:", style="Subtitle.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        # Common language presets + custom entry
+        self.sub_translate_lang_var = tk.StringVar(value="pt")
+        translate_langs = [
+            "pt", "es", "fr", "de", "it", "ja", "ko", "zh-Hans",
+            "zh-Hant", "ru", "ar", "hi", "tr", "pl", "nl", "sv",
+            "id", "vi", "th", "uk", "cs", "el", "ro", "hu"
+        ]
+        translate_combo = ttk.Combobox(
+            translate_lang_frame,
+            textvariable=self.sub_translate_lang_var,
+            values=translate_langs,
+            width=10,
+        )
+        translate_combo.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        ttk.Label(
+            translate_lang_frame,
+            text=tr("sub_translate_help", "YouTube auto-translate (type any language code)"),
+            style="Caption.TLabel"
+        ).pack(side=tk.LEFT)
+        
+        # Available translations label (populated after verify)
+        self.sub_translate_info_label = ttk.Label(sub_card.body, text="", style="Caption.TLabel")
+        self.sub_translate_info_label.pack(anchor=tk.W)
         
         # === CHAPTERS CARD (shown/hidden dynamically after verify) ===
         self._chapters_card_frame = ttk.Frame(main)
@@ -2924,10 +2965,24 @@ class EasyCutApp:
                 # --- Available Subtitles ---
                 subtitles = info.get('subtitles', {})
                 auto_subs = info.get('automatic_captions', {})
-                all_sub_langs = sorted(set(list(subtitles.keys()) + list(auto_subs.keys())))
+                manual_langs = sorted(subtitles.keys())
+                auto_langs = sorted(auto_subs.keys())
+                all_sub_langs = sorted(set(manual_langs + auto_langs))
+                
                 if all_sub_langs:
                     sub_msg = tr("sub_found", "Subtitles found: {}").format(", ".join(all_sub_langs[:20]))
                     self.root.after(0, lambda: self.download_log.add_log(f"📝 {sub_msg}"))
+                
+                # Show auto-translate availability info
+                if auto_langs:
+                    n_auto = len(auto_langs)
+                    translate_msg = tr("sub_translate_available", "{} auto-translate languages available").format(n_auto)
+                    self.root.after(0, lambda m=translate_msg: self.sub_translate_info_label.config(
+                        text=f"🌐 {m}"
+                    ))
+                else:
+                    no_msg = tr("sub_translate_none", "No auto-translate available for this video")
+                    self.root.after(0, lambda m=no_msg: self.sub_translate_info_label.config(text=m))
                 
                 # --- Per-Channel Quality Default ---
                 self._apply_channel_default(uploader)
@@ -3239,7 +3294,19 @@ class EasyCutApp:
             sub_lang = self.sub_lang_entry.get().strip() or "en"
             sub_format = self.sub_format_var.get() or "srt"
             
-            base_opts['subtitleslangs'] = [l.strip() for l in sub_lang.split(',')]
+            # Build subtitle language list
+            sub_langs = [l.strip() for l in sub_lang.split(',')]
+            
+            # Translate option: add target language to the langs list
+            # YouTube auto-translate serves translated captions when requested
+            if hasattr(self, 'sub_translate_var') and self.sub_translate_var.get():
+                translate_to = self.sub_translate_lang_var.get().strip()
+                if translate_to and translate_to not in sub_langs:
+                    sub_langs.append(translate_to)
+                # Force auto-generated subs (translation comes from auto-captions)
+                base_opts['writeautomaticsub'] = True
+            
+            base_opts['subtitleslangs'] = sub_langs
             base_opts['subtitlesformat'] = sub_format
             
             if sub_type == "auto":

@@ -379,6 +379,11 @@ TRANSLATIONS = {
         "sub_help": "Language code (e.g., en, pt, es). Comma-separated for multiple.",
         "sub_found": "Subtitles found: {}",
         "sub_none": "No subtitles available",
+        "sub_translate": "Translate subtitles",
+        "sub_translate_to": "Translate to",
+        "sub_translate_help": "YouTube auto-translate (type any language code)",
+        "sub_translate_available": "{} auto-translate languages available",
+        "sub_translate_none": "No auto-translate available for this video",
         
         # Settings
         "tab_settings": "Settings",
@@ -834,6 +839,11 @@ TRANSLATIONS = {
         "sub_help": "Código do idioma (ex: en, pt, es). Separados por vírgula.",
         "sub_found": "Legendas encontradas: {}",
         "sub_none": "Nenhuma legenda disponível",
+        "sub_translate": "Traduzir legendas",
+        "sub_translate_to": "Traduzir para",
+        "sub_translate_help": "Tradução automática do YouTube (digite qualquer código de idioma)",
+        "sub_translate_available": "{} idiomas de tradução automática disponíveis",
+        "sub_translate_none": "Tradução automática não disponível para este vídeo",
         
         # Configurações
         "tab_settings": "Configurações",
