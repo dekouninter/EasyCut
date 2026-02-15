@@ -306,6 +306,42 @@ TRANSLATIONS = {
         "log_downloading": "Downloading video from",
         "log_verifying_url": "Verifying URL...",
         "log_video_info": "Video info retrieved successfully",
+        
+        # Format Selection
+        "format_title": "Available Formats",
+        "format_select": "Select Format",
+        "format_auto": "Auto (Best)",
+        "format_video_audio": "Video + Audio",
+        "format_video_only": "Video Only",
+        "format_audio_only": "Audio Only",
+        "format_resolution": "Resolution",
+        "format_codec": "Codec",
+        "format_fps": "FPS",
+        "format_size": "Size",
+        "format_bitrate": "Bitrate",
+        "format_ext": "Extension",
+        "format_note": "Note",
+        "format_fallback": "Selected format unavailable, falling back to: {}",
+        "format_fetching": "Fetching available formats...",
+        "format_none": "No formats available",
+        "format_count": "{} formats available",
+        
+        # Metadata Display
+        "meta_uploader": "Uploader",
+        "meta_views": "Views",
+        "meta_upload_date": "Upload Date",
+        "meta_description": "Description",
+        "meta_fetching": "Fetching video info...",
+        "meta_thumbnail": "Thumbnail",
+        
+        # Duplicate Detection
+        "dup_title": "Duplicate Detection",
+        "dup_found": "This video was already downloaded:",
+        "dup_skip": "Skip",
+        "dup_overwrite": "Download Again",
+        "dup_ask": "Video already downloaded. Download again?",
+        "dup_skipped": "Skipped (already downloaded)",
+        "dup_batch_skipped": "{} duplicates skipped",
     },
     
     "pt": {
@@ -601,6 +637,42 @@ TRANSLATIONS = {
         "log_downloading": "Baixando vídeo de",
         "log_verifying_url": "Verificando URL...",
         "log_video_info": "Informações do vídeo obtidas com sucesso",
+        
+        # Seleção de Formato
+        "format_title": "Formatos Disponíveis",
+        "format_select": "Selecionar Formato",
+        "format_auto": "Automático (Melhor)",
+        "format_video_audio": "Vídeo + Áudio",
+        "format_video_only": "Apenas Vídeo",
+        "format_audio_only": "Apenas Áudio",
+        "format_resolution": "Resolução",
+        "format_codec": "Codec",
+        "format_fps": "FPS",
+        "format_size": "Tamanho",
+        "format_bitrate": "Taxa de Bits",
+        "format_ext": "Extensão",
+        "format_note": "Nota",
+        "format_fallback": "Formato selecionado indisponível, usando: {}",
+        "format_fetching": "Buscando formatos disponíveis...",
+        "format_none": "Nenhum formato disponível",
+        "format_count": "{} formatos disponíveis",
+        
+        # Exibição de Metadados
+        "meta_uploader": "Autor",
+        "meta_views": "Visualizações",
+        "meta_upload_date": "Data de Publicação",
+        "meta_description": "Descrição",
+        "meta_fetching": "Buscando informações do vídeo...",
+        "meta_thumbnail": "Miniatura",
+        
+        # Detecção de Duplicatas
+        "dup_title": "Detecção de Duplicatas",
+        "dup_found": "Este vídeo já foi baixado:",
+        "dup_skip": "Pular",
+        "dup_overwrite": "Baixar Novamente",
+        "dup_ask": "Vídeo já baixado. Baixar novamente?",
+        "dup_skipped": "Pulado (já baixado)",
+        "dup_batch_skipped": "{} duplicatas puladas",
     }
 }
 

@@ -81,6 +81,9 @@ class EasyCutApp:
         self.active_scroll_canvas = None  # Track active canvas for mouse wheel scroll
         self.browser_var = None  # Browser selection variable
         self.download_semaphore = threading.BoundedSemaphore(value=3)
+        self._video_formats = []  # Fetched format list from yt-dlp
+        self._video_info_cache = {}  # Cached metadata from last verify
+        self._format_id_map = {}  # Maps combo index to format_id
         
         # Paths
         self.output_dir = Path(self.config_manager.get("output_dir", "downloads"))
@@ -1073,18 +1076,22 @@ class EasyCutApp:
             width=10
         ).pack(side=tk.LEFT)
         
-        # === VIDEO INFO CARD ===
+        # === VIDEO INFO CARD (Metadata + Thumbnail) ===
         info_card = ModernCard(main, title=tr("download_info", "Video Information"), dark_mode=self.dark_mode)
         info_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
-        info_grid = ttk.Frame(info_card.body)
-        info_grid.pack(fill=tk.X)
+        info_row = ttk.Frame(info_card.body)
+        info_row.pack(fill=tk.X)
+        
+        # Left: metadata grid
+        info_grid = ttk.Frame(info_row)
+        info_grid.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
         # Title row
         ttk.Label(info_grid, text=f"{tr('download_title', 'Title')}:", style="Subtitle.TLabel").grid(
             row=0, column=0, sticky=tk.W, padx=(0, Spacing.MD), pady=Spacing.XS
         )
-        self.download_title_label = ttk.Label(info_grid, text="-", style="Caption.TLabel")
+        self.download_title_label = ttk.Label(info_grid, text="-", style="Caption.TLabel", wraplength=350)
         self.download_title_label.grid(row=0, column=1, sticky=tk.W, pady=Spacing.XS)
         
         # Duration row
@@ -1093,6 +1100,67 @@ class EasyCutApp:
         )
         self.download_duration_label = ttk.Label(info_grid, text="-", style="Caption.TLabel")
         self.download_duration_label.grid(row=1, column=1, sticky=tk.W, pady=Spacing.XS)
+        
+        # Uploader row
+        ttk.Label(info_grid, text=f"{tr('meta_uploader', 'Uploader')}:", style="Subtitle.TLabel").grid(
+            row=2, column=0, sticky=tk.W, padx=(0, Spacing.MD), pady=Spacing.XS
+        )
+        self.download_uploader_label = ttk.Label(info_grid, text="-", style="Caption.TLabel")
+        self.download_uploader_label.grid(row=2, column=1, sticky=tk.W, pady=Spacing.XS)
+        
+        # Views row
+        ttk.Label(info_grid, text=f"{tr('meta_views', 'Views')}:", style="Subtitle.TLabel").grid(
+            row=3, column=0, sticky=tk.W, padx=(0, Spacing.MD), pady=Spacing.XS
+        )
+        self.download_views_label = ttk.Label(info_grid, text="-", style="Caption.TLabel")
+        self.download_views_label.grid(row=3, column=1, sticky=tk.W, pady=Spacing.XS)
+        
+        # Upload date row
+        ttk.Label(info_grid, text=f"{tr('meta_upload_date', 'Upload Date')}:", style="Subtitle.TLabel").grid(
+            row=4, column=0, sticky=tk.W, padx=(0, Spacing.MD), pady=Spacing.XS
+        )
+        self.download_date_label = ttk.Label(info_grid, text="-", style="Caption.TLabel")
+        self.download_date_label.grid(row=4, column=1, sticky=tk.W, pady=Spacing.XS)
+        
+        # Right: thumbnail placeholder
+        self.thumbnail_frame = ttk.Frame(info_row)
+        self.thumbnail_frame.pack(side=tk.RIGHT, padx=(Spacing.MD, 0))
+        
+        self.thumbnail_label = tk.Label(
+            self.thumbnail_frame,
+            text="🖼",
+            width=20, height=6,
+            bg=self.design.get_color("bg_tertiary"),
+            fg=self.design.get_color("fg_tertiary"),
+            font=("Segoe UI Emoji", 24),
+            relief=tk.FLAT
+        )
+        self.thumbnail_label.pack()
+        
+        # === FORMAT SELECTION CARD ===
+        format_card = ModernCard(main, title=tr("format_title", "Available Formats"), dark_mode=self.dark_mode)
+        format_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        format_container = ttk.Frame(format_card.body)
+        format_container.pack(fill=tk.X)
+        
+        ttk.Label(format_container, text=f"{tr('format_select', 'Select Format')}:", style="Subtitle.TLabel").pack(
+            side=tk.LEFT, padx=(0, Spacing.SM)
+        )
+        
+        self.format_var = tk.StringVar(value="auto")
+        self.format_combo = ttk.Combobox(
+            format_container,
+            textvariable=self.format_var,
+            state="readonly",
+            width=60
+        )
+        self.format_combo['values'] = [tr("format_auto", "Auto (Best)")]
+        self.format_combo.current(0)
+        self.format_combo.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, Spacing.SM))
+        
+        self.format_status_label = ttk.Label(format_card.body, text="", style="Caption.TLabel")
+        self.format_status_label.pack(anchor=tk.W, pady=(Spacing.XS, 0))
         
         # === DOWNLOAD MODE CARD ===
         mode_card = ModernCard(main, title=tr("download_mode", "Download Mode"), dark_mode=self.dark_mode)
@@ -2048,7 +2116,7 @@ class EasyCutApp:
         thread.start()
     
     def verify_video(self):
-        """Verify video URL"""
+        """Verify video URL and fetch full metadata, formats, and thumbnail"""
         tr = self.translator.get
         url = self.download_url_entry.get().strip()
         
@@ -2056,7 +2124,15 @@ class EasyCutApp:
             messagebox.showerror(tr("msg_error", "Error"), tr("download_invalid_url", "Invalid YouTube URL"))
             return
         
-        self.download_log.add_log(tr("log_verifying_url", "Verifying URL..."))
+        self.download_log.add_log(tr("meta_fetching", "Fetching video info..."))
+        self.format_status_label.config(text=tr("format_fetching", "Fetching available formats..."))
+        
+        # Reset metadata UI
+        self.download_title_label.config(text="...")
+        self.download_duration_label.config(text="...")
+        self.download_uploader_label.config(text="...")
+        self.download_views_label.config(text="...")
+        self.download_date_label.config(text="...")
         
         def verify_thread():
             if not YT_DLP_AVAILABLE:
@@ -2066,19 +2142,217 @@ class EasyCutApp:
             try:
                 with yt_dlp.YoutubeDL({'quiet': True, 'no_warnings': True}) as ydl:
                     info = ydl.extract_info(url, download=False)
-                    title = info.get('title', 'Unknown')
-                    duration = info.get('duration', 0)
-                    
-                    self.download_title_label.config(text=title[:50])
-                    mins, secs = divmod(duration, 60)
-                    self.download_duration_label.config(text=f"{int(mins)}:{int(secs):02d}")
-                    
-                    self.download_log.add_log(tr("log_video_info", "Video info retrieved successfully"))
+                
+                # Cache the full info
+                self._video_info_cache = info
+                
+                # --- Metadata ---
+                title = info.get('title', 'Unknown')
+                duration = info.get('duration', 0)
+                uploader = info.get('uploader', info.get('channel', '-'))
+                view_count = info.get('view_count', 0)
+                upload_date = info.get('upload_date', '')  # YYYYMMDD
+                video_id = info.get('id', '')
+                
+                # Format duration
+                if duration:
+                    hours, remainder = divmod(int(duration), 3600)
+                    mins, secs = divmod(remainder, 60)
+                    dur_str = f"{hours}:{mins:02d}:{secs:02d}" if hours else f"{mins}:{secs:02d}"
+                else:
+                    dur_str = "-"
+                
+                # Format views
+                if view_count:
+                    if view_count >= 1_000_000:
+                        views_str = f"{view_count / 1_000_000:.1f}M"
+                    elif view_count >= 1_000:
+                        views_str = f"{view_count / 1_000:.1f}K"
+                    else:
+                        views_str = str(view_count)
+                else:
+                    views_str = "-"
+                
+                # Format upload date
+                if upload_date and len(upload_date) == 8:
+                    date_str = f"{upload_date[6:8]}/{upload_date[4:6]}/{upload_date[:4]}"
+                else:
+                    date_str = "-"
+                
+                # Update metadata labels (thread-safe via root.after)
+                self.root.after(0, lambda: self.download_title_label.config(text=title[:80]))
+                self.root.after(0, lambda: self.download_duration_label.config(text=dur_str))
+                self.root.after(0, lambda: self.download_uploader_label.config(text=uploader[:50]))
+                self.root.after(0, lambda: self.download_views_label.config(text=views_str))
+                self.root.after(0, lambda: self.download_date_label.config(text=date_str))
+                
+                # --- Thumbnail ---
+                thumbnail_url = info.get('thumbnail', '')
+                if thumbnail_url:
+                    self._load_thumbnail(thumbnail_url)
+                
+                # --- Available Formats ---
+                formats = info.get('formats', [])
+                self._video_formats = formats
+                self._populate_format_combo(formats)
+                
+                # --- Duplicate Detection ---
+                self._check_duplicate(video_id, title)
+                
+                self.root.after(0, lambda: self.download_log.add_log(
+                    tr("log_video_info", "Video info retrieved successfully")
+                ))
+                
             except Exception as e:
-                self.download_log.add_log(f"{tr('msg_error', 'Error')}: {str(e)}", "ERROR")
+                self.root.after(0, lambda: self.download_log.add_log(
+                    f"{tr('msg_error', 'Error')}: {str(e)}", "ERROR"
+                ))
+                self.root.after(0, lambda: self.format_status_label.config(text=""))
         
         thread = threading.Thread(target=verify_thread, daemon=True)
         thread.start()
+    
+    def _load_thumbnail(self, url: str):
+        """Load thumbnail from URL and display in UI"""
+        try:
+            import urllib.request
+            import io
+            from PIL import Image, ImageTk
+            
+            # Download thumbnail
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = resp.read()
+            
+            # Resize to fit UI (160x90 = 16:9)
+            img = Image.open(io.BytesIO(data))
+            img = img.resize((160, 90), Image.LANCZOS)
+            photo = ImageTk.PhotoImage(img)
+            
+            def update_ui():
+                self.thumbnail_label.config(image=photo, text="", width=160, height=90)
+                self.thumbnail_label.image = photo  # Keep reference
+            
+            self.root.after(0, update_ui)
+        except Exception as e:
+            self.logger.debug(f"Thumbnail load failed: {e}")
+    
+    def _populate_format_combo(self, formats: list):
+        """Populate the format selection combobox with available formats"""
+        tr = self.translator.get
+        
+        format_options = [tr("format_auto", "Auto (Best)")]
+        self._format_id_map = {"auto": None}  # Maps display index to format_id
+        
+        # Categorize and sort formats
+        video_audio = []
+        video_only = []
+        audio_only = []
+        
+        for f in formats:
+            fmt_id = f.get('format_id', '?')
+            ext = f.get('ext', '?')
+            vcodec = f.get('vcodec', 'none')
+            acodec = f.get('acodec', 'none')
+            height = f.get('height')
+            fps = f.get('fps')
+            filesize = f.get('filesize') or f.get('filesize_approx')
+            tbr = f.get('tbr')
+            note = f.get('format_note', '')
+            
+            has_video = vcodec and vcodec != 'none'
+            has_audio = acodec and acodec != 'none'
+            
+            # Build display string
+            parts = []
+            if height:
+                parts.append(f"{height}p")
+            if fps:
+                parts.append(f"{fps}fps")
+            if ext:
+                parts.append(ext)
+            if tbr:
+                parts.append(f"{int(tbr)}kbps")
+            if filesize:
+                size_mb = filesize / (1024 * 1024)
+                parts.append(f"{size_mb:.1f}MB" if size_mb < 1024 else f"{size_mb/1024:.1f}GB")
+            if note:
+                parts.append(note)
+            
+            display = f"[{fmt_id}] {' | '.join(parts)}"
+            
+            if has_video and has_audio:
+                video_audio.append((display, fmt_id, height or 0))
+            elif has_video:
+                video_only.append((display + " [V]", fmt_id, height or 0))
+            elif has_audio:
+                audio_only.append((display + " [A]", fmt_id, 0))
+        
+        # Sort by resolution (highest first)
+        video_audio.sort(key=lambda x: x[2], reverse=True)
+        video_only.sort(key=lambda x: x[2], reverse=True)
+        
+        idx = 1
+        if video_audio:
+            format_options.append(f"── {tr('format_video_audio', 'Video + Audio')} ──")
+            self._format_id_map[idx] = None  # separator
+            idx += 1
+            for display, fmt_id, _ in video_audio[:15]:  # Limit to top 15
+                format_options.append(display)
+                self._format_id_map[idx] = fmt_id
+                idx += 1
+        
+        if video_only:
+            format_options.append(f"── {tr('format_video_only', 'Video Only')} ──")
+            self._format_id_map[idx] = None
+            idx += 1
+            for display, fmt_id, _ in video_only[:10]:
+                format_options.append(display)
+                self._format_id_map[idx] = fmt_id
+                idx += 1
+        
+        if audio_only:
+            format_options.append(f"── {tr('format_audio_only', 'Audio Only')} ──")
+            self._format_id_map[idx] = None
+            idx += 1
+            for display, fmt_id, _ in audio_only[:10]:
+                format_options.append(display)
+                self._format_id_map[idx] = fmt_id
+                idx += 1
+        
+        total = len(video_audio) + len(video_only) + len(audio_only)
+        status = tr("format_count", "{} formats available").format(total)
+        
+        def update_ui():
+            self.format_combo['values'] = format_options
+            self.format_combo.current(0)
+            self.format_status_label.config(text=status)
+        
+        self.root.after(0, update_ui)
+    
+    def _get_selected_format_id(self):
+        """Get the yt-dlp format ID from the combobox selection, or None for auto"""
+        if not hasattr(self, '_format_id_map'):
+            return None
+        idx = self.format_combo.current()
+        fmt_id = self._format_id_map.get(idx)
+        return fmt_id
+    
+    def _check_duplicate(self, video_id: str, title: str):
+        """Check if video was already downloaded and warn user"""
+        tr = self.translator.get
+        if not video_id:
+            return
+        
+        history = self.config_manager.load_history()
+        for entry in history:
+            entry_url = entry.get("url", "")
+            if video_id in entry_url and entry.get("status") == "success":
+                self.root.after(0, lambda t=title: self.download_log.add_log(
+                    f"⚠ {tr('dup_found', 'This video was already downloaded:')} {t[:40]}",
+                    "WARNING"
+                ))
+                return
 
     @staticmethod
     def _parse_timecode(time_text: str):
@@ -2129,16 +2403,20 @@ class EasyCutApp:
         end_tc = self._format_timecode(end_seconds)
         return f"*{start_tc}-{end_tc}"
 
-    def _build_download_options(self, output_template: str, quality: str, mode: str, section: str = None, quiet: bool = False):
+    def _build_download_options(self, output_template: str, quality: str, mode: str, section: str = None, quiet: bool = False, format_id: str = None):
         """Create yt-dlp options for a download."""
-        format_map = {
-            'best': 'bestvideo+bestaudio/best',
-            'mp4': 'best[ext=mp4]/best',
-            '1080': 'bestvideo[height<=1080]+bestaudio/best',
-            '720': 'bestvideo[height<=720]+bestaudio/best',
-            'audio': 'bestaudio/best'
-        }
-        format_str = format_map.get(quality, 'best')
+        # If a specific format_id was selected from the format combo, use it directly
+        if format_id:
+            format_str = format_id
+        else:
+            format_map = {
+                'best': 'bestvideo+bestaudio/best',
+                'mp4': 'best[ext=mp4]/best',
+                '1080': 'bestvideo[height<=1080]+bestaudio/best',
+                '720': 'bestvideo[height<=720]+bestaudio/best',
+                'audio': 'bestaudio/best'
+            }
+            format_str = format_map.get(quality, 'best')
 
         base_opts = {
             'format': format_str,
@@ -2191,6 +2469,23 @@ class EasyCutApp:
             messagebox.showwarning(tr("msg_warning", "Warning"), tr("download_progress", "Downloading..."))
             return
         
+        # --- Duplicate detection ---
+        if self._video_info_cache:
+            video_id = self._video_info_cache.get('id', '')
+            cached_title = self._video_info_cache.get('title', '')
+            if video_id:
+                history = self.config_manager.load_history()
+                for entry in history:
+                    if video_id in entry.get('url', '') and entry.get('status') == 'success':
+                        answer = messagebox.askyesno(
+                            tr('dup_title', 'Duplicate Detected'),
+                            f"{tr('dup_found', 'This video was already downloaded:')}\n{cached_title[:60]}\n\n{tr('dup_overwrite', 'Download again?')}"
+                        )
+                        if not answer:
+                            self.download_log.add_log(tr('dup_skipped', 'Download skipped (duplicate)'))
+                            return
+                        break
+        
         self.is_downloading = True
         self.download_log.add_log(f"{tr('log_downloading', 'Downloading video from')} {url}")
         
@@ -2226,8 +2521,15 @@ class EasyCutApp:
                 return
             
             try:
+                # Use specific format from combobox if selected
+                selected_format_id = self._get_selected_format_id()
+                
                 output_template = str(self.output_dir / "%(title)s.%(ext)s")
-                base_opts = self._build_download_options(output_template, quality, mode, section=section, quiet=False)
+                base_opts = self._build_download_options(
+                    output_template, quality, mode,
+                    section=section, quiet=False,
+                    format_id=selected_format_id
+                )
                 ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
                 
                 info = self._run_ydl_download(url, ydl_opts)
@@ -2359,6 +2661,15 @@ class EasyCutApp:
                     info = self._run_ydl_download(url, ydl_opts)
                     success += 1
                     self.batch_log.add_log(f"[{i}/{len(urls)}] {info.get('title', 'Video')[:30]}")
+                    
+                    # Add per-video history entry
+                    entry = {
+                        "date": datetime.now().isoformat(),
+                        "filename": info.get('title', 'unknown'),
+                        "status": "success",
+                        "url": url
+                    }
+                    self.config_manager.add_to_history(entry)
                 
                 except Exception as e:
                     error_msg = str(e)
