@@ -84,6 +84,8 @@ class EasyCutApp:
         self._video_formats = []  # Fetched format list from yt-dlp
         self._video_info_cache = {}  # Cached metadata from last verify
         self._format_id_map = {}  # Maps combo index to format_id
+        self._channel_limit_var = None  # Channel video limit spinbox variable
+        self._thumbnail_cache = {}  # video_id -> PhotoImage for history
         
         # Paths
         self.output_dir = Path(self.config_manager.get("output_dir", "downloads"))
@@ -1188,6 +1190,31 @@ class EasyCutApp:
                 value=value
             ).grid(row=i // 2, column=i % 2, sticky=tk.W, padx=Spacing.SM, pady=Spacing.XS)
         
+        # Channel limit control (shown below mode grid)
+        channel_limit_frame = ttk.Frame(mode_card.body)
+        channel_limit_frame.pack(fill=tk.X, pady=(Spacing.SM, 0))
+        
+        ttk.Label(
+            channel_limit_frame,
+            text=f"{tr('channel_limit', 'Latest videos')}:",
+            style="Caption.TLabel"
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        self._channel_limit_var = tk.IntVar(value=10)
+        channel_spinbox = ttk.Spinbox(
+            channel_limit_frame,
+            from_=1, to=500,
+            textvariable=self._channel_limit_var,
+            width=6
+        )
+        channel_spinbox.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        ttk.Label(
+            channel_limit_frame,
+            text=tr('channel_limit_help', 'Number of latest videos to download (1-500)'),
+            style="Caption.TLabel"
+        ).pack(side=tk.LEFT)
+        
         # === TIME RANGE CARD ===
         time_card = ModernCard(main, title=tr("download_time_range", "Time Range"), dark_mode=self.dark_mode)
         time_card.pack(fill=tk.X, pady=(0, Spacing.MD))
@@ -2186,6 +2213,30 @@ class EasyCutApp:
                 self.root.after(0, lambda: self.download_views_label.config(text=views_str))
                 self.root.after(0, lambda: self.download_date_label.config(text=date_str))
                 
+                # --- Playlist / Channel info ---
+                entries = info.get('entries', None)
+                if entries:
+                    # This is a playlist/channel — show aggregate info
+                    entry_list = list(entries) if not isinstance(entries, list) else entries
+                    n_videos = len(entry_list)
+                    total_dur = sum(e.get('duration', 0) or 0 for e in entry_list if isinstance(e, dict))
+                    if total_dur:
+                        t_h, t_rem = divmod(int(total_dur), 3600)
+                        t_m, t_s = divmod(t_rem, 60)
+                        total_dur_str = f"{t_h}h {t_m:02d}m" if t_h else f"{t_m}m {t_s:02d}s"
+                    else:
+                        total_dur_str = "-"
+                    
+                    playlist_msg = tr("playlist_info", "Playlist: {} videos").format(n_videos)
+                    dur_msg = tr("playlist_duration", "Total duration: {}").format(total_dur_str)
+                    self.root.after(0, lambda: self.download_log.add_log(
+                        f"📋 {playlist_msg} | {dur_msg}"
+                    ))
+                    # Update duration label with total playlist duration
+                    self.root.after(0, lambda: self.download_duration_label.config(
+                        text=f"{n_videos} videos • {total_dur_str}"
+                    ))
+                
                 # --- Thumbnail ---
                 thumbnail_url = info.get('thumbnail', '')
                 if thumbnail_url:
@@ -2429,7 +2480,13 @@ class EasyCutApp:
             base_opts['noplaylist'] = False  # Download entire playlist
         elif mode == "channel":
             base_opts['noplaylist'] = False  # Enable playlist for channels
-            base_opts['playlistend'] = 10  # Download last 10 videos by default
+            channel_limit = 10
+            if self._channel_limit_var:
+                try:
+                    channel_limit = max(1, min(500, self._channel_limit_var.get()))
+                except (tk.TclError, ValueError):
+                    channel_limit = 10
+            base_opts['playlistend'] = channel_limit
         else:
             base_opts['noplaylist'] = True  # Download single video only
 
@@ -2538,7 +2595,9 @@ class EasyCutApp:
                     "date": datetime.now().isoformat(),
                     "filename": info.get('title', 'unknown'),
                     "status": "success",
-                    "url": url
+                    "url": url,
+                    "thumbnail": info.get('thumbnail', ''),
+                    "video_id": info.get('id', '')
                 }
                 self.config_manager.add_to_history(entry)
                 
@@ -2555,11 +2614,18 @@ class EasyCutApp:
                 self.logger.error(f"Download failed: {url}")
                 self.logger.error(f"  Error: {error_msg}")
                 
-                # Check if error is due to browser being open
-                if "Could not copy" in error_msg and "cookie database" in error_msg:
-                    self.download_log.add_log(tr("browser_test_browser_open", "⚠️ Browser is open! Close it first."), "WARNING")
-                else:
-                    self.download_log.add_log(f"{tr('msg_error', 'Error')}: {error_msg}", "ERROR")
+                # User-friendly error message
+                friendly = self._get_friendly_error(error_msg)
+                self.download_log.add_log(f"{tr('msg_error', 'Error')}: {friendly}", "ERROR")
+                
+                # Add failed entry to history
+                entry = {
+                    "date": datetime.now().isoformat(),
+                    "filename": url[:50],
+                    "status": "error",
+                    "url": url
+                }
+                self.config_manager.add_to_history(entry)
             
             finally:
                 self.is_downloading = False
@@ -2572,6 +2638,35 @@ class EasyCutApp:
         tr = self.translator.get
         self.is_downloading = False
         self.download_log.add_log(tr("download_stop", "Stop"))
+    
+    def _get_friendly_error(self, error_msg: str) -> str:
+        """Map common yt-dlp errors to user-friendly translated messages"""
+        tr = self.translator.get
+        error_lower = error_msg.lower()
+        
+        # Pattern → i18n key mapping (order matters — first match wins)
+        patterns = [
+            (["private video", "video is private"], "err_private"),
+            (["sign in to confirm your age", "age-restricted", "age restricted"], "err_age_restricted"),
+            (["video unavailable", "this video has been removed", "this video is no longer available", "video is not available"], "err_unavailable"),
+            (["geo", "not available in your country", "blocked in your country", "available in your country"], "err_geo_blocked"),
+            (["premieres in", "scheduled for", "live event will begin"], "err_live_not_started"),
+            (["http error 429", "too many requests", "rate limit"], "err_rate_limited"),
+            (["unable to download", "connection", "timed out", "urlopen error", "network is unreachable"], "err_network"),
+            (["no video formats", "requested format not available", "no suitable format"], "err_no_formats"),
+            (["postprocessing", "ffmpeg", "ffprobe"], "err_ffmpeg_post"),
+            (["copyright", "copyrighted"], "err_copyright"),
+            (["join this channel", "members-only", "members only"], "err_members_only"),
+            (["premium", "youtube red"], "err_premium_only"),
+            (["could not copy", "cookie database"], "browser_test_browser_open"),
+        ]
+        
+        for keywords, key in patterns:
+            if any(kw in error_lower for kw in keywords):
+                return tr(key, error_msg[:100])
+        
+        # Fallback: truncated original message
+        return f"{tr('err_unknown', 'An unexpected error occurred.')}\n{error_msg[:120]}"
     
     def on_closing(self):
         """Handle application closing gracefully"""
@@ -2667,18 +2762,30 @@ class EasyCutApp:
                         "date": datetime.now().isoformat(),
                         "filename": info.get('title', 'unknown'),
                         "status": "success",
-                        "url": url
+                        "url": url,
+                        "thumbnail": info.get('thumbnail', ''),
+                        "video_id": info.get('id', '')
                     }
                     self.config_manager.add_to_history(entry)
                 
                 except Exception as e:
                     error_msg = str(e)
-                    # Check if error is due to browser being open
-                    if "Could not copy" in error_msg and "cookie database" in error_msg:
-                        self.batch_log.add_log(f"[{i}/{len(urls)}] {tr('browser_test_browser_open', '⚠️ Browser is open! Close it first.')}", "WARNING")
-                        break  # Stop batch if browser is open
-                    else:
-                        self.batch_log.add_log(f"[{i}/{len(urls)}] ✗ Error: {error_msg[:50]}", "ERROR")
+                    # User-friendly error message
+                    friendly = self._get_friendly_error(error_msg)
+                    self.batch_log.add_log(f"[{i}/{len(urls)}] ✗ {friendly[:80]}", "ERROR")
+                    
+                    # Add failed entry to history
+                    entry = {
+                        "date": datetime.now().isoformat(),
+                        "filename": url[:50],
+                        "status": "error",
+                        "url": url
+                    }
+                    self.config_manager.add_to_history(entry)
+                    
+                    # Stop batch if browser cookie error
+                    if "could not copy" in error_msg.lower() and "cookie" in error_msg.lower():
+                        break
             
             self.batch_log.add_log(f"Batch complete: {success}/{len(urls)} successful")
             self.logger.info(f"Batch download completed: {success}/{len(urls)} successful")
@@ -2758,9 +2865,38 @@ class EasyCutApp:
                 }
                 status_emoji = status_emoji_map.get(status, "ℹ️")
                 
+                # Main layout: thumbnail | info
+                main_frame = ttk.Frame(record_card.body)
+                main_frame.pack(fill=tk.X, pady=(0, Spacing.XS))
+                
+                # Thumbnail (if available)
+                thumbnail_url = item.get("thumbnail", "")
+                video_id = item.get("video_id", "")
+                if thumbnail_url and video_id:
+                    thumb_label = tk.Label(
+                        main_frame,
+                        text="🎬",
+                        width=10, height=3,
+                        bg=self.design.get_color("bg_secondary"),
+                        relief="flat"
+                    )
+                    thumb_label.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+                    
+                    # Async thumbnail load (use cache)
+                    if video_id in self._thumbnail_cache:
+                        photo = self._thumbnail_cache[video_id]
+                        thumb_label.config(image=photo, text="", width=80, height=45)
+                        thumb_label.image = photo
+                    else:
+                        self._load_history_thumbnail(thumb_label, thumbnail_url, video_id)
+                
+                # Info section
+                info_frame = ttk.Frame(main_frame)
+                info_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+                
                 # Header with status
-                header_frame = ttk.Frame(record_card.body)
-                header_frame.pack(fill=tk.X, pady=(0, Spacing.XS))
+                header_frame = ttk.Frame(info_frame)
+                header_frame.pack(fill=tk.X)
                 
                 status_label = tk.Label(
                     header_frame,
@@ -2793,6 +2929,38 @@ class EasyCutApp:
                 
             except Exception as e:
                 self.logger.warning(f"Error displaying history record: {e}")
+    
+    def _load_history_thumbnail(self, label, url: str, video_id: str):
+        """Load a thumbnail for a history card asynchronously"""
+        def fetch():
+            try:
+                import urllib.request
+                import io
+                from PIL import Image, ImageTk
+                
+                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    data = resp.read()
+                
+                img = Image.open(io.BytesIO(data))
+                img = img.resize((80, 45), Image.LANCZOS)
+                photo = ImageTk.PhotoImage(img)
+                
+                # Cache it
+                self._thumbnail_cache[video_id] = photo
+                
+                def update():
+                    try:
+                        label.config(image=photo, text="", width=80, height=45)
+                        label.image = photo
+                    except tk.TclError:
+                        pass  # Widget may have been destroyed
+                
+                self.root.after(0, update)
+            except Exception:
+                pass  # Silently fail — placeholder stays
+        
+        threading.Thread(target=fetch, daemon=True).start()
     
     def clear_history(self):
         """Clear download history"""

@@ -334,6 +334,30 @@ TRANSLATIONS = {
         "meta_fetching": "Fetching video info...",
         "meta_thumbnail": "Thumbnail",
         
+        # Error Messages (user-friendly)
+        "err_private": "This video is private. Sign in with OAuth to access it.",
+        "err_age_restricted": "Age-restricted video. Sign in with OAuth to access it.",
+        "err_unavailable": "This video is unavailable or has been removed.",
+        "err_geo_blocked": "This video is not available in your country.",
+        "err_live_not_started": "This live stream has not started yet.",
+        "err_rate_limited": "Too many requests. Please wait a moment and try again.",
+        "err_network": "Network error. Check your internet connection.",
+        "err_no_formats": "No downloadable formats found for this video.",
+        "err_ffmpeg_post": "Post-processing failed. Ensure FFmpeg is installed correctly.",
+        "err_copyright": "This video cannot be downloaded due to copyright restrictions.",
+        "err_members_only": "This video is for channel members only.",
+        "err_premium_only": "This content requires YouTube Premium.",
+        "err_unknown": "An unexpected error occurred. Check the logs for details.",
+        
+        # Channel Downloads
+        "channel_limit": "Latest videos",
+        "channel_limit_help": "Number of latest videos to download (1-500)",
+        
+        # Playlist Info
+        "playlist_info": "Playlist: {} videos",
+        "playlist_duration": "Total duration: {}",
+        "playlist_uploader": "By: {}",
+        
         # Duplicate Detection
         "dup_title": "Duplicate Detection",
         "dup_found": "This video was already downloaded:",
@@ -664,6 +688,30 @@ TRANSLATIONS = {
         "meta_description": "Descrição",
         "meta_fetching": "Buscando informações do vídeo...",
         "meta_thumbnail": "Miniatura",
+        
+        # Mensagens de Erro (amigáveis)
+        "err_private": "Este vídeo é privado. Faça login com OAuth para acessá-lo.",
+        "err_age_restricted": "Vídeo com restrição de idade. Faça login com OAuth para acessá-lo.",
+        "err_unavailable": "Este vídeo não está disponível ou foi removido.",
+        "err_geo_blocked": "Este vídeo não está disponível no seu país.",
+        "err_live_not_started": "Esta transmissão ao vivo ainda não começou.",
+        "err_rate_limited": "Muitas solicitações. Aguarde um momento e tente novamente.",
+        "err_network": "Erro de rede. Verifique sua conexão com a internet.",
+        "err_no_formats": "Nenhum formato disponível para download neste vídeo.",
+        "err_ffmpeg_post": "Falha no pós-processamento. Verifique se o FFmpeg está instalado.",
+        "err_copyright": "Este vídeo não pode ser baixado por restrições de direitos autorais.",
+        "err_members_only": "Este vídeo é exclusivo para membros do canal.",
+        "err_premium_only": "Este conteúdo requer YouTube Premium.",
+        "err_unknown": "Ocorreu um erro inesperado. Verifique os logs para detalhes.",
+        
+        # Downloads de Canal
+        "channel_limit": "Últimos vídeos",
+        "channel_limit_help": "Número de últimos vídeos para baixar (1-500)",
+        
+        # Informações de Playlist
+        "playlist_info": "Playlist: {} vídeos",
+        "playlist_duration": "Duração total: {}",
+        "playlist_uploader": "Por: {}",
         
         # Detecção de Duplicatas
         "dup_title": "Detecção de Duplicatas",
