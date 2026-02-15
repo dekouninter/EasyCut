@@ -111,9 +111,36 @@ For questions about this privacy policy or data practices:
 - **Developer**: Deko Costa
 - **Email**: easycutdark@gmail.com
 
+## Legal Compliance & User Responsibility
+
+**Personal Use Only:**
+
+EasyCut is designed for personal, non-commercial use. When using this application:
+
+1. **You are responsible** for complying with:
+   - YouTube's Terms of Service
+   - Copyright laws in your jurisdiction
+   - Content creators' rights
+
+2. **Acceptable downloads:**
+   - Your own content uploaded to YouTube
+   - Content with explicit permission from the creator
+   - Content permitted under fair use (where applicable)
+
+3. **The developers are NOT responsible for:**
+   - Copyright violations by users
+   - Misuse of the software
+   - Legal consequences from unauthorized downloads
+
+**By using EasyCut, you accept full responsibility for your actions.**
+
 ## Consent
 
-By using EasyCut and clicking "Sync with YouTube", you consent to this privacy policy.
+By using EasyCut and clicking "Sync with YouTube", you:
+- Consent to this privacy policy
+- Acknowledge the legal disclaimer
+- Accept responsibility for your downloads
+- Agree to use the software for personal, legal purposes only
 
 ---
 
@@ -123,3 +150,4 @@ By using EasyCut and clicking "Sync with YouTube", you consent to this privacy p
 - OAuth tokens are stored securely locally
 - You can revoke access anytime
 - Open-source and transparent
+- **FOR PERSONAL USE ONLY - You are responsible for legal compliance**

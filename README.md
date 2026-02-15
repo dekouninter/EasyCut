@@ -11,6 +11,30 @@
 
 ---
 
+## ⚠️ Important Legal Notice
+
+**FOR PERSONAL USE ONLY**
+
+EasyCut is intended for **personal, non-commercial use** to download:
+- **Your own videos** uploaded to YouTube
+- Videos you have **explicit permission** to download from the content creator
+- Content allowed under **fair use** doctrine in your jurisdiction
+
+**You are responsible for:**
+- Complying with YouTube's Terms of Service
+- Respecting copyright laws in your country
+- Obtaining necessary permissions before downloading content
+- Using downloaded content legally and ethically
+
+**EasyCut developers are not responsible for:**
+- Copyright violations committed by users
+- Misuse of the software
+- Legal consequences resulting from unauthorized downloads
+
+By using EasyCut, you acknowledge and accept full responsibility for your actions.
+
+---
+
 ## 📥 Getting Started
 
 ### For End Users (Recommended)

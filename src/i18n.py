@@ -217,6 +217,19 @@ TRANSLATIONS = {
         "about_tab_credits": "Credits",
         "about_tab_features": "Features",
         "about_subtitle": "Professional YouTube Downloader & Audio Converter",
+        "about_section_legal": "Legal Notice - Personal Use Only",
+        "about_legal_disclaimer": (
+            "FOR PERSONAL USE ONLY\n\n"
+            "EasyCut is intended for downloading:\n"
+            "\u2022 Your own videos uploaded to YouTube\n"
+            "\u2022 Content with explicit creator permission\n"
+            "\u2022 Content allowed under fair use in your jurisdiction\n\n"
+            "YOU ARE RESPONSIBLE FOR:\n"
+            "\u2022 Complying with YouTube's Terms of Service\n"
+            "\u2022 Respecting copyright laws\n"
+            "\u2022 Obtaining necessary permissions\n\n"
+            "Developers are NOT responsible for copyright violations or misuse."
+        ),
         "about_section_info": "Application Info",
         "about_section_links": "Connect & Support",
         "about_section_features": "Features",
@@ -481,6 +494,19 @@ TRANSLATIONS = {
         "about_tab_credits": "Créditos",
         "about_tab_features": "Recursos",
         "about_subtitle": "Downloader profissional do YouTube e conversor de audio",
+        "about_section_legal": "Aviso Legal - Apenas Uso Pessoal",
+        "about_legal_disclaimer": (
+            "APENAS PARA USO PESSOAL\n\n"
+            "EasyCut é destinado para baixar:\n"
+            "\u2022 Seus próprios vídeos enviados ao YouTube\n"
+            "\u2022 Conteúdo com permissão explícita do criador\n"
+            "\u2022 Conteúdo permitido por uso justo (fair use) em sua jurisdição\n\n"
+            "VOCÊ É RESPONSÁVEL POR:\n"
+            "\u2022 Cumprir os Termos de Serviço do YouTube\n"
+            "\u2022 Respeitar as leis de direitos autorais\n"
+            "\u2022 Obter permissões necessárias\n\n"
+            "Desenvolvedores NÃO são responsáveis por violações de direitos autorais ou uso indevido."
+        ),
         "about_section_info": "Informacoes do aplicativo",
         "about_section_links": "Conectar e apoiar",
         "about_section_features": "Recursos",

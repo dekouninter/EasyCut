@@ -26,11 +26,29 @@ See the full GPL-3.0 license at: https://www.gnu.org/licenses/gpl-3.0.html
 ## 4. User Responsibilities
 
 You agree to:
+- Use EasyCut **FOR PERSONAL USE ONLY**
 - Use EasyCut in compliance with YouTube's Terms of Service
 - Use EasyCut in compliance with applicable copyright laws
 - Not use EasyCut for illegal activities
 - Respect content creators' rights
 - Only download content you have the right to download
+
+### Acceptable Use
+
+EasyCut is intended for:
+- Downloading **your own videos** you uploaded to YouTube
+- Downloading videos with **explicit permission** from the copyright holder
+- **Personal archival** of content you legally access
+- **Fair use** purposes (education, commentary, criticism) where legally permitted
+
+### Prohibited Use
+
+You must NOT use EasyCut to:
+- Download copyrighted content without permission
+- Redistribute downloaded content commercially
+- Violate YouTube's Terms of Service
+- Infringe on intellectual property rights
+- Bypass content protection or access restrictions
 
 ## 5. YouTube Terms of Service
 
@@ -39,7 +57,15 @@ You agree to:
 - Copyright laws in your jurisdiction
 - Fair use doctrine (where applicable)
 
-**You are responsible** for ensuring your use of downloaded content is legal.
+**You are solely responsible** for ensuring your use of downloaded content is legal.
+
+**YouTube's ToS (Section 4B) states:**
+> "You shall not download any Content unless you see a 'download' or similar link displayed by YouTube on the Service for that Content."
+
+**By using EasyCut, you acknowledge:**
+- This tool may violate YouTube's Terms of Service
+- You assume all legal risk and responsibility
+- The developers are not liable for your actions
 
 ## 6. Disclaimer of Warranties
 

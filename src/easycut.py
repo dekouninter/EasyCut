@@ -1568,6 +1568,40 @@ class EasyCutApp:
             font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION)
         ).pack(anchor="w")
         
+        # === LEGAL DISCLAIMER CARD ===
+        disclaimer_card = ModernCard(main, title="⚠️ " + tr("about_section_legal", "Legal Notice - Personal Use Only"), dark_mode=self.dark_mode)
+        disclaimer_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        disclaimer_bg = self.design.get_color("warning") if not self.dark_mode else "#3d2f00"
+        disclaimer_fg = self.design.get_color("fg_primary")
+        
+        disclaimer_frame = tk.Frame(disclaimer_card.body, bg=disclaimer_bg, padx=Spacing.MD, pady=Spacing.MD)
+        disclaimer_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        disclaimer_text = tr(
+            "about_legal_disclaimer",
+            "FOR PERSONAL USE ONLY\n\n"
+            "EasyCut is intended for downloading:\n"
+            "• Your own videos uploaded to YouTube\n"
+            "• Content with explicit creator permission\n"
+            "• Content allowed under fair use in your jurisdiction\n\n"
+            "YOU ARE RESPONSIBLE FOR:\n"
+            "• Complying with YouTube's Terms of Service\n"
+            "• Respecting copyright laws\n"
+            "• Obtaining necessary permissions\n\n"
+            "Developers are NOT responsible for copyright violations or misuse."
+        )
+        
+        tk.Label(
+            disclaimer_frame,
+            text=disclaimer_text,
+            bg=disclaimer_bg,
+            fg=disclaimer_fg,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION),
+            justify=tk.LEFT,
+            wraplength=600
+        ).pack(anchor="w")
+        
         # === APP INFO CARD ===
         info_card = ModernCard(main, title=tr("about_section_info", "Application Info"), dark_mode=self.dark_mode)
         info_card.pack(fill=tk.X, pady=(0, Spacing.MD))
