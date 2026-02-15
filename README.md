@@ -57,28 +57,49 @@ Want to contribute or run from source? See [Installation](#installation) below.
 
 ---
 
-### ✨ Key Features (Current Code)
+### ✨ Key Features
 
-- ✅ **Single Video Download**: Download YouTube videos with quality presets (Best, MP4 Best, 1080p, 720p)
+#### 📥 Download & Recording
+- ✅ **Single Video Download**: Quality presets (Best, MP4 Best, 1080p, 720p) with smart format selection
 - ✅ **Audio Conversion**: Extract audio as MP3, WAV, M4A, OPUS with bitrate options (128-320 kbps)
 - ✅ **Time Range Downloads**: Download specific segments (Start/End time in HH:MM:SS format)
-- ✅ **Batch Downloads**: Paste multiple URLs for sequential downloading
-- ✅ **Playlist Downloads**: Download entire YouTube playlists via yt-dlp
-- ✅ **Channel Downloads**: Download latest 10 videos from a YouTube channel
-- ✅ **Live Stream Recording**: Record live streams with quality presets (Best, 1080p, 720p, 480p)
-- ✅ **YouTube OAuth 2.0**: One-click "Sync with YouTube" authentication
+- ✅ **Batch Downloads**: Paste multiple URLs with download queue, pause/resume, and per-batch quality presets
+- ✅ **Playlist Downloads**: Download entire YouTube playlists with video count and total duration display
+- ✅ **Channel Downloads**: Download latest N videos from a channel (configurable 1-500)
+- ✅ **Live Stream Recording**: Record with quality presets, preferred codec (H.264/VP9/AV1), post-processing (audio extraction, subtitles)
+- ✅ **YouTube Chapters**: Detect and download individual chapters as separate files
+- ✅ **YouTube Shorts**: Auto-detect and download Shorts with vertical video badge
+- ✅ **Subtitles**: Download auto-generated or manual captions in SRT/VTT/ASS/JSON3 with embed and auto-translate support
+- ✅ **Automatic Retries**: Exponential backoff (2s, 4s, 8s) for network errors with configurable max retries
+- ✅ **Download Scheduler**: Schedule downloads to start at a specific time
+
+#### 🔧 Tools & Management
+- ✅ **Smart Format Selection**: Browse all available formats (video+audio, video-only, audio-only) before downloading
+- ✅ **Video Metadata Display**: Title, duration, uploader, views, upload date, and thumbnail preview
+- ✅ **Archive Mode**: Track downloaded videos and auto-skip duplicates via yt-dlp archive
+- ✅ **Quality Profiles**: Save and load named presets for quality, mode, audio, and subtitle settings
+- ✅ **Per-Channel Defaults**: Set default quality presets for specific YouTube channels
+- ✅ **Duplicate Detection**: Pre-download warning when a video was already downloaded
+- ✅ **Post-Processing Hub**: Right-click history entries to copy URL, re-download, extract audio, or delete
+- ✅ **Video Enhancement**: FFmpeg-powered audio normalization, video denoising, stabilization, and 1080p upscaling
+- ✅ **Enhanced History**: Sort (date/title/status), filter by status, search across all fields, thumbnails, and rich metadata
+- ✅ **User-Friendly Errors**: Contextual error messages for private, age-restricted, geo-blocked, copyright, and network errors
+
+#### 🔐 Authentication & Settings
+- ✅ **YouTube OAuth 2.0**: One-click popup authentication with auto-closing browser tab (3s countdown)
 - ✅ **Persistent Auth**: Tokens in `config/youtube_token.pickle`, cookies in `config/yt_cookies.txt`
-- ✅ **Download History**: Stored in `config/history_downloads.json` with search/filter and clear button
-- ✅ **Output Folder Selection**: Default `downloads/`, changeable in UI
-- ✅ **Real-Time Logs**: Download, batch, and live logs in the UI with progress hooks
-- ✅ **Light/Dark Theme**: Instant theme switch
-- ✅ **Multi-Language**: 7 languages — English, Portuguese, Spanish, French, German, Italian, Japanese (250+ translated strings each)
-- ✅ **Structured Logging**: RotatingFileHandler (5MB max, 3 backups) + console output
-- ✅ **Graceful Shutdown**: Config save and active download check on close
-- ✅ **Donation Buttons**: Buy Me a Coffee and Livepix links
+- ✅ **Settings Tab**: Network proxy, rate limiting, retries, cookie file, archive, and scheduler configuration
+
+#### 🎨 UI & Experience
+- ✅ **Light/Dark Theme**: Instant theme switch with persistent preference
+- ✅ **Multi-Language**: 7 languages — English, Portuguese, Spanish, French, German, Italian, Japanese (250+ keys each)
 - ✅ **Custom Fonts**: Inter Display with Segoe UI fallback
 - ✅ **Keyboard Shortcuts**: Ctrl+1-5 (sections), Ctrl+T (theme), Ctrl+L (log), Ctrl+O (folder), Esc (close log)
 - ✅ **Collapsible Sidebar**: Hamburger menu to expand/collapse navigation
+- ✅ **Real-Time Logs**: Download, batch, and live logs with progress hooks
+- ✅ **Structured Logging**: RotatingFileHandler (5MB max, 3 backups) + console output
+- ✅ **Graceful Shutdown**: Config save and active download check on close
+- ✅ **Donation Buttons**: Buy Me a Coffee, Livepix, and Ko-fi links
 
 ---
 
@@ -209,13 +230,11 @@ python main.py
 
 ---
 
-## ⚠️ Known Limitations (Current Code)
+## ⚠️ Known Limitations
 
-- These items are documented and planned, but not prioritized yet.
-- **Download Cancellation**: The stop button sets a flag but cannot cancel an in-progress yt-dlp download. In batch mode, the "Stop All" button also cannot interrupt the current URL being downloaded.
+- **Download Cancellation**: The stop button sets a flag but cannot cancel an in-progress yt-dlp download mid-stream.
 - **Browser Cookie Extraction**: The browser cookie UI exists but is disabled in favor of OAuth flow.
 - **Thread Safety**: Some background operations update UI directly without `root.after()` scheduling.
-- **Batch History**: Individual batch downloads are not added to history separately; history refreshes only after the entire batch completes.
 - **Donation Window Language**: The donation popup always displays in English regardless of the app's language setting.
 
 ## 🔐 Security
@@ -271,6 +290,7 @@ This creates `dist/EasyCut.exe` with embedded OAuth credentials - ready to distr
 - [OAUTH_SETUP.md](OAUTH_SETUP.md) — Creating Google OAuth credentials (developers)
 
 ### Development & Planning
+- [TESTING.md](TESTING.md) — Manual and automated test cases for all features
 - Internal planning documents are maintained locally and are not part of the public repository.
 ### Documentation Index
 - [**DOCUMENTATION.md**](DOCUMENTATION.md) — **📚 Master index of all documentation**

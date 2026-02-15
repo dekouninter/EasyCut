@@ -141,9 +141,29 @@ If you find EasyCut useful, consider:
 - OAuth browser auto-close after 3 seconds (fixed HTML content-type for JS execution)
 - 5 new languages: Spanish, French, German, Italian, Japanese (250+ keys each)
 - Language selector expanded to 7 languages in UI
+- Smart format selection with categorized format listing
+- Video metadata display (title, duration, uploader, views, upload date)
+- Thumbnail display in download tab and history cards
+- Subtitle downloads (auto-generated, manual, both) with SRT/VTT/ASS/JSON3 + auto-translate
+- YouTube Chapters detection and split download
+- YouTube Shorts detection with vertical video badge
+- Archive mode with duplicate tracking via yt-dlp archive file
+- Quality profiles (save/load/delete named presets)
+- Per-channel quality defaults
+- Duplicate detection with pre-download warning
+- Download queue management with pause/resume in batch tab
+- Batch quality presets with fallback option
+- Live stream enhancements: codec selection (H.264/VP9/AV1), audio extraction, subtitles
+- Live stream auto-detection with tab switch prompt
+- Settings tab: network proxy, rate limiting, retries, cookie file, archive, scheduler
+- Download scheduler with time-based triggers
+- Automatic retries with exponential backoff for network errors
+- Enhanced history: sort, filter by status, rich metadata, thumbnails
+- Post-processing hub: right-click context menu (copy URL, re-download, extract audio, delete)
+- Video/audio enhancement via FFmpeg (normalize, denoise, stabilize, upscale)
+- User-friendly error messages for all common YouTube error types
 - Removed ROADMAP.md (all roadmap items completed)
-- Added TESTING.md to root for better visibility
-- Version bump to 1.3.0 across all files
+- Added TESTING.md with comprehensive test cases for all features
 - Full documentation update
 
 ### v1.2.1
@@ -182,12 +202,9 @@ If you find EasyCut useful, consider:
 - Bug fixes and stability improvements
 
 ### Coming Soon
-- Smart format selection with fallback
-- Thumbnail display in history
-- Subtitle downloads (auto + manual, multi-language)
-- YouTube Chapters & Shorts support
-- Archive mode with duplicate detection
-- Live stream enhancements
+- Additional video enhancement filters
+- Drag & drop URL support
+- System tray notifications
 
 ## 🤝 Contributing
 

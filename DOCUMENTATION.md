@@ -26,6 +26,7 @@ Welcome to the EasyCut documentation hub. This index helps you find the right do
 | Document | Purpose | For Whom |
 |----------|---------|----------|
 | [README.md](README.md) | Project overview, features, installation | Everyone |
+| [TESTING.md](TESTING.md) | Manual test cases for all features | Testers & Contributors |
 | [OAUTH_SETUP.md](OAUTH_SETUP.md) | OAuth credential creation walkthrough | Developers |
 | [BUILD.md](BUILD.md) | Building standalone executables | Maintainers & Packagers |
 
@@ -59,15 +60,14 @@ Welcome to the EasyCut documentation hub. This index helps you find the right do
 
 ---
 
-## 📋 Planning Documents (Local Development Only)
+## 📋 Planning & Testing Documents
 
-These documents are in `.gitignore` as they contain planning information not intended for public repositories:
+These documents support development, testing, and project management:
 
-- **FEATURES_AND_INTEGRATIONS.md** — Feature tracking and library integration status
-- **ROADMAP.md** — Internal product roadmap and planning
-- **DOCUMENTATION_UPDATES.md** — Internal change log for documentation updates
+- **[TESTING.md](TESTING.md)** — Comprehensive manual test cases for all 24 feature areas
+- **FEATURES_AND_INTEGRATIONS.md** — Feature tracking and library integration status (internal)
 
-They're useful for team coordination and project management but kept locally to avoid repository clutter.
+Note: Internal planning documents are kept in the `internal/` folder for team coordination.
 
 ---
 
@@ -78,8 +78,8 @@ They're useful for team coordination and project management but kept locally to 
 - [ ] Update current status if needed
 
 ### Monthly Review
-- [ ] Update current status in ROADMAP.md
-- [ ] Update REFACTORING_PLAN.md phase status
+- [ ] Update current status if needed
+- [ ] Review test cases in TESTING.md
 
 ### Quarterly Review
 - [ ] Full content review for accuracy
@@ -110,8 +110,8 @@ They're useful for team coordination and project management but kept locally to 
 **...build a release executable**
 → Follow [BUILD.md](BUILD.md)
 
-**...understand the project's future**
-→ Internal planning docs are maintained locally (not in the public repository)
+**...understand the project's testing**
+→ See [TESTING.md](TESTING.md) for comprehensive test cases
 
 **...contribute code improvements**
 → Start with [README.md](README.md) and open an issue with proposed changes

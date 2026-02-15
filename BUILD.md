@@ -254,7 +254,7 @@ Before each release:
 
 - [ ] Update version in `build_config.json`
 - [ ] Update version in `src/easycut.py` (setup_logging version string)
-- [ ] Update version in `src/i18n.py` (`TRANSLATIONS['en']['version']` and `['pt']['version']`)
+- [ ] Update version in `src/i18n.py` (`TRANSLATIONS[lang]['version']` for all 7 languages: en, pt, es, fr, de, it, ja)
 - [ ] Update About tab version in `src/easycut.py` (Application Info card)
 - [ ] Update version in `src/ui_enhanced.py` (StatusBar default label and docstring)
 - [ ] Update version in `scripts/setup.py` (`version=` field)

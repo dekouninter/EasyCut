@@ -114,8 +114,13 @@ Update this file as features are implemented.
 ### 3.2 Language
 - [ ] Switch to English
 - [ ] Switch to Portuguese
+- [ ] Switch to Spanish
+- [ ] Switch to French
+- [ ] Switch to German
+- [ ] Switch to Italian
+- [ ] Switch to Japanese
 - [ ] Language persists after restart
-- [ ] All visible strings change on switch
+- [ ] All visible strings change on switch (all 7 languages)
 - [ ] Donation window respects language
 
 ### 3.3 Keyboard Shortcuts
@@ -177,9 +182,8 @@ Update this file as features are implemented.
 - [ ] Format selection resets when new URL is verified
 
 ### 5.3 i18n
-- [ ] All format labels translated (EN)
-- [ ] All format labels translated (PT)
-- [ ] Category headers use translated text
+- [ ] All format labels translated (EN, PT, ES, FR, DE, IT, JA)
+- [ ] Category headers use translated text in all 7 languages
 
 ---
 
@@ -234,8 +238,7 @@ Update this file as features are implemented.
 - [ ] `refresh_history()` still called at end of batch
 
 ### 8.4 i18n
-- [ ] `dup_title`, `dup_found`, `dup_overwrite`, `dup_skipped` keys present (EN)
-- [ ] Same keys present (PT)
+- [ ] `dup_title`, `dup_found`, `dup_overwrite`, `dup_skipped` keys present in all 7 languages (EN, PT, ES, FR, DE, IT, JA)
 
 ---
 
@@ -259,7 +262,7 @@ Update this file as features are implemented.
 
 ### 8.5.2 Error Handling
 - [ ] Errors shown in download log (not raw exception text)
-- [ ] Errors translated to PT when language is Portuguese
+- [ ] Errors translated correctly when switching between all 7 languages
 - [ ] Failed downloads recorded in history (status: "error")
 - [ ] Batch errors truncated to 80 chars in batch log
 - [ ] Batch stops on browser cookie error (asks to close browser)
@@ -344,8 +347,7 @@ Update this file as features are implemented.
 - [ ] Downloaded subtitle file is in target language
 
 ### 9.5 i18n
-- [ ] All sub_* keys present (EN) — including sub_translate_*
-- [ ] All sub_* keys present (PT) — including sub_translate_*
+- [ ] All sub_* keys present in all 7 languages (EN, PT, ES, FR, DE, IT, JA) — including sub_translate_*
 
 ---
 
@@ -603,11 +605,10 @@ Update this file as features are implemented.
 - [ ] Timer stops when no pending items remain
 
 ### 21.3 i18n
-- [ ] All scheduler_* keys present (EN)
-- [ ] All scheduler_* keys present (PT)
-- [ ] All live_postprocess/codec keys present (EN + PT)
-- [ ] All batch_quality_* keys present (EN + PT)
-- [ ] All retry_* keys present (EN + PT)
+- [ ] All scheduler_* keys present in all 7 languages (EN, PT, ES, FR, DE, IT, JA)
+- [ ] All live_postprocess/codec keys present in all 7 languages
+- [ ] All batch_quality_* keys present in all 7 languages
+- [ ] All retry_* keys present in all 7 languages
 
 ---
 
@@ -654,9 +655,8 @@ Update this file as features are implemented.
 - [ ] Delete from History removes single entry (with confirm dialog)
 
 ### 23.3 i18n
-- [ ] All pp_* keys present (EN)
-- [ ] All pp_* keys present (PT)
-- [ ] All history_sort/filter/count keys present (EN + PT)
+- [ ] All pp_* keys present in all 7 languages (EN, PT, ES, FR, DE, IT, JA)
+- [ ] All history_sort/filter/count keys present in all 7 languages
 
 ---
 
@@ -698,8 +698,7 @@ Update this file as features are implemented.
 - [ ] If output file already exists → auto-incremented name (`_normalized_1`, `_normalized_2`, etc.)
 
 ### 24.7 i18n
-- [ ] Enhancement keys present in EN: pp_enhance, pp_normalize_audio, pp_denoise_video, pp_stabilize_video, pp_upscale, pp_enhancing, pp_enhance_done, pp_enhance_error, pp_no_file
-- [ ] All above keys present in PT
+- [ ] Enhancement keys present in all 7 languages (EN, PT, ES, FR, DE, IT, JA): pp_enhance, pp_normalize_audio, pp_denoise_video, pp_stabilize_video, pp_upscale, pp_enhancing, pp_enhance_done, pp_enhance_error, pp_no_file
 
 ---
 
