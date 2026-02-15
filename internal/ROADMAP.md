@@ -250,10 +250,11 @@ This roadmap defines **realistic feature development** for a YouTube downloader.
   - Extract audio downloads bestaudio + FFmpegExtractAudio
   - Delete single entries from history
   - Re-download populates URL in download tab
-- [ ] **Video upscaling**
-  - Upscale 480p/720p to 1080p (optional, requires GPU or extra processing)
-  - Audio enhancement: normalize, noise reduction
-  - Video enhancement: denoise, stabilize (optional filters)
+- [x] **Video upscaling / Enhancement**
+  - Upscale to 1080p via FFmpeg (scale + lanczos)
+  - Audio enhancement: normalize (EBU R128 loudnorm)
+  - Video enhancement: denoise (hqdn3d), stabilize (deshake)
+  - Accessible via "Enhance..." submenu in history context menu
 
 ### Automatic Retries & Scheduling
 - [x] **Automatic retries**

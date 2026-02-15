@@ -4488,6 +4488,30 @@ class EasyCutApp:
                     label=f"🎵 {tr('pp_extract_audio', 'Extract Audio (MP3)')}",
                     command=lambda: self._pp_extract_audio(url, filename)
                 )
+                
+                # Video/Audio enhancement submenu
+                enhance_menu = tk.Menu(menu, tearoff=0)
+                enhance_menu.add_command(
+                    label=f"🔊 {tr('pp_normalize_audio', 'Normalize Audio')}",
+                    command=lambda: self._pp_enhance_file(filename, "normalize")
+                )
+                enhance_menu.add_command(
+                    label=f"🎞️ {tr('pp_denoise_video', 'Denoise Video')}",
+                    command=lambda: self._pp_enhance_file(filename, "denoise")
+                )
+                enhance_menu.add_command(
+                    label=f"📐 {tr('pp_stabilize_video', 'Stabilize Video')}",
+                    command=lambda: self._pp_enhance_file(filename, "stabilize")
+                )
+                enhance_menu.add_separator()
+                enhance_menu.add_command(
+                    label=f"⬆️ {tr('pp_upscale', 'Upscale to 1080p')}",
+                    command=lambda: self._pp_enhance_file(filename, "upscale")
+                )
+                menu.add_cascade(
+                    label=f"✨ {tr('pp_enhance', 'Enhance...')}",
+                    menu=enhance_menu
+                )
             
             menu.add_separator()
             
@@ -4562,6 +4586,119 @@ class EasyCutApp:
                 self.download_log.add_log(f"🎵 ❌ {tr('msg_error', 'Error')}: {str(e)[:60]}", "ERROR")
         
         threading.Thread(target=extract_thread, daemon=True).start()
+    
+    def _pp_enhance_file(self, filename: str, enhancement_type: str):
+        """Post-process: enhance a downloaded file using FFmpeg filters.
+        
+        Supported types: normalize, denoise, stabilize, upscale
+        """
+        import subprocess
+        from pathlib import Path
+        
+        tr = self.translator.get
+        
+        # Check FFmpeg
+        if not shutil.which("ffmpeg"):
+            messagebox.showerror(tr("msg_error", "Error"), tr("log_ffmpeg_not_found", "FFmpeg not found."))
+            return
+        
+        # Find the local file in output_dir
+        source_file = None
+        base_name = Path(filename).stem if "." in filename else filename
+        
+        for f in self.output_dir.iterdir():
+            if f.is_file() and f.stem == base_name:
+                source_file = f
+                break
+        
+        # Fallback: partial match
+        if not source_file:
+            for f in self.output_dir.iterdir():
+                if f.is_file() and base_name.lower() in f.stem.lower():
+                    source_file = f
+                    break
+        
+        if not source_file or not source_file.exists():
+            messagebox.showwarning(
+                tr("msg_warning", "Warning"),
+                tr("pp_no_file", "File not found in output folder. It may have been moved or deleted.")
+            )
+            return
+        
+        # Build suffix and FFmpeg filter args based on enhancement type
+        ffmpeg_filters = {
+            "normalize": {
+                "suffix": "_normalized",
+                "args": ["-af", "loudnorm=I=-16:TP=-1.5:LRA=11"],
+                "label": tr("pp_normalize_audio", "Normalize Audio"),
+            },
+            "denoise": {
+                "suffix": "_denoised",
+                "args": ["-vf", "hqdn3d=4:3:6:4.5", "-c:a", "copy"],
+                "label": tr("pp_denoise_video", "Denoise Video"),
+            },
+            "stabilize": {
+                "suffix": "_stabilized",
+                "args": ["-vf", "deshake=rx=32:ry=32", "-c:a", "copy"],
+                "label": tr("pp_stabilize_video", "Stabilize Video"),
+            },
+            "upscale": {
+                "suffix": "_1080p",
+                "args": ["-vf", "scale=-2:1080:flags=lanczos", "-c:a", "copy"],
+                "label": tr("pp_upscale", "Upscale to 1080p"),
+            },
+        }
+        
+        if enhancement_type not in ffmpeg_filters:
+            return
+        
+        config = ffmpeg_filters[enhancement_type]
+        suffix = config["suffix"]
+        label = config["label"]
+        output_file = source_file.with_stem(source_file.stem + suffix)
+        
+        # Avoid overwriting
+        counter = 1
+        while output_file.exists():
+            output_file = source_file.with_stem(f"{source_file.stem}{suffix}_{counter}")
+            counter += 1
+        
+        self.download_log.add_log(f"✨ {tr('pp_enhancing', 'Enhancing')}: {label} — {source_file.name}")
+        
+        def enhance_thread():
+            try:
+                cmd = [
+                    "ffmpeg", "-y", "-i", str(source_file),
+                    *config["args"],
+                    str(output_file),
+                ]
+                
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+                )
+                
+                if result.returncode == 0 and output_file.exists():
+                    size_mb = output_file.stat().st_size / (1024 * 1024)
+                    self.download_log.add_log(
+                        f"✨ ✅ {tr('pp_enhance_done', 'Enhancement complete')}: "
+                        f"{output_file.name} ({size_mb:.1f} MB)"
+                    )
+                else:
+                    err = result.stderr[-200:] if result.stderr else "Unknown error"
+                    self.download_log.add_log(
+                        f"✨ ❌ {tr('pp_enhance_error', 'Enhancement failed')}: {err}",
+                        "ERROR",
+                    )
+            except Exception as e:
+                self.download_log.add_log(
+                    f"✨ ❌ {tr('pp_enhance_error', 'Enhancement failed')}: {str(e)[:80]}",
+                    "ERROR",
+                )
+        
+        threading.Thread(target=enhance_thread, daemon=True).start()
     
     def _delete_history_entry(self, item: dict):
         """Delete a single entry from history"""

@@ -522,6 +522,17 @@ TRANSLATIONS = {
         "pp_delete_entry": "Delete from History",
         "pp_delete_confirm": "Delete this entry from history?",
         "pp_copied": "Copied to clipboard",
+        
+        # Video/Audio Enhancement
+        "pp_enhance": "Enhance...",
+        "pp_normalize_audio": "Normalize Audio",
+        "pp_denoise_video": "Denoise Video",
+        "pp_stabilize_video": "Stabilize Video",
+        "pp_upscale": "Upscale to 1080p",
+        "pp_enhancing": "Enhancing",
+        "pp_enhance_done": "Enhancement complete",
+        "pp_enhance_error": "Enhancement failed",
+        "pp_no_file": "File not found in output folder. It may have been moved or deleted.",
     },
     
     "pt": {
@@ -1033,6 +1044,17 @@ TRANSLATIONS = {
         "pp_delete_entry": "Excluir do Histórico",
         "pp_delete_confirm": "Excluir esta entrada do histórico?",
         "pp_copied": "Copiado para a área de transferência",
+        
+        # Aprimoramento de Vídeo/Áudio
+        "pp_enhance": "Aprimorar...",
+        "pp_normalize_audio": "Normalizar Áudio",
+        "pp_denoise_video": "Reduzir Ruído do Vídeo",
+        "pp_stabilize_video": "Estabilizar Vídeo",
+        "pp_upscale": "Aumentar para 1080p",
+        "pp_enhancing": "Aprimorando",
+        "pp_enhance_done": "Aprimoramento concluído",
+        "pp_enhance_error": "Falha no aprimoramento",
+        "pp_no_file": "Arquivo não encontrado na pasta de saída. Pode ter sido movido ou excluído.",
     }
 }
 

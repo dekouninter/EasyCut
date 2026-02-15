@@ -660,6 +660,49 @@ Update this file as features are implemented.
 
 ---
 
+## 24. Video/Audio Enhancement via FFmpeg (Q1 2027) — IMPLEMENTED
+
+### 24.1 Enhancement Submenu
+- [ ] Right-click a **successful** history entry → "✨ Enhance..." submenu appears
+- [ ] Submenu shows 4 options: Normalize Audio, Denoise Video, Stabilize Video, Upscale to 1080p
+- [ ] Submenu only appears for entries with `status == "success"`
+
+### 24.2 Normalize Audio
+- [ ] Select "🔊 Normalize Audio" on a downloaded entry
+- [ ] FFmpeg runs with `loudnorm` filter (EBU R128 normalization)
+- [ ] Output file created as `{name}_normalized.{ext}` in output folder
+- [ ] Log shows progress and completion message with file size
+
+### 24.3 Denoise Video
+- [ ] Select "🎞️ Denoise Video" on a downloaded video entry
+- [ ] FFmpeg runs with `hqdn3d` filter (temporal + spatial denoising)
+- [ ] Output file created as `{name}_denoised.{ext}`
+- [ ] Audio stream is copied (not re-encoded)
+
+### 24.4 Stabilize Video
+- [ ] Select "📐 Stabilize Video" on a shaky video
+- [ ] FFmpeg runs with `deshake` filter (motion compensation)
+- [ ] Output file created as `{name}_stabilized.{ext}`
+- [ ] Audio stream is copied
+
+### 24.5 Upscale to 1080p
+- [ ] Select "⬆️ Upscale to 1080p" on a lower-resolution video
+- [ ] FFmpeg runs with `scale=-2:1080:flags=lanczos` filter
+- [ ] Output file created as `{name}_1080p.{ext}`
+- [ ] Aspect ratio is preserved (width auto-calculated)
+
+### 24.6 Error Handling
+- [ ] If FFmpeg is not installed → error dialog "FFmpeg not found"
+- [ ] If source file is missing/moved → warning "File not found in output folder"
+- [ ] If FFmpeg process fails → error logged with stderr details
+- [ ] If output file already exists → auto-incremented name (`_normalized_1`, `_normalized_2`, etc.)
+
+### 24.7 i18n
+- [ ] Enhancement keys present in EN: pp_enhance, pp_normalize_audio, pp_denoise_video, pp_stabilize_video, pp_upscale, pp_enhancing, pp_enhance_done, pp_enhance_error, pp_no_file
+- [ ] All above keys present in PT
+
+---
+
 ## Test URLs
 
 ### Standard Videos
