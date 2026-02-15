@@ -471,6 +471,40 @@ TRANSLATIONS = {
         "shorts_detected": "YouTube Short detected",
         "shorts_badge": "SHORT",
         "shorts_vertical": "Vertical video",
+
+        # Live Post-Processing (Q4 2026)
+        "live_postprocess": "Post-Processing",
+        "live_extract_audio": "Extract audio only",
+        "live_subtitles": "Download subtitles",
+        "live_preferred_codec": "Preferred Codec",
+        "live_codec_title": "Live Streaming Preferences",
+        "live_codec_help": "VP9 = better quality, H.264 = wider compatibility, AV1 = best compression",
+
+        # Batch Quality (Q2 2026)
+        "batch_quality": "Batch Quality",
+        "batch_quality_preset": "Quality preset",
+        "batch_quality_fallback": "Fallback to lower quality if unavailable",
+        "batch_quality_help": "Applied to all URLs. Overrides main download quality for batch.",
+
+        # Automatic Retries (Q1 2027)
+        "retry_attempt": "Retry",
+        "retry_network_error": "Network error, retrying...",
+        "retry_exhausted": "All retry attempts failed",
+
+        # Download Scheduler (Q1 2027)
+        "scheduler_title": "Download Scheduler",
+        "scheduler_help": "Schedule downloads to start at a specific time",
+        "scheduler_time": "Start at",
+        "scheduler_url_placeholder": "URL to download...",
+        "scheduler_add": "Schedule",
+        "scheduler_clear": "Clear All",
+        "scheduler_none": "No downloads scheduled",
+        "scheduler_count": "{} downloads scheduled",
+        "scheduler_added": "Scheduled download at {}:{}",
+        "scheduler_starting": "Starting scheduled download",
+        "scheduler_completed": "Scheduled download completed",
+        "scheduler_failed": "Scheduled download failed",
+        "scheduler_no_url": "Enter a URL to schedule",
     },
     
     "pt": {
@@ -931,6 +965,40 @@ TRANSLATIONS = {
         "shorts_detected": "YouTube Short detectado",
         "shorts_badge": "SHORT",
         "shorts_vertical": "Vídeo vertical",
+
+        # Pós-Processamento Live (Q4 2026)
+        "live_postprocess": "Pós-Processamento",
+        "live_extract_audio": "Extrair apenas áudio",
+        "live_subtitles": "Baixar legendas",
+        "live_preferred_codec": "Codec Preferido",
+        "live_codec_title": "Preferências de Transmissão Ao Vivo",
+        "live_codec_help": "VP9 = melhor qualidade, H.264 = maior compatibilidade, AV1 = melhor compressão",
+
+        # Qualidade em Lote (Q2 2026)
+        "batch_quality": "Qualidade do Lote",
+        "batch_quality_preset": "Preset de qualidade",
+        "batch_quality_fallback": "Usar qualidade inferior se indisponível",
+        "batch_quality_help": "Aplicado a todas as URLs. Substitui a qualidade principal para lote.",
+
+        # Retentativas Automáticas (Q1 2027)
+        "retry_attempt": "Tentativa",
+        "retry_network_error": "Erro de rede, tentando novamente...",
+        "retry_exhausted": "Todas as tentativas falharam",
+
+        # Agendador de Downloads (Q1 2027)
+        "scheduler_title": "Agendador de Downloads",
+        "scheduler_help": "Agende downloads para iniciar em um horário específico",
+        "scheduler_time": "Iniciar às",
+        "scheduler_url_placeholder": "URL para baixar...",
+        "scheduler_add": "Agendar",
+        "scheduler_clear": "Limpar Todos",
+        "scheduler_none": "Nenhum download agendado",
+        "scheduler_count": "{} downloads agendados",
+        "scheduler_added": "Download agendado às {}:{}",
+        "scheduler_starting": "Iniciando download agendado",
+        "scheduler_completed": "Download agendado concluído",
+        "scheduler_failed": "Download agendado falhou",
+        "scheduler_no_url": "Insira uma URL para agendar",
     }
 }
 

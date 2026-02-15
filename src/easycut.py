@@ -1539,6 +1539,34 @@ class EasyCutApp:
             width=12
         ).pack(side=tk.LEFT)
         
+        # === BATCH QUALITY CARD ===
+        bq_card = ModernCard(main, title=tr("batch_quality", "Batch Quality"), dark_mode=self.dark_mode)
+        bq_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        bq_row = ttk.Frame(bq_card.body)
+        bq_row.pack(fill=tk.X)
+        
+        ttk.Label(bq_row, text=f"{tr('batch_quality_preset', 'Quality preset')}:", style="Caption.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self._batch_quality_var = tk.StringVar(value="best")
+        ttk.Combobox(
+            bq_row, textvariable=self._batch_quality_var,
+            values=["best", "1080", "720", "480", "audio"],
+            width=12, state="readonly"
+        ).pack(side=tk.LEFT, padx=(0, Spacing.MD))
+        
+        self._batch_fallback_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(
+            bq_row,
+            text=tr("batch_quality_fallback", "Fallback to lower quality"),
+            variable=self._batch_fallback_var
+        ).pack(side=tk.LEFT)
+        
+        ttk.Label(
+            bq_card.body,
+            text=tr("batch_quality_help", "Applied to all URLs. Overrides main download quality for batch."),
+            style="Caption.TLabel"
+        ).pack(anchor=tk.W, pady=(Spacing.XS, 0))
+        
         # === DOWNLOAD QUEUE CARD ===
         queue_card = ModernCard(main, title=tr("queue_title", "Download Queue"), dark_mode=self.dark_mode)
         queue_card.pack(fill=tk.BOTH, expand=True, pady=(0, Spacing.MD))
@@ -1724,6 +1752,51 @@ class EasyCutApp:
             ttk.Radiobutton(quality_grid, text=label, variable=self.live_quality_var, value=value).grid(
                 row=i // 2, column=i % 2, sticky=tk.W, padx=Spacing.SM, pady=Spacing.XS
             )
+        
+        # === POST-PROCESSING CARD ===
+        pp_card = ModernCard(main, title=tr("live_postprocess", "Post-Processing"), dark_mode=self.dark_mode)
+        pp_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        # Audio extraction
+        self.live_audio_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            pp_card.body,
+            text=tr("live_extract_audio", "Extract audio only"),
+            variable=self.live_audio_var
+        ).pack(anchor=tk.W, pady=(0, Spacing.XS))
+        
+        audio_row = ttk.Frame(pp_card.body)
+        audio_row.pack(fill=tk.X, pady=(0, Spacing.SM))
+        ttk.Label(audio_row, text=f"{tr('audio_format', 'Format')}:", style="Caption.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self.live_audio_format_var = tk.StringVar(value="mp3")
+        ttk.Combobox(
+            audio_row, textvariable=self.live_audio_format_var,
+            values=["mp3", "wav", "m4a", "opus"], width=8, state="readonly"
+        ).pack(side=tk.LEFT, padx=(0, Spacing.MD))
+        ttk.Label(audio_row, text=f"{tr('audio_bitrate', 'Bitrate')}:", style="Caption.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self.live_audio_bitrate_var = tk.StringVar(value="192")
+        ttk.Combobox(
+            audio_row, textvariable=self.live_audio_bitrate_var,
+            values=["128", "192", "256", "320"], width=6, state="readonly"
+        ).pack(side=tk.LEFT)
+        
+        # Subtitles
+        self.live_sub_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            pp_card.body,
+            text=tr("live_subtitles", "Download subtitles"),
+            variable=self.live_sub_var
+        ).pack(anchor=tk.W, pady=(Spacing.SM, Spacing.XS))
+        
+        # Preferred codec
+        codec_row = ttk.Frame(pp_card.body)
+        codec_row.pack(fill=tk.X, pady=(Spacing.SM, 0))
+        ttk.Label(codec_row, text=f"{tr('live_preferred_codec', 'Preferred Codec')}:", style="Caption.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self.live_codec_var = tk.StringVar(value=self.config_manager.get("live_codec", "auto"))
+        ttk.Combobox(
+            codec_row, textvariable=self.live_codec_var,
+            values=["auto", "h264", "vp9", "av1"], width=10, state="readonly"
+        ).pack(side=tk.LEFT)
         
         # === ACTION BUTTONS ===
         action_frame = ttk.Frame(main)
@@ -2027,6 +2100,75 @@ class EasyCutApp:
             variant="outline", size="sm", width=8
         ).pack(side=tk.LEFT)
         
+        # === DOWNLOAD SCHEDULER CARD ===
+        sched_card = ModernCard(main, title=tr("scheduler_title", "Download Scheduler"), dark_mode=self.dark_mode)
+        sched_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        ttk.Label(
+            sched_card.body,
+            text=tr("scheduler_help", "Schedule downloads to start at a specific time"),
+            style="Caption.TLabel"
+        ).pack(anchor=tk.W, pady=(0, Spacing.SM))
+        
+        sched_row = ttk.Frame(sched_card.body)
+        sched_row.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        ttk.Label(sched_row, text=f"{tr('scheduler_time', 'Start at')}:", style="Subtitle.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self._sched_hour_var = tk.StringVar(value="02")
+        ttk.Spinbox(sched_row, from_=0, to=23, textvariable=self._sched_hour_var, width=4, format="%02.0f").pack(side=tk.LEFT)
+        ttk.Label(sched_row, text=":", style="Subtitle.TLabel").pack(side=tk.LEFT)
+        self._sched_min_var = tk.StringVar(value="00")
+        ttk.Spinbox(sched_row, from_=0, to=59, textvariable=self._sched_min_var, width=4, format="%02.0f").pack(side=tk.LEFT, padx=(0, Spacing.MD))
+        
+        self._sched_url_entry = ttk.Entry(sched_row, width=35, font=(LOADED_FONT_FAMILY, Typography.SIZE_MD))
+        self._sched_url_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, Spacing.SM))
+        self._sched_url_entry.insert(0, tr("scheduler_url_placeholder", "URL to download..."))
+        self._sched_url_entry.bind("<FocusIn>", lambda e: self._sched_url_entry.delete(0, tk.END) if tr("scheduler_url_placeholder", "URL to download...") in self._sched_url_entry.get() else None)
+        
+        sched_btn_row = ttk.Frame(sched_card.body)
+        sched_btn_row.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        ModernButton(
+            sched_btn_row,
+            text=tr("scheduler_add", "Schedule"),
+            command=self._schedule_download,
+            variant="primary", size="sm", width=12
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        ModernButton(
+            sched_btn_row,
+            text=tr("scheduler_clear", "Clear All"),
+            command=self._clear_scheduled,
+            variant="danger", size="sm", width=12
+        ).pack(side=tk.LEFT)
+        
+        # Scheduled items list
+        self._sched_list_frame = ttk.Frame(sched_card.body)
+        self._sched_list_frame.pack(fill=tk.X)
+        
+        self._scheduled_downloads = []
+        self._scheduler_timer_id = None
+        self._sched_status_label = ttk.Label(sched_card.body, text=tr("scheduler_none", "No downloads scheduled"), style="Caption.TLabel")
+        self._sched_status_label.pack(anchor=tk.W)
+        
+        # === PREFERRED LIVE CODEC CARD ===
+        codec_card = ModernCard(main, title=tr("live_codec_title", "Live Streaming Preferences"), dark_mode=self.dark_mode)
+        codec_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        codec_row = ttk.Frame(codec_card.body)
+        codec_row.pack(fill=tk.X)
+        ttk.Label(codec_row, text=f"{tr('live_preferred_codec', 'Preferred Codec')}:", style="Subtitle.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self._settings_live_codec_var = tk.StringVar(value=self.config_manager.get("live_codec", "auto"))
+        ttk.Combobox(
+            codec_row, textvariable=self._settings_live_codec_var,
+            values=["auto", "h264", "vp9", "av1"], width=10, state="readonly"
+        ).pack(side=tk.LEFT)
+        ttk.Label(
+            codec_card.body,
+            text=tr("live_codec_help", "VP9 = better quality, H.264 = wider compatibility, AV1 = best compression"),
+            style="Caption.TLabel"
+        ).pack(anchor=tk.W, pady=(Spacing.XS, 0))
+        
         # === SAVE BUTTON ===
         save_frame = ttk.Frame(main)
         save_frame.pack(fill=tk.X, pady=(Spacing.LG, 0))
@@ -2053,6 +2195,12 @@ class EasyCutApp:
         self.config_manager.set("max_retries", self._settings_retries_var.get())
         self.config_manager.set("cookies_file", self._settings_cookie_entry.get().strip())
         self.config_manager.set("archive_enabled", self._settings_archive_var.get())
+        # Save live codec preference
+        if hasattr(self, '_settings_live_codec_var'):
+            self.config_manager.set("live_codec", self._settings_live_codec_var.get())
+            # Sync with live tab codec combobox
+            if hasattr(self, 'live_codec_var'):
+                self.live_codec_var.set(self._settings_live_codec_var.get())
         self.download_log.add_log(tr("settings_saved", "Settings saved successfully!"))
     
     def _browse_cookie_file(self):
@@ -2263,6 +2411,159 @@ class EasyCutApp:
                     f"⚙️ {tr('channel_defaults_applied', 'Applied channel default: {}').format(quality)}"
                 ))
                 return
+    
+    # === DOWNLOAD SCHEDULER ===
+    
+    def _schedule_download(self):
+        """Add a URL to the scheduled downloads list"""
+        tr = self.translator.get
+        url = self._sched_url_entry.get().strip()
+        placeholder = tr("scheduler_url_placeholder", "URL to download...")
+        
+        if not url or url == placeholder:
+            messagebox.showwarning(tr("msg_warning", "Warning"), tr("scheduler_no_url", "Enter a URL to schedule"))
+            return
+        
+        if not self.is_valid_youtube_url(url):
+            messagebox.showerror(tr("msg_error", "Error"), tr("download_invalid_url", "Invalid YouTube URL"))
+            return
+        
+        try:
+            hour = int(self._sched_hour_var.get())
+            minute = int(self._sched_min_var.get())
+        except (ValueError, tk.TclError):
+            hour, minute = 2, 0
+        
+        sched_item = {
+            "url": url,
+            "hour": hour,
+            "minute": minute,
+            "status": "pending",
+        }
+        self._scheduled_downloads.append(sched_item)
+        
+        # Clear entry
+        self._sched_url_entry.delete(0, tk.END)
+        self._sched_url_entry.insert(0, placeholder)
+        
+        self._refresh_sched_ui()
+        
+        # Start scheduler timer if not running
+        if self._scheduler_timer_id is None:
+            self._check_scheduled_downloads()
+        
+        self.download_log.add_log(
+            f"📅 {tr('scheduler_added', 'Scheduled download at {}:{}').format(f'{hour:02d}', f'{minute:02d}')}: {url[:50]}"
+        )
+    
+    def _clear_scheduled(self):
+        """Clear all scheduled downloads"""
+        self._scheduled_downloads.clear()
+        if self._scheduler_timer_id is not None:
+            self.root.after_cancel(self._scheduler_timer_id)
+            self._scheduler_timer_id = None
+        self._refresh_sched_ui()
+    
+    def _refresh_sched_ui(self):
+        """Refresh the scheduled downloads list display"""
+        tr = self.translator.get
+        
+        for widget in self._sched_list_frame.winfo_children():
+            widget.destroy()
+        
+        pending = [s for s in self._scheduled_downloads if s['status'] == 'pending']
+        
+        if not pending:
+            self._sched_status_label.config(text=tr("scheduler_none", "No downloads scheduled"))
+        else:
+            self._sched_status_label.config(
+                text=tr("scheduler_count", "{} downloads scheduled").format(len(pending))
+            )
+        
+        for i, item in enumerate(self._scheduled_downloads):
+            row = ttk.Frame(self._sched_list_frame)
+            row.pack(fill=tk.X, pady=(0, 2))
+            
+            status_emoji = "📅" if item['status'] == 'pending' else ("✅" if item['status'] == 'done' else "❌")
+            time_str = f"{item['hour']:02d}:{item['minute']:02d}"
+            
+            ttk.Label(
+                row,
+                text=f"{status_emoji} {time_str} — {item['url'][:45]}",
+                style="Caption.TLabel"
+            ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+            
+            if item['status'] == 'pending':
+                idx = i
+                ModernButton(
+                    row,
+                    text="✕",
+                    command=lambda j=idx: self._remove_scheduled(j),
+                    variant="ghost", size="sm", width=3
+                ).pack(side=tk.RIGHT)
+    
+    def _remove_scheduled(self, index: int):
+        """Remove a single scheduled download"""
+        if 0 <= index < len(self._scheduled_downloads):
+            self._scheduled_downloads.pop(index)
+            self._refresh_sched_ui()
+    
+    def _check_scheduled_downloads(self):
+        """Periodically check if any scheduled download should start now"""
+        now = datetime.now()
+        current_hour = now.hour
+        current_minute = now.minute
+        
+        for item in self._scheduled_downloads:
+            if item['status'] == 'pending':
+                if item['hour'] == current_hour and item['minute'] == current_minute:
+                    item['status'] = 'running'
+                    self._start_scheduled_download(item)
+        
+        # Check every 30 seconds
+        pending = [s for s in self._scheduled_downloads if s['status'] == 'pending']
+        if pending:
+            self._scheduler_timer_id = self.root.after(30000, self._check_scheduled_downloads)
+        else:
+            self._scheduler_timer_id = None
+    
+    def _start_scheduled_download(self, item: dict):
+        """Start a scheduled download"""
+        tr = self.translator.get
+        url = item['url']
+        self.download_log.add_log(f"📅 {tr('scheduler_starting', 'Starting scheduled download')}: {url[:50]}")
+        
+        def sched_thread():
+            try:
+                output_template = str(self.output_dir / "%(title)s.%(ext)s")
+                quality = self.download_quality_var.get()
+                mode = self.download_mode_var.get()
+                base_opts = self._build_download_options(output_template, quality, mode, quiet=True)
+                ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
+                
+                info = self._run_ydl_download(url, ydl_opts)
+                item['status'] = 'done'
+                
+                entry = {
+                    "date": datetime.now().isoformat(),
+                    "filename": info.get('title', 'unknown'),
+                    "status": "success",
+                    "url": url,
+                    "thumbnail": info.get('thumbnail', ''),
+                    "video_id": info.get('id', ''),
+                }
+                self.config_manager.add_to_history(entry)
+                self.download_log.add_log(f"📅 ✅ {tr('scheduler_completed', 'Scheduled download completed')}: {info.get('title', '')[:40]}")
+                self.root.after(0, self.refresh_history)
+            except Exception as e:
+                item['status'] = 'failed'
+                friendly = self._get_friendly_error(str(e))
+                self.download_log.add_log(f"📅 ❌ {tr('scheduler_failed', 'Scheduled download failed')}: {friendly[:60]}", "ERROR")
+            
+            self.root.after(0, self._refresh_sched_ui)
+        
+        thread = threading.Thread(target=sched_thread, daemon=True)
+        thread.start()
     
     def _show_chapters_ui(self):
         """Show chapters card in download tab after verify detects chapters"""
@@ -3443,7 +3744,34 @@ class EasyCutApp:
                 )
                 ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
                 
-                info = self._run_ydl_download(url, ydl_opts)
+                # Retry with exponential backoff
+                max_retries = self.config_manager.get("max_retries", 3)
+                last_error = None
+                for attempt in range(int(max_retries)):
+                    try:
+                        info = self._run_ydl_download(url, ydl_opts)
+                        last_error = None
+                        break
+                    except Exception as retry_err:
+                        last_error = retry_err
+                        error_str = str(retry_err).lower()
+                        retryable = any(k in error_str for k in [
+                            'connection', 'timeout', 'temporary', 'urlopen',
+                            'http error 5', 'http error 429', 'timed out',
+                            'network', 'socket', 'retry'
+                        ])
+                        if not retryable or attempt == int(max_retries) - 1:
+                            break
+                        wait_time = 2 ** (attempt + 1)
+                        self.download_log.add_log(
+                            f"{tr('retry_attempt', 'Retry')} {attempt+1}/{max_retries} ({wait_time}s)...",
+                            "WARNING"
+                        )
+                        import time
+                        time.sleep(wait_time)
+                
+                if last_error:
+                    raise last_error
 
                 entry = {
                     "date": datetime.now().isoformat(),
@@ -3566,8 +3894,16 @@ class EasyCutApp:
         urls = [url.strip() for url in urls_text.split('\n') if url.strip()]
         
         # Get current download mode and quality from UI
-        quality = self.download_quality_var.get()
+        # Use batch-specific quality if available, else fall back to main quality
+        if hasattr(self, '_batch_quality_var') and self._batch_quality_var.get():
+            quality = self._batch_quality_var.get()
+        else:
+            quality = self.download_quality_var.get()
         mode = self.download_mode_var.get()
+        
+        # If batch quality is "audio", force audio mode
+        if quality == "audio":
+            mode = "audio"
         
         # Check FFmpeg for audio mode before starting batch
         if mode == "audio" and not shutil.which("ffmpeg"):
@@ -3634,9 +3970,44 @@ class EasyCutApp:
                 try:
                     output_template = str(self.output_dir / "%(title)s.%(ext)s")
                     base_opts = self._build_download_options(output_template, quality, mode, section=section, quiet=True)
+                    
+                    # Batch quality fallback: if specific quality, add fallback format
+                    use_fallback = hasattr(self, '_batch_fallback_var') and self._batch_fallback_var.get()
+                    if use_fallback and quality not in ("best", "audio"):
+                        # Append a broader fallback: if e.g. 1080p not available, try best
+                        base_opts['format'] = base_opts.get('format', 'best') + '/bestvideo+bestaudio/best'
+                    
                     ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
                     
-                    info = self._run_ydl_download(url, ydl_opts)
+                    # Retry with exponential backoff
+                    max_retries = self.config_manager.get("max_retries", 3)
+                    last_error = None
+                    for attempt in range(int(max_retries)):
+                        try:
+                            info = self._run_ydl_download(url, ydl_opts)
+                            last_error = None
+                            break
+                        except Exception as retry_err:
+                            last_error = retry_err
+                            error_str = str(retry_err).lower()
+                            # Only retry on network/transient errors
+                            retryable = any(k in error_str for k in [
+                                'connection', 'timeout', 'temporary', 'urlopen',
+                                'http error 5', 'http error 429', 'timed out',
+                                'network', 'socket', 'retry'
+                            ])
+                            if not retryable or attempt == int(max_retries) - 1:
+                                break
+                            wait_time = 2 ** (attempt + 1)  # 2, 4, 8 seconds...
+                            self.batch_log.add_log(
+                                f"[{i+1}] {tr('retry_attempt', 'Retry')} {attempt+1}/{max_retries} ({wait_time}s)...",
+                                "WARNING"
+                            )
+                            import time
+                            time.sleep(wait_time)
+                    
+                    if last_error:
+                        raise last_error
                     success += 1
                     item["status"] = "completed"
                     item["title"] = info.get('title', 'Video')[:50]
@@ -4071,12 +4442,21 @@ class EasyCutApp:
                 mode = self.live_mode_var.get()
                 quality = self.live_quality_var.get()
                 
-                # Map quality to format
+                # Map quality to format — with preferred codec support
+                codec = self.live_codec_var.get() if hasattr(self, 'live_codec_var') else "auto"
+                codec_filter = ""
+                if codec == "h264":
+                    codec_filter = "[vcodec^=avc]"
+                elif codec == "vp9":
+                    codec_filter = "[vcodec^=vp9]"
+                elif codec == "av1":
+                    codec_filter = "[vcodec^=av01]"
+                
                 format_str = {
-                    "best": "best",
-                    "1080": "best[height<=1080]",
-                    "720": "best[height<=720]",
-                    "480": "best[height<=480]",
+                    "best": f"bestvideo{codec_filter}+bestaudio/best" if codec_filter else "best",
+                    "1080": f"bestvideo[height<=1080]{codec_filter}+bestaudio/best[height<=1080]",
+                    "720": f"bestvideo[height<=720]{codec_filter}+bestaudio/best[height<=720]",
+                    "480": f"bestvideo[height<=480]{codec_filter}+bestaudio/best[height<=480]",
                 }[quality]
                 
                 # Calculate duration based on mode
@@ -4100,6 +4480,35 @@ class EasyCutApp:
                 
                 if max_duration:
                     base_opts['max_filesize'] = max_duration * 100000  # Approximate
+                
+                # Post-processing: audio extraction
+                if hasattr(self, 'live_audio_var') and self.live_audio_var.get():
+                    audio_codec = self.live_audio_format_var.get()
+                    audio_quality = self.live_audio_bitrate_var.get()
+                    base_opts['format'] = 'bestaudio/best'
+                    base_opts['postprocessors'] = [{
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': audio_codec,
+                        'preferredquality': audio_quality,
+                    }]
+                
+                # Post-processing: subtitles
+                if hasattr(self, 'live_sub_var') and self.live_sub_var.get():
+                    base_opts['writeautomaticsub'] = True
+                    base_opts['writesubtitles'] = True
+                    base_opts['subtitleslangs'] = ['en', 'pt']
+                    base_opts['subtitlesformat'] = 'srt'
+                
+                # Network settings from config
+                proxy = self.config_manager.get("proxy", "")
+                rate_limit = self.config_manager.get("rate_limit", "")
+                max_retries = self.config_manager.get("max_retries", 3)
+                if proxy:
+                    base_opts['proxy'] = proxy
+                if rate_limit:
+                    base_opts['ratelimit'] = self._parse_rate_limit(rate_limit)
+                if max_retries:
+                    base_opts['retries'] = int(max_retries)
                 
                 ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
                 
