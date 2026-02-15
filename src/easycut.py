@@ -2225,6 +2225,18 @@ class EasyCutApp:
         
         urls = [url.strip() for url in urls_text.split('\n') if url.strip()]
         
+        # Get current download mode and quality from UI
+        quality = self.download_quality_var.get()
+        mode = self.download_mode_var.get()
+        
+        # Check FFmpeg for audio mode before starting batch
+        if mode == "audio" and not shutil.which("ffmpeg"):
+            messagebox.showerror(
+                tr("msg_error", "Error"),
+                tr("log_ffmpeg_not_found", "FFmpeg not found. Audio conversion may not work.")
+            )
+            return
+        
         self.batch_log.add_log(f"{tr('batch_progress', 'Downloading batch')} ({len(urls)})")
         
         def batch_thread():
@@ -2240,7 +2252,7 @@ class EasyCutApp:
                 
                 try:
                     output_template = str(self.output_dir / "%(title)s.%(ext)s")
-                    base_opts = self._build_download_options(output_template, "best", "full", quiet=True)
+                    base_opts = self._build_download_options(output_template, quality, mode, quiet=True)
                     ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
                     
                     info = self._run_ydl_download(url, ydl_opts)
