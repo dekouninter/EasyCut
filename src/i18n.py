@@ -419,6 +419,53 @@ TRANSLATIONS = {
         "profile_loaded": "Profile '{}' loaded",
         "profile_deleted": "Profile '{}' deleted",
         "profile_none": "No profiles saved",
+
+        # Download Queue (Q2 2026)
+        "queue_title": "Download Queue",
+        "queue_status": "Status",
+        "queue_queued": "Queued",
+        "queue_downloading": "Downloading...",
+        "queue_completed": "Completed",
+        "queue_failed": "Failed",
+        "queue_paused": "Paused",
+        "queue_pause": "Pause Queue",
+        "queue_resume": "Resume Queue",
+        "queue_clear_done": "Clear Completed",
+        "queue_progress": "{} of {} completed",
+        "queue_skip": "Skip",
+
+        # Per-Channel Defaults (Q3 2026)
+        "channel_defaults_title": "Per-Channel Defaults",
+        "channel_defaults_help": "Set default quality for specific channels",
+        "channel_defaults_add": "Add Channel Default",
+        "channel_defaults_remove": "Remove",
+        "channel_defaults_channel": "Channel",
+        "channel_defaults_quality": "Quality",
+        "channel_defaults_applied": "Applied channel default: {}",
+        "channel_defaults_none": "No channel defaults configured",
+
+        # Live Stream Enhancements (Q4 2026)
+        "live_detected": "Live stream detected!",
+        "live_switch": "Switch to Live tab?",
+        "live_badge": "LIVE",
+        "live_auto_detect": "Auto-detect live streams",
+        "live_auto_detect_help": "Automatically detect if URL is a live stream",
+
+        # YouTube Chapters (Q4 2026)
+        "chapters_title": "Chapters",
+        "chapters_found": "{} chapters found",
+        "chapters_none": "No chapters available",
+        "chapters_download_all": "Download All Chapters",
+        "chapters_download_selected": "Download Selected",
+        "chapters_split": "Split by Chapters",
+        "chapters_split_help": "Download each chapter as a separate file",
+        "chapters_progress": "Downloading chapter {}/{}: {}",
+        "chapters_completed": "All chapters downloaded successfully",
+
+        # YouTube Shorts (Q4 2026)
+        "shorts_detected": "YouTube Short detected",
+        "shorts_badge": "SHORT",
+        "shorts_vertical": "Vertical video",
     },
     
     "pt": {
@@ -827,6 +874,53 @@ TRANSLATIONS = {
         "profile_loaded": "Perfil '{}' carregado",
         "profile_deleted": "Perfil '{}' excluído",
         "profile_none": "Nenhum perfil salvo",
+
+        # Fila de Download (Q2 2026)
+        "queue_title": "Fila de Download",
+        "queue_status": "Status",
+        "queue_queued": "Na fila",
+        "queue_downloading": "Baixando...",
+        "queue_completed": "Concluído",
+        "queue_failed": "Falhou",
+        "queue_paused": "Pausado",
+        "queue_pause": "Pausar Fila",
+        "queue_resume": "Retomar Fila",
+        "queue_clear_done": "Limpar Concluídos",
+        "queue_progress": "{} de {} concluídos",
+        "queue_skip": "Pular",
+
+        # Padrão por Canal (Q3 2026)
+        "channel_defaults_title": "Padrão por Canal",
+        "channel_defaults_help": "Definir qualidade padrão para canais específicos",
+        "channel_defaults_add": "Adicionar Canal",
+        "channel_defaults_remove": "Remover",
+        "channel_defaults_channel": "Canal",
+        "channel_defaults_quality": "Qualidade",
+        "channel_defaults_applied": "Padrão do canal aplicado: {}",
+        "channel_defaults_none": "Nenhum padrão de canal configurado",
+
+        # Melhorias do Live Stream (Q4 2026)
+        "live_detected": "Live stream detectada!",
+        "live_switch": "Mudar para aba Live?",
+        "live_badge": "AO VIVO",
+        "live_auto_detect": "Detectar live streams automaticamente",
+        "live_auto_detect_help": "Detectar automaticamente se a URL é uma live",
+
+        # Capítulos do YouTube (Q4 2026)
+        "chapters_title": "Capítulos",
+        "chapters_found": "{} capítulos encontrados",
+        "chapters_none": "Nenhum capítulo disponível",
+        "chapters_download_all": "Baixar Todos os Capítulos",
+        "chapters_download_selected": "Baixar Selecionados",
+        "chapters_split": "Dividir por Capítulos",
+        "chapters_split_help": "Baixar cada capítulo como arquivo separado",
+        "chapters_progress": "Baixando capítulo {}/{}: {}",
+        "chapters_completed": "Todos os capítulos baixados com sucesso",
+
+        # YouTube Shorts (Q4 2026)
+        "shorts_detected": "YouTube Short detectado",
+        "shorts_badge": "SHORT",
+        "shorts_vertical": "Vídeo vertical",
     }
 }
 

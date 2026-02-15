@@ -86,6 +86,9 @@ class EasyCutApp:
         self._format_id_map = {}  # Maps combo index to format_id
         self._channel_limit_var = None  # Channel video limit spinbox variable
         self._thumbnail_cache = {}  # video_id -> PhotoImage for history
+        self._download_queue = []  # List of {url, status, title} for batch queue
+        self._queue_paused = False  # Whether the queue is paused
+        self._chapters_info = []  # Detected video chapters from yt-dlp
         
         # Paths
         self.output_dir = Path(self.config_manager.get("output_dir", "downloads"))
@@ -1356,6 +1359,39 @@ class EasyCutApp:
             variable=self.sub_embed_var
         ).pack(anchor=tk.W)
         
+        # === CHAPTERS CARD (shown/hidden dynamically after verify) ===
+        self._chapters_card_frame = ttk.Frame(main)
+        # Not packed by default — shown only when chapters detected
+        
+        chapters_card = ModernCard(self._chapters_card_frame, title=tr("chapters_title", "Chapters"), dark_mode=self.dark_mode)
+        chapters_card.pack(fill=tk.X)
+        
+        self._chapters_list_frame = ttk.Frame(chapters_card.body)
+        self._chapters_list_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        # Split by chapters checkbox
+        self._chapters_split_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            chapters_card.body,
+            text=tr("chapters_split", "Split by Chapters"),
+            variable=self._chapters_split_var
+        ).pack(anchor=tk.W, pady=(0, Spacing.XS))
+        
+        ttk.Label(
+            chapters_card.body,
+            text=tr("chapters_split_help", "Download each chapter as a separate file"),
+            style="Caption.TLabel"
+        ).pack(anchor=tk.W, pady=(0, Spacing.SM))
+        
+        ModernButton(
+            chapters_card.body,
+            text=tr("chapters_download_all", "Download All Chapters"),
+            command=self._download_chapters,
+            variant="outline",
+            size="sm",
+            width=22
+        ).pack(anchor=tk.W)
+        
         # === ACTION BUTTONS ===
         action_frame = ttk.Frame(main)
         action_frame.pack(fill=tk.X, pady=(Spacing.MD, 0))
@@ -1386,7 +1422,7 @@ class EasyCutApp:
         return frame
     
     def create_batch_tab(self):
-        """Create batch download section"""
+        """Create batch download section with download queue management"""
         tr = self.translator.get
         
         frame = ttk.Frame(self.section_container)
@@ -1429,7 +1465,7 @@ class EasyCutApp:
         text_scrollbar = ttk.Scrollbar(text_container, orient=tk.VERTICAL)
         self.batch_text = tk.Text(
             text_container,
-            height=12,
+            height=8,
             yscrollcommand=text_scrollbar.set,
             font=(LOADED_FONT_FAMILY, Typography.SIZE_MD),
             wrap=tk.WORD
@@ -1461,6 +1497,56 @@ class EasyCutApp:
             size="sm",
             width=12
         ).pack(side=tk.LEFT)
+        
+        # === DOWNLOAD QUEUE CARD ===
+        queue_card = ModernCard(main, title=tr("queue_title", "Download Queue"), dark_mode=self.dark_mode)
+        queue_card.pack(fill=tk.BOTH, expand=True, pady=(0, Spacing.MD))
+        
+        # Queue status bar
+        queue_status_frame = ttk.Frame(queue_card.body)
+        queue_status_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        self.queue_progress_label = ttk.Label(
+            queue_status_frame,
+            text=tr("queue_progress", "{} of {} completed").format(0, 0),
+            style="Caption.TLabel"
+        )
+        self.queue_progress_label.pack(side=tk.LEFT)
+        
+        ModernButton(
+            queue_status_frame,
+            text=tr("queue_clear_done", "Clear Completed"),
+            command=self._queue_clear_completed,
+            variant="ghost",
+            size="sm",
+            width=16
+        ).pack(side=tk.RIGHT)
+        
+        ModernButton(
+            queue_status_frame,
+            text=tr("queue_pause", "Pause Queue"),
+            command=self._queue_toggle_pause,
+            variant="outline",
+            size="sm",
+            width=14
+        ).pack(side=tk.RIGHT, padx=(0, Spacing.SM))
+        
+        # Scrollable queue list
+        queue_canvas = tk.Canvas(queue_card.body, bg=self.design.get_color("bg_tertiary"), highlightthickness=0, height=120)
+        queue_scrollbar = ttk.Scrollbar(queue_card.body, orient=tk.VERTICAL, command=queue_canvas.yview)
+        self.queue_list_frame = ttk.Frame(queue_canvas)
+        
+        self.queue_list_frame.bind(
+            "<Configure>",
+            lambda e: queue_canvas.configure(scrollregion=queue_canvas.bbox("all"))
+        )
+        queue_canvas.create_window((0, 0), window=self.queue_list_frame, anchor="nw", tags="content")
+        queue_canvas.configure(yscrollcommand=queue_scrollbar.set)
+        queue_canvas.bind("<Configure>", lambda e: queue_canvas.itemconfig("content", width=e.width))
+        
+        queue_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        queue_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.enable_mousewheel_scroll(queue_canvas, self.queue_list_frame)
         
         # === ACTION BUTTONS ===
         action_frame = ttk.Frame(main)
@@ -1859,6 +1945,47 @@ class EasyCutApp:
         
         ModernButton(save_profile_row, text=tr("profile_save", "Save Current"), command=self._save_profile, variant="primary", size="sm", width=14).pack(side=tk.LEFT)
         
+        # === PER-CHANNEL DEFAULTS CARD ===
+        channel_card = ModernCard(main, title=tr("channel_defaults_title", "Per-Channel Defaults"), dark_mode=self.dark_mode)
+        channel_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        ttk.Label(
+            channel_card.body,
+            text=tr("channel_defaults_help", "Set default quality for specific channels"),
+            style="Caption.TLabel"
+        ).pack(anchor=tk.W, pady=(0, Spacing.SM))
+        
+        # Channel defaults list container
+        self._channel_defaults_frame = ttk.Frame(channel_card.body)
+        self._channel_defaults_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        self._refresh_channel_defaults_ui()
+        
+        # Add new channel default row
+        add_row = ttk.Frame(channel_card.body)
+        add_row.pack(fill=tk.X)
+        
+        self._channel_default_name_entry = ttk.Entry(add_row, width=25)
+        self._channel_default_name_entry.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self._channel_default_name_entry.insert(0, tr("channel_defaults_channel", "Channel"))
+        self._channel_default_name_entry.bind("<FocusIn>", lambda e: self._channel_default_name_entry.delete(0, tk.END) if self._channel_default_name_entry.get() == tr("channel_defaults_channel", "Channel") else None)
+        
+        self._channel_default_quality_var = tk.StringVar(value="best")
+        ttk.Combobox(
+            add_row,
+            textvariable=self._channel_default_quality_var,
+            values=["best", "1080", "720", "480", "audio"],
+            width=10,
+            state="readonly"
+        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        ModernButton(
+            add_row,
+            text=tr("channel_defaults_add", "Add"),
+            command=self._add_channel_default,
+            variant="outline", size="sm", width=8
+        ).pack(side=tk.LEFT)
+        
         # === SAVE BUTTON ===
         save_frame = ttk.Frame(main)
         save_frame.pack(fill=tk.X, pady=(Spacing.LG, 0))
@@ -2014,6 +2141,200 @@ class EasyCutApp:
             self._profile_combo['values'] = list(profiles.keys())
             self._profile_var.set("")
             self.download_log.add_log(tr("profile_deleted", "Profile '{}' deleted").format(name))
+    
+    def _refresh_channel_defaults_ui(self):
+        """Refresh the per-channel defaults display in settings"""
+        tr = self.translator.get
+        
+        for widget in self._channel_defaults_frame.winfo_children():
+            widget.destroy()
+        
+        defaults = self.config_manager.get("channel_defaults", {}) or {}
+        
+        if not defaults:
+            ttk.Label(
+                self._channel_defaults_frame,
+                text=tr("channel_defaults_none", "No channel defaults configured"),
+                style="Caption.TLabel"
+            ).pack(anchor=tk.W)
+            return
+        
+        quality_labels = {"best": "Best", "1080": "1080p", "720": "720p", "480": "480p", "audio": "Audio"}
+        
+        for channel_name, quality in defaults.items():
+            row = ttk.Frame(self._channel_defaults_frame)
+            row.pack(fill=tk.X, pady=1)
+            
+            ttk.Label(
+                row,
+                text=f"📺 {channel_name}",
+                style="Subtitle.TLabel"
+            ).pack(side=tk.LEFT, padx=(0, Spacing.MD))
+            
+            ttk.Label(
+                row,
+                text=f"→ {quality_labels.get(quality, quality)}",
+                style="Caption.TLabel"
+            ).pack(side=tk.LEFT, padx=(0, Spacing.MD))
+            
+            ModernButton(
+                row,
+                text=tr("channel_defaults_remove", "Remove"),
+                command=lambda ch=channel_name: self._remove_channel_default(ch),
+                variant="ghost", size="sm", width=8
+            ).pack(side=tk.RIGHT)
+    
+    def _add_channel_default(self):
+        """Add a per-channel quality default"""
+        tr = self.translator.get
+        channel_name = self._channel_default_name_entry.get().strip()
+        if not channel_name or channel_name == tr("channel_defaults_channel", "Channel"):
+            return
+        
+        quality = self._channel_default_quality_var.get()
+        defaults = self.config_manager.get("channel_defaults", {}) or {}
+        defaults[channel_name] = quality
+        self.config_manager.set("channel_defaults", defaults)
+        
+        self._channel_default_name_entry.delete(0, tk.END)
+        self._refresh_channel_defaults_ui()
+    
+    def _remove_channel_default(self, channel_name: str):
+        """Remove a per-channel quality default"""
+        defaults = self.config_manager.get("channel_defaults", {}) or {}
+        if channel_name in defaults:
+            del defaults[channel_name]
+            self.config_manager.set("channel_defaults", defaults)
+        self._refresh_channel_defaults_ui()
+    
+    def _apply_channel_default(self, uploader: str):
+        """Check if a channel has a default quality and apply it"""
+        if not uploader:
+            return
+        tr = self.translator.get
+        defaults = self.config_manager.get("channel_defaults", {}) or {}
+        
+        # Case-insensitive match
+        for channel_name, quality in defaults.items():
+            if channel_name.lower() in uploader.lower() or uploader.lower() in channel_name.lower():
+                self.root.after(0, lambda q=quality: self.download_quality_var.set(q))
+                self.root.after(0, lambda: self.download_log.add_log(
+                    f"⚙️ {tr('channel_defaults_applied', 'Applied channel default: {}').format(quality)}"
+                ))
+                return
+    
+    def _show_chapters_ui(self):
+        """Show chapters card in download tab after verify detects chapters"""
+        tr = self.translator.get
+        
+        if not self._chapters_info:
+            return
+        
+        # Clear previous chapter list
+        for widget in self._chapters_list_frame.winfo_children():
+            widget.destroy()
+        
+        # Show the chapters card
+        self._chapters_card_frame.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        ch_count_label = ttk.Label(
+            self._chapters_list_frame,
+            text=tr("chapters_found", "{} chapters found").format(len(self._chapters_info)),
+            style="Subtitle.TLabel"
+        )
+        ch_count_label.pack(anchor=tk.W, pady=(0, Spacing.XS))
+        
+        # Show each chapter with time
+        for idx, ch in enumerate(self._chapters_info[:20], 1):
+            ch_title = ch.get('title', f'Chapter {idx}')
+            ch_start = int(ch.get('start_time', 0))
+            ch_end = int(ch.get('end_time', 0))
+            start_str = self._format_timecode(ch_start)
+            end_str = self._format_timecode(ch_end)
+            
+            ch_row = ttk.Frame(self._chapters_list_frame)
+            ch_row.pack(fill=tk.X, pady=1)
+            
+            ttk.Label(
+                ch_row,
+                text=f"  {idx}. {ch_title}",
+                style="Caption.TLabel"
+            ).pack(side=tk.LEFT)
+            
+            ttk.Label(
+                ch_row,
+                text=f"  [{start_str} → {end_str}]",
+                style="Caption.TLabel"
+            ).pack(side=tk.LEFT)
+    
+    def _download_chapters(self):
+        """Download video split by chapters"""
+        tr = self.translator.get
+        url = self.download_url_entry.get().strip()
+        
+        if not url or not self._chapters_info:
+            return
+        
+        if self.is_downloading:
+            messagebox.showwarning(tr("msg_warning", "Warning"), tr("download_progress", "Downloading..."))
+            return
+        
+        self.is_downloading = True
+        quality = self.download_quality_var.get()
+        mode = self.download_mode_var.get()
+        chapters = self._chapters_info
+        
+        if self._chapters_split_var.get():
+            # Split mode: download each chapter as separate file
+            self.download_log.add_log(f"📖 {tr('chapters_download_all', 'Download All Chapters')} ({len(chapters)})")
+            
+            def chapters_thread():
+                success = 0
+                for i, ch in enumerate(chapters, 1):
+                    ch_title = ch.get('title', f'Chapter {i}')
+                    start_time = ch.get('start_time', 0)
+                    end_time = ch.get('end_time', 0)
+                    
+                    self.root.after(0, lambda t=ch_title, n=i: self.download_log.add_log(
+                        tr("chapters_progress", "Downloading chapter {}/{}: {}").format(n, len(chapters), t)
+                    ))
+                    
+                    # Use download_sections for chapter time range
+                    section_str = f"*{start_time}-{end_time}"
+                    output_template = str(self.output_dir / f"%(title)s - {ch_title}.%(ext)s")
+                    
+                    try:
+                        base_opts = self._build_download_options(output_template, quality, mode, section=section_str, quiet=True)
+                        ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
+                        info = self._run_ydl_download(url, ydl_opts)
+                        success += 1
+                        
+                        entry = {
+                            "date": datetime.now().isoformat(),
+                            "filename": f"{info.get('title', 'unknown')} - {ch_title}",
+                            "status": "success",
+                            "url": url,
+                            "thumbnail": info.get('thumbnail', ''),
+                            "video_id": info.get('id', '')
+                        }
+                        self.config_manager.add_to_history(entry)
+                    except Exception as e:
+                        self.root.after(0, lambda err=str(e): self.download_log.add_log(
+                            f"✗ {self._get_friendly_error(err)[:80]}", "ERROR"
+                        ))
+                
+                self.is_downloading = False
+                self.root.after(0, lambda: self.download_log.add_log(
+                    f"✓ {tr('chapters_completed', 'All chapters downloaded successfully')} ({success}/{len(chapters)})"
+                ))
+                self.refresh_history()
+            
+            thread = threading.Thread(target=chapters_thread, daemon=True)
+            thread.start()
+        else:
+            # Normal download with chapter metadata preserved
+            self.is_downloading = False
+            self.start_download()
     
     def create_about_tab(self):
         """Create about section"""
@@ -2608,6 +2929,52 @@ class EasyCutApp:
                     sub_msg = tr("sub_found", "Subtitles found: {}").format(", ".join(all_sub_langs[:20]))
                     self.root.after(0, lambda: self.download_log.add_log(f"📝 {sub_msg}"))
                 
+                # --- Per-Channel Quality Default ---
+                self._apply_channel_default(uploader)
+                
+                # --- Live Stream Detection ---
+                is_live = info.get('is_live', False)
+                if is_live:
+                    def offer_live_switch():
+                        answer = messagebox.askyesno(
+                            tr("live_detected", "Live stream detected!"),
+                            tr("live_switch", "Switch to Live tab?")
+                        )
+                        if answer:
+                            self.live_url_entry.delete(0, tk.END)
+                            self.live_url_entry.insert(0, url)
+                            self._switch_section("live")
+                    self.root.after(0, offer_live_switch)
+                
+                # --- YouTube Shorts Detection ---
+                is_short = '/shorts/' in url or (duration and duration < 62 and info.get('height', 0) > info.get('width', 0))
+                if is_short:
+                    self.root.after(0, lambda: self.download_log.add_log(
+                        f"📱 {tr('shorts_detected', 'YouTube Short detected')} ({dur_str})"
+                    ))
+                
+                # --- YouTube Chapters ---
+                chapters = info.get('chapters', []) or []
+                self._chapters_info = chapters
+                if chapters:
+                    ch_msg = tr("chapters_found", "{} chapters found").format(len(chapters))
+                    self.root.after(0, lambda: self.download_log.add_log(f"📖 {ch_msg}"))
+                    # Show chapter list in log
+                    for idx, ch in enumerate(chapters[:15], 1):
+                        ch_title = ch.get('title', f'Chapter {idx}')
+                        ch_start = int(ch.get('start_time', 0))
+                        ch_end = int(ch.get('end_time', 0))
+                        ch_dur = self._format_timecode(ch_end - ch_start)
+                        self.root.after(0, lambda t=ch_title, d=ch_dur, n=idx: 
+                            self.download_log.add_log(f"  {n}. {t} ({d})")
+                        )
+                    self.root.after(0, self._show_chapters_ui)
+                else:
+                    self._chapters_info = []
+                    # Hide chapters UI if present
+                    if hasattr(self, '_chapters_card_frame'):
+                        self.root.after(0, lambda: self._chapters_card_frame.pack_forget())
+                
                 # --- Duplicate Detection ---
                 self._check_duplicate(video_id, title)
                 
@@ -3017,7 +3384,8 @@ class EasyCutApp:
                     "status": "success",
                     "url": url,
                     "thumbnail": info.get('thumbnail', ''),
-                    "video_id": info.get('id', '')
+                    "video_id": info.get('id', ''),
+                    "is_live": info.get('is_live', False) or False,
                 }
                 self.config_manager.add_to_history(entry)
                 
@@ -3120,7 +3488,7 @@ class EasyCutApp:
         self.root.destroy()
     
     def start_batch_download(self):
-        """Start batch download"""
+        """Start batch download with queue management"""
         tr = self.translator.get
         urls_text = self.batch_text.get(1.0, tk.END).strip()
         
@@ -3151,22 +3519,50 @@ class EasyCutApp:
                 messagebox.showerror(tr("msg_error", "Error"), str(exc))
                 return
         
-        self.batch_log.add_log(f"{tr('batch_progress', 'Downloading batch')} ({len(urls)})")
+        # Initialize download queue
+        self._download_queue = []
+        self._queue_paused = False
+        for url in urls:
+            self._download_queue.append({
+                "url": url,
+                "status": "queued",
+                "title": url[:50],
+            })
+        self._refresh_queue_ui()
         
-        # Structured logging
+        self.batch_log.add_log(f"{tr('batch_progress', 'Downloading batch')} ({len(urls)})")
         self.logger.info(f"Batch download started: {len(urls)} URLs")
         self.logger.info(f"  Quality: {quality}, Mode: {mode}")
         
         def batch_thread():
             success = 0
-            for i, url in enumerate(urls, 1):
+            for i, item in enumerate(self._download_queue):
+                # Check if stopped
+                if not self.is_downloading and i > 0:
+                    break
+                
+                # Pause support — wait while paused
+                while self._queue_paused:
+                    import time
+                    time.sleep(0.5)
+                    if not self.is_downloading:
+                        break
+                
+                url = item["url"]
+                
                 if not self.is_valid_youtube_url(url):
-                    self.batch_log.add_log(f"[{i}/{len(urls)}] {tr('download_invalid_url', 'Invalid URL')}", "WARNING")
+                    item["status"] = "failed"
+                    item["title"] = f"Invalid URL: {url[:40]}"
+                    self.root.after(0, self._refresh_queue_ui)
+                    self.batch_log.add_log(f"[{i+1}/{len(self._download_queue)}] {tr('download_invalid_url', 'Invalid URL')}", "WARNING")
                     continue
                 
                 if not YT_DLP_AVAILABLE:
                     self.batch_log.add_log(tr("msg_error", "Error") + ": yt-dlp", "ERROR")
                     break
+                
+                item["status"] = "downloading"
+                self.root.after(0, self._refresh_queue_ui)
                 
                 try:
                     output_template = str(self.output_dir / "%(title)s.%(ext)s")
@@ -3175,9 +3571,11 @@ class EasyCutApp:
                     
                     info = self._run_ydl_download(url, ydl_opts)
                     success += 1
-                    self.batch_log.add_log(f"[{i}/{len(urls)}] {info.get('title', 'Video')[:30]}")
+                    item["status"] = "completed"
+                    item["title"] = info.get('title', 'Video')[:50]
+                    self.root.after(0, self._refresh_queue_ui)
+                    self.batch_log.add_log(f"[{i+1}/{len(self._download_queue)}] ✓ {item['title'][:30]}")
                     
-                    # Add per-video history entry
                     entry = {
                         "date": datetime.now().isoformat(),
                         "filename": info.get('title', 'unknown'),
@@ -3190,11 +3588,11 @@ class EasyCutApp:
                 
                 except Exception as e:
                     error_msg = str(e)
-                    # User-friendly error message
                     friendly = self._get_friendly_error(error_msg)
-                    self.batch_log.add_log(f"[{i}/{len(urls)}] ✗ {friendly[:80]}", "ERROR")
+                    item["status"] = "failed"
+                    self.root.after(0, self._refresh_queue_ui)
+                    self.batch_log.add_log(f"[{i+1}/{len(self._download_queue)}] ✗ {friendly[:80]}", "ERROR")
                     
-                    # Add failed entry to history
                     entry = {
                         "date": datetime.now().isoformat(),
                         "filename": url[:50],
@@ -3203,16 +3601,107 @@ class EasyCutApp:
                     }
                     self.config_manager.add_to_history(entry)
                     
-                    # Stop batch if browser cookie error
                     if "could not copy" in error_msg.lower() and "cookie" in error_msg.lower():
                         break
             
-            self.batch_log.add_log(f"Batch complete: {success}/{len(urls)} successful")
-            self.logger.info(f"Batch download completed: {success}/{len(urls)} successful")
+            self.batch_log.add_log(f"Batch complete: {success}/{len(self._download_queue)} successful")
+            self.logger.info(f"Batch download completed: {success}/{len(self._download_queue)} successful")
+            self.is_downloading = False
+            self.root.after(0, self._refresh_queue_ui)
             self.refresh_history()
         
+        self.is_downloading = True
         thread = threading.Thread(target=batch_thread, daemon=True)
         thread.start()
+    
+    def _refresh_queue_ui(self):
+        """Refresh the visual queue list"""
+        tr = self.translator.get
+        
+        if not hasattr(self, 'queue_list_frame'):
+            return
+        
+        for widget in self.queue_list_frame.winfo_children():
+            widget.destroy()
+        
+        status_emoji = {
+            "queued": "⏳",
+            "downloading": "⬇️",
+            "completed": "✅",
+            "failed": "❌",
+            "paused": "⏸️",
+        }
+        status_color = {
+            "queued": self.design.get_color("fg_secondary"),
+            "downloading": self.design.get_color("accent_primary"),
+            "completed": self.design.get_color("success"),
+            "failed": self.design.get_color("error"),
+            "paused": self.design.get_color("warning"),
+        }
+        
+        completed = sum(1 for item in self._download_queue if item["status"] == "completed")
+        total = len(self._download_queue)
+        self.queue_progress_label.config(
+            text=tr("queue_progress", "{} of {} completed").format(completed, total)
+        )
+        
+        for i, item in enumerate(self._download_queue):
+            row_frame = tk.Frame(
+                self.queue_list_frame,
+                bg=self.design.get_color("bg_tertiary"),
+            )
+            row_frame.pack(fill=tk.X, pady=1, padx=Spacing.XS)
+            
+            # Status emoji
+            tk.Label(
+                row_frame,
+                text=status_emoji.get(item["status"], "❓"),
+                font=("Segoe UI Emoji", 11),
+                bg=self.design.get_color("bg_tertiary"),
+                fg=status_color.get(item["status"], self.design.get_color("fg_primary")),
+            ).pack(side=tk.LEFT, padx=(Spacing.SM, Spacing.XS))
+            
+            # Title / URL
+            tk.Label(
+                row_frame,
+                text=f"{i+1}. {item['title'][:55]}",
+                font=(LOADED_FONT_FAMILY, Typography.SIZE_SM),
+                bg=self.design.get_color("bg_tertiary"),
+                fg=self.design.get_color("fg_primary"),
+                anchor="w",
+            ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+            
+            # Status text
+            status_text = tr(f"queue_{item['status']}", item["status"].title())
+            tk.Label(
+                row_frame,
+                text=status_text,
+                font=(LOADED_FONT_FAMILY, Typography.SIZE_TINY),
+                bg=self.design.get_color("bg_tertiary"),
+                fg=status_color.get(item["status"], self.design.get_color("fg_secondary")),
+            ).pack(side=tk.RIGHT, padx=Spacing.SM)
+    
+    def _queue_toggle_pause(self):
+        """Toggle pause/resume for the download queue"""
+        self._queue_paused = not self._queue_paused
+        tr = self.translator.get
+        if self._queue_paused:
+            self.batch_log.add_log(tr("queue_paused", "Paused"))
+            # Mark currently queued items as paused visually
+            for item in self._download_queue:
+                if item["status"] == "queued":
+                    item["status"] = "paused"
+        else:
+            self.batch_log.add_log(tr("queue_resume", "Resume Queue"))
+            for item in self._download_queue:
+                if item["status"] == "paused":
+                    item["status"] = "queued"
+        self._refresh_queue_ui()
+    
+    def _queue_clear_completed(self):
+        """Remove completed items from the download queue"""
+        self._download_queue = [item for item in self._download_queue if item["status"] != "completed"]
+        self._refresh_queue_ui()
     
     def batch_paste(self):
         """Paste from clipboard"""
@@ -3346,6 +3835,31 @@ class EasyCutApp:
                     bg=self.design.get_color("bg_tertiary")
                 )
                 date_label.pack(side=tk.RIGHT, padx=(Spacing.SM, 0))
+                
+                # Badge: Live / Shorts / type indicators
+                item_url = item.get("url", "")
+                is_live_entry = item.get("is_live", False)
+                is_short_entry = '/shorts/' in item_url
+                
+                if is_live_entry:
+                    tk.Label(
+                        header_frame,
+                        text=f" 🔴 {tr('live_badge', 'LIVE')} ",
+                        font=(LOADED_FONT_FAMILY, 8, "bold"),
+                        fg="#FFFFFF",
+                        bg="#E53935",
+                        relief="flat"
+                    ).pack(side=tk.RIGHT, padx=(Spacing.XS, 0))
+                
+                if is_short_entry:
+                    tk.Label(
+                        header_frame,
+                        text=f" 📱 {tr('shorts_badge', 'SHORT')} ",
+                        font=(LOADED_FONT_FAMILY, 8, "bold"),
+                        fg="#FFFFFF",
+                        bg="#FF6D00",
+                        relief="flat"
+                    ).pack(side=tk.RIGHT, padx=(Spacing.XS, 0))
                 
             except Exception as e:
                 self.logger.warning(f"Error displaying history record: {e}")
@@ -3531,7 +4045,10 @@ class EasyCutApp:
                         "date": datetime.now().isoformat(),
                         "filename": Path(filename).name,
                         "status": "success",
-                        "url": url
+                        "url": url,
+                        "is_live": True,
+                        "thumbnail": info.get('thumbnail', ''),
+                        "video_id": info.get('id', '')
                     }
                     self.config_manager.add_to_history(entry)
                     
