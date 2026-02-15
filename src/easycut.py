@@ -2090,6 +2090,35 @@ class EasyCutApp:
         self.download_log.add_log(f"{tr('log_downloading', 'Downloading video from')} {url}")
         
         quality = self.download_quality_var.get()
+        mode = self.download_mode_var.get()
+        section = None
+
+        if mode in ("range", "until"):
+            start_text = self.time_start_entry.get().strip()
+            end_text = self.time_end_entry.get().strip()
+
+            start_seconds = self._parse_timecode(start_text) if mode == "range" else 0
+            end_seconds = self._parse_timecode(end_text)
+
+            if end_seconds is None or (mode == "range" and start_seconds is None):
+                messagebox.showerror(
+                    tr("msg_error", "Error"),
+                    tr("download_time_invalid", "Invalid time format. Use HH:MM:SS or MM:SS.")
+                )
+                self.is_downloading = False
+                return
+
+            if mode == "range" and end_seconds <= start_seconds:
+                messagebox.showerror(
+                    tr("msg_error", "Error"),
+                    tr("download_time_order", "End time must be greater than start time.")
+                )
+                self.is_downloading = False
+                return
+
+            start_tc = self._format_timecode(start_seconds)
+            end_tc = self._format_timecode(end_seconds)
+            section = f"*{start_tc}-{end_tc}"
         
         def download_thread():
             if not YT_DLP_AVAILABLE:
@@ -2110,6 +2139,8 @@ class EasyCutApp:
                     'outtmpl': output_template,
                     'quiet': False,
                 }
+                if section:
+                    base_opts['download_sections'] = [section]
                 ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
                 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
