@@ -1,0 +1,27 @@
+# Example Test Files for Offline Audio Conversion Testing
+# Copy this file to test_files.txt and update paths to your local video files
+
+# Single file test - paste this in the URL field:
+d:\Deko\Desktop\EasyCut\examples\sample_video.mp4
+
+# Batch test - paste these in Batch Download tab (one per line):
+d:\Deko\Desktop\EasyCut\examples\video1.mp4
+d:\Deko\Desktop\EasyCut\examples\video2.mkv
+d:\Deko\Desktop\EasyCut\examples\video3.webm
+
+# Alternative path format (forward slashes work too):
+d:/Deko/Desktop/EasyCut/examples/test_video.mp4
+
+# Tips for offline testing:
+# 1. Use short videos (10-30 seconds) for quick tests
+# 2. Test different formats: mp4, mkv, webm, avi, mov
+# 3. Test files with spaces in names: "my video (1).mp4"
+# 4. Test with various audio codecs in source files
+# 5. Keep original files to compare audio quality after conversion
+
+# To get free test videos:
+# - Use OBS to record a short screen capture
+# - Use your phone to record a short video
+# - Download Creative Commons videos from archive.org (when online)
+# - Convert any video you already have to a smaller test file using:
+#   ffmpeg -i input.mp4 -t 10 -vcodec copy -acodec copy test_10sec.mp4

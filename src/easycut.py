@@ -103,20 +103,50 @@ class EasyCutApp:
     def setup_logging(self):
         """Setup application logging"""
         log_file = Path("config") / "app.log"
+        log_file.parent.mkdir(exist_ok=True)
+        
+        # Configure logging with rotation
+        from logging.handlers import RotatingFileHandler
+        
+        # File handler with rotation (5MB max, keep 3 backups)
+        file_handler = RotatingFileHandler(
+            log_file,
+            maxBytes=5*1024*1024,  # 5MB
+            backupCount=3,
+            encoding='utf-8'
+        )
+        file_handler.setLevel(logging.INFO)
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        ))
+        
+        # Console handler for debugging (only warnings and above)
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.WARNING)
+        console_handler.setFormatter(logging.Formatter(
+            '%(levelname)-8s | %(message)s'
+        ))
+        
+        # Configure root logger
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s | %(levelname)-8s | %(message)s',
-            handlers=[
-                logging.FileHandler(log_file, encoding='utf-8'),
-            ]
+            handlers=[file_handler, console_handler]
         )
+        
         self.logger = logging.getLogger(__name__)
+        self.logger.info("="*60)
+        self.logger.info("EasyCut Application Started")
+        self.logger.info(f"Version: 1.2.0")
     
     def setup_window(self):
         """Setup main window"""
         self.root.title("EasyCut")
         self.root.geometry("1000x700")
         self.root.minsize(800, 500)
+        
+        # Setup graceful shutdown
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
     
     def setup_ui(self):
         """Setup complete user interface — sidebar layout"""
@@ -1505,6 +1535,14 @@ class EasyCutApp:
         history_search_entry.pack(side=tk.LEFT)
         history_search_entry.bind("<KeyRelease>", lambda _e: self.refresh_history())
 
+        # Clear History button
+        ttk.Button(
+            action_frame,
+            text=tr("history_clear", "Clear History"),
+            command=self.clear_history,
+            style="Secondary.TButton"
+        ).pack(side=tk.LEFT, padx=(Spacing.SM, 0))
+
         # === HISTORY TABLE CARD ===
         table_card = ModernCard(main, title=tr("history_records", "Download Records"), dark_mode=self.dark_mode)
         table_card.pack(fill=tk.BOTH, expand=True, pady=(Spacing.MD, 0))
@@ -2154,6 +2192,10 @@ class EasyCutApp:
         
         quality = self.download_quality_var.get()
         mode = self.download_mode_var.get()
+        
+        # Structured logging
+        self.logger.info(f"Download started: {url}")
+        self.logger.info(f"  Quality: {quality}, Mode: {mode}")
 
         if mode == "audio" and not shutil.which("ffmpeg"):
             messagebox.showerror(
@@ -2190,12 +2232,20 @@ class EasyCutApp:
                     "url": url
                 }
                 self.config_manager.add_to_history(entry)
+                
+                # Structured logging
+                self.logger.info(f"Download completed: {info.get('title', 'unknown')}")
+                self.logger.info(f"  File: {info.get('_filename', 'unknown')}")
 
                 self.download_log.add_log(tr("download_success", "Download completed successfully!"))
                 self.refresh_history()
             
             except Exception as e:
                 error_msg = str(e)
+                # Structured logging
+                self.logger.error(f"Download failed: {url}")
+                self.logger.error(f"  Error: {error_msg}")
+                
                 # Check if error is due to browser being open
                 if "Could not copy" in error_msg and "cookie database" in error_msg:
                     self.download_log.add_log(tr("browser_test_browser_open", "⚠️ Browser is open! Close it first."), "WARNING")
@@ -2213,6 +2263,37 @@ class EasyCutApp:
         tr = self.translator.get
         self.is_downloading = False
         self.download_log.add_log(tr("download_stop", "Stop"))
+    
+    def on_closing(self):
+        """Handle application closing gracefully"""
+        tr = self.translator.get
+        
+        # Check if downloads are active
+        if self.is_downloading:
+            response = messagebox.askyesnocancel(
+                tr("msg_confirm", "Confirm"),
+                tr("msg_download_active", "Downloads are in progress. Close anyway?")
+            )
+            if not response:  # User clicked No or Cancel
+                return
+        
+        # Log shutdown
+        self.logger.info("Application shutdown initiated")
+        
+        # Save current config
+        try:
+            self.config_manager.set("output_dir", str(self.output_dir))
+            self.config_manager.set("language", self.current_lang)
+            self.logger.info("Configuration saved")
+        except Exception as e:
+            self.logger.error(f"Error saving configuration: {e}")
+        
+        # Final log
+        self.logger.info("EasyCut Application Closed")
+        self.logger.info("="*60)
+        
+        # Destroy window
+        self.root.destroy()
     
     def start_batch_download(self):
         """Start batch download"""
@@ -2238,6 +2319,10 @@ class EasyCutApp:
             return
         
         self.batch_log.add_log(f"{tr('batch_progress', 'Downloading batch')} ({len(urls)})")
+        
+        # Structured logging
+        self.logger.info(f"Batch download started: {len(urls)} URLs")
+        self.logger.info(f"  Quality: {quality}, Mode: {mode}")
         
         def batch_thread():
             success = 0
@@ -2269,6 +2354,7 @@ class EasyCutApp:
                         self.batch_log.add_log(f"[{i}/{len(urls)}] ✗ Error: {error_msg[:50]}", "ERROR")
             
             self.batch_log.add_log(f"Batch complete: {success}/{len(urls)} successful")
+            self.logger.info(f"Batch download completed: {success}/{len(urls)} successful")
             self.refresh_history()
         
         thread = threading.Thread(target=batch_thread, daemon=True)
