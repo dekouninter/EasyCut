@@ -1104,7 +1104,9 @@ class EasyCutApp:
             ("full", tr("download_mode_full", "Complete Video")),
             ("range", tr("download_mode_range", "Time Range")),
             ("until", tr("download_mode_until", "Until Time")),
-            ("audio", tr("download_mode_audio", "Audio Only"))
+            ("audio", tr("download_mode_audio", "Audio Only")),
+            ("playlist", tr("download_mode_playlist", "Full Playlist")),
+            ("channel", tr("download_mode_channel", "Channel Videos"))
         ]
         
         mode_grid = ttk.Frame(mode_card.body)
@@ -2150,6 +2152,15 @@ class EasyCutApp:
             'outtmpl': output_template,
             'quiet': quiet,
         }
+        
+        # Playlist handling
+        if mode == "playlist":
+            base_opts['noplaylist'] = False  # Download entire playlist
+        elif mode == "channel":
+            base_opts['noplaylist'] = False  # Enable playlist for channels
+            base_opts['playlistend'] = 10  # Download last 10 videos by default
+        else:
+            base_opts['noplaylist'] = True  # Download single video only
 
         if section:
             base_opts['download_sections'] = [section]
@@ -2205,12 +2216,15 @@ class EasyCutApp:
             self.is_downloading = False
             return
 
-        try:
-            section = self._build_download_section(mode)
-        except ValueError as exc:
-            messagebox.showerror(tr("msg_error", "Error"), str(exc))
-            self.is_downloading = False
-            return
+        # Build time range section (not applicable for playlist mode)
+        section = None
+        if mode in ("range", "until"):
+            try:
+                section = self._build_download_section(mode)
+            except ValueError as exc:
+                messagebox.showerror(tr("msg_error", "Error"), str(exc))
+                self.is_downloading = False
+                return
         
         def download_thread():
             if not YT_DLP_AVAILABLE:
@@ -2318,6 +2332,15 @@ class EasyCutApp:
             )
             return
         
+        # Build time range section if needed
+        section = None
+        if mode in ("range", "until"):
+            try:
+                section = self._build_download_section(mode)
+            except ValueError as exc:
+                messagebox.showerror(tr("msg_error", "Error"), str(exc))
+                return
+        
         self.batch_log.add_log(f"{tr('batch_progress', 'Downloading batch')} ({len(urls)})")
         
         # Structured logging
@@ -2337,7 +2360,7 @@ class EasyCutApp:
                 
                 try:
                     output_template = str(self.output_dir / "%(title)s.%(ext)s")
-                    base_opts = self._build_download_options(output_template, quality, mode, quiet=True)
+                    base_opts = self._build_download_options(output_template, quality, mode, section=section, quiet=True)
                     ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
                     
                     info = self._run_ydl_download(url, ydl_opts)
