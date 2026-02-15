@@ -137,7 +137,16 @@ If you find EasyCut useful, consider:
 
 ## 📝 Version History
 
-### v1.2.1 (Current)
+### v1.3.0 (Current)
+- OAuth browser auto-close after 3 seconds (fixed HTML content-type for JS execution)
+- 5 new languages: Spanish, French, German, Italian, Japanese (250+ keys each)
+- Language selector expanded to 7 languages in UI
+- Removed ROADMAP.md (all roadmap items completed)
+- Added TESTING.md to root for better visibility
+- Version bump to 1.3.0 across all files
+- Full documentation update
+
+### v1.2.1
 - Complete codebase audit: version normalization, license corrections, bug fixes
 - Documentation accuracy review and update
 - All version strings synchronized to single source

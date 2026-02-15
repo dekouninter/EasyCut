@@ -171,19 +171,41 @@ class OAuthManager:
             if on_browser_open:
                 on_browser_open()
             
-            # This opens the browser automatically
+            # Auto-close HTML page shown after successful OAuth
             success_html = (
-                "<html><body>"
-                "<h1>Authentication complete</h1>"
-                "<p>You can close this window. It will close automatically in 3 seconds.</p>"
-                "<script>setTimeout(function(){window.close();}, 3000);</script>"
-                "</body></html>"
+                "<html><head><title>EasyCut - Authenticated</title></head><body "
+                "style='font-family:sans-serif;text-align:center;padding:60px'>"
+                "<h1 style='color:#22c55e'>&#10004; Authentication Complete</h1>"
+                "<p>This window will close automatically in <span id='c'>3</span> seconds...</p>"
+                "<p style='color:#888;font-size:13px'>You can also close it manually.</p>"
+                "<script>"
+                "var s=3;var e=document.getElementById('c');"
+                "setInterval(function(){s--;if(s>=0)e.textContent=s;},1000);"
+                "setTimeout(function(){window.close();},3000);"
+                "</script></body></html>"
             )
-            self.creds = flow.run_local_server(
-                port=0,
-                open_browser=True,
-                success_message=success_html
-            )
+            
+            # Monkey-patch the WSGI app to serve HTML instead of plain text
+            # so the browser executes the auto-close JavaScript
+            from google_auth_oauthlib.flow import _WSGIApp
+            _original_call = _WSGIApp.__call__
+            
+            def _html_call(self_wsgi, environ, start_response):
+                start_response("200 OK", [("Content-type", "text/html; charset=utf-8")])
+                self_wsgi.last_request_uri = __import__('wsgiref.util', fromlist=['request_uri']).request_uri(environ)
+                return [self_wsgi._success_message.encode("utf-8")]
+            
+            _WSGIApp.__call__ = _html_call
+            
+            try:
+                self.creds = flow.run_local_server(
+                    port=0,
+                    open_browser=True,
+                    success_message=success_html
+                )
+            finally:
+                # Restore original to avoid side effects
+                _WSGIApp.__call__ = _original_call
             
             # Save token for future use
             self._save_token()

@@ -1,6 +1,6 @@
 # 🎬 EasyCut - Professional YouTube Downloader
 
-![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)
+![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
 ![Author](https://img.shields.io/badge/author-Deko%20Costa-brightgreen.svg)
 
@@ -72,7 +72,7 @@ Want to contribute or run from source? See [Installation](#installation) below.
 - ✅ **Output Folder Selection**: Default `downloads/`, changeable in UI
 - ✅ **Real-Time Logs**: Download, batch, and live logs in the UI with progress hooks
 - ✅ **Light/Dark Theme**: Instant theme switch
-- ✅ **Multi-Language**: English and Portuguese (230+ translated strings)
+- ✅ **Multi-Language**: 7 languages — English, Portuguese, Spanish, French, German, Italian, Japanese (250+ translated strings each)
 - ✅ **Structured Logging**: RotatingFileHandler (5MB max, 3 backups) + console output
 - ✅ **Graceful Shutdown**: Config save and active download check on close
 - ✅ **Donation Buttons**: Buy Me a Coffee and Livepix links
@@ -100,7 +100,7 @@ requests>=2.32.0
 ```
 
 **Default Settings:**
-- Language: **Portuguese** (can switch to English instantly)
+- Language: **Portuguese** (can switch to English, Spanish, French, German, Italian, or Japanese instantly)
 - Theme: **Dark** (can toggle to Light instantly)
 - Authentication: **OAuth 2.0** (one-click sync with YouTube)
 
