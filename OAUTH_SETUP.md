@@ -131,7 +131,7 @@ If you are seeing the Google OAuth warning screen, follow these steps in your ow
 - Add your Google account as a **Test User** in the Google Cloud Console
 - Or publish the OAuth consent screen
 
-**Note:** Some error messages may reference `OAUTH_FIX.md`. Use the steps in this document instead.
+**Note:** Some error messages may reference `OAUTH_SETUP.md`. Use the steps in this document.
 
 #### "Failed to get cookies"
 - Try clicking "Sync with YouTube" again

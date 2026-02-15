@@ -63,7 +63,6 @@ Welcome to the EasyCut documentation hub. This index helps you find the right do
 
 These documents are in `.gitignore` as they contain planning information not intended for public repositories:
 
-- **OAUTH_CHECKLIST.md** — Internal verification checklist for OAuth activation
 - **REFACTORING_PLAN.md** — Internal strategic refactoring plan
 - **ROADMAP.md** — Internal product roadmap and planning
 - **DOCUMENTATION_UPDATES.md** — Internal change log for documentation updates
@@ -80,7 +79,6 @@ They're useful for team coordination and project management but kept locally to 
 
 ### Monthly Review
 - [ ] Update current status in ROADMAP.md
-- [ ] Review and update OAUTH_CHECKLIST.md progress
 - [ ] Update REFACTORING_PLAN.md phase status
 
 ### Quarterly Review

@@ -198,7 +198,7 @@ class OAuthManager:
                     "3. OAuth consent screen → Add Test Users\n"
                     "4. Add your Google email\n"
                     "5. OR publish the app\n\n"
-                    "📖 See OAUTH_FIX.md for detailed instructions"
+                    "See OAUTH_SETUP.md for detailed instructions"
                 )
             elif 'redirect_uri_mismatch' in error_msg:
                 raise OAuthError(
