@@ -80,6 +80,7 @@ class EasyCutApp:
         self.is_downloading = False
         self.active_scroll_canvas = None  # Track active canvas for mouse wheel scroll
         self.browser_var = None  # Browser selection variable
+        self.download_semaphore = threading.BoundedSemaphore(value=3)
         
         # Paths
         self.output_dir = Path(self.config_manager.get("output_dir", "downloads"))
@@ -2072,6 +2073,68 @@ class EasyCutApp:
         minutes = (total_seconds % 3600) // 60
         seconds = total_seconds % 60
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+    def _build_download_section(self, mode: str):
+        """Build yt-dlp download section for range/until modes."""
+        if mode not in ("range", "until"):
+            return None
+
+        tr = self.translator.get
+        start_text = self.time_start_entry.get().strip()
+        end_text = self.time_end_entry.get().strip()
+
+        start_seconds = self._parse_timecode(start_text) if mode == "range" else 0
+        end_seconds = self._parse_timecode(end_text)
+
+        if end_seconds is None or (mode == "range" and start_seconds is None):
+            raise ValueError(tr("download_time_invalid", "Invalid time format. Use HH:MM:SS or MM:SS."))
+
+        if mode == "range" and end_seconds <= start_seconds:
+            raise ValueError(tr("download_time_order", "End time must be greater than start time."))
+
+        start_tc = self._format_timecode(start_seconds)
+        end_tc = self._format_timecode(end_seconds)
+        return f"*{start_tc}-{end_tc}"
+
+    def _build_download_options(self, output_template: str, quality: str, mode: str, section: str = None, quiet: bool = False):
+        """Create yt-dlp options for a download."""
+        format_map = {
+            'best': 'bestvideo+bestaudio/best',
+            'mp4': 'best[ext=mp4]/best',
+            '1080': 'bestvideo[height<=1080]+bestaudio/best',
+            '720': 'bestvideo[height<=720]+bestaudio/best',
+            'audio': 'bestaudio/best'
+        }
+        format_str = format_map.get(quality, 'best')
+
+        base_opts = {
+            'format': format_str,
+            'outtmpl': output_template,
+            'quiet': quiet,
+        }
+
+        if section:
+            base_opts['download_sections'] = [section]
+
+        if mode == "audio":
+            audio_codec = self.audio_format_var.get()
+            audio_quality = self.audio_bitrate_var.get()
+            base_opts['format'] = 'bestaudio/best'
+            base_opts['postprocessors'] = [
+                {
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': audio_codec,
+                    'preferredquality': audio_quality,
+                }
+            ]
+
+        return base_opts
+
+    def _run_ydl_download(self, url: str, ydl_opts: dict):
+        """Run yt-dlp download with a concurrency limit."""
+        with self.download_semaphore:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                return ydl.extract_info(url, download=True)
     
     def start_download(self):
         """Start downloading video"""
@@ -2091,34 +2154,21 @@ class EasyCutApp:
         
         quality = self.download_quality_var.get()
         mode = self.download_mode_var.get()
-        section = None
 
-        if mode in ("range", "until"):
-            start_text = self.time_start_entry.get().strip()
-            end_text = self.time_end_entry.get().strip()
+        if mode == "audio" and not shutil.which("ffmpeg"):
+            messagebox.showerror(
+                tr("msg_error", "Error"),
+                tr("log_ffmpeg_not_found", "FFmpeg not found. Audio conversion may not work.")
+            )
+            self.is_downloading = False
+            return
 
-            start_seconds = self._parse_timecode(start_text) if mode == "range" else 0
-            end_seconds = self._parse_timecode(end_text)
-
-            if end_seconds is None or (mode == "range" and start_seconds is None):
-                messagebox.showerror(
-                    tr("msg_error", "Error"),
-                    tr("download_time_invalid", "Invalid time format. Use HH:MM:SS or MM:SS.")
-                )
-                self.is_downloading = False
-                return
-
-            if mode == "range" and end_seconds <= start_seconds:
-                messagebox.showerror(
-                    tr("msg_error", "Error"),
-                    tr("download_time_order", "End time must be greater than start time.")
-                )
-                self.is_downloading = False
-                return
-
-            start_tc = self._format_timecode(start_seconds)
-            end_tc = self._format_timecode(end_seconds)
-            section = f"*{start_tc}-{end_tc}"
+        try:
+            section = self._build_download_section(mode)
+        except ValueError as exc:
+            messagebox.showerror(tr("msg_error", "Error"), str(exc))
+            self.is_downloading = False
+            return
         
         def download_thread():
             if not YT_DLP_AVAILABLE:
@@ -2128,34 +2178,21 @@ class EasyCutApp:
             
             try:
                 output_template = str(self.output_dir / "%(title)s.%(ext)s")
-                format_str = {
-                    'best': 'bestvideo+bestaudio/best',
-                    'mp4': 'best[ext=mp4]/best',
-                    'audio': 'bestaudio/best'
-                }.get(quality, 'best')
-                
-                base_opts = {
-                    'format': format_str,
-                    'outtmpl': output_template,
-                    'quiet': False,
-                }
-                if section:
-                    base_opts['download_sections'] = [section]
+                base_opts = self._build_download_options(output_template, quality, mode, section=section, quiet=False)
                 ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
                 
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    info = ydl.extract_info(url, download=True)
-                    
-                    entry = {
-                        "date": datetime.now().isoformat(),
-                        "filename": info.get('title', 'unknown'),
-                        "status": "success",
-                        "url": url
-                    }
-                    self.config_manager.add_to_history(entry)
-                    
-                    self.download_log.add_log(tr("download_success", "Download completed successfully!"))
-                    self.refresh_history()
+                info = self._run_ydl_download(url, ydl_opts)
+
+                entry = {
+                    "date": datetime.now().isoformat(),
+                    "filename": info.get('title', 'unknown'),
+                    "status": "success",
+                    "url": url
+                }
+                self.config_manager.add_to_history(entry)
+
+                self.download_log.add_log(tr("download_success", "Download completed successfully!"))
+                self.refresh_history()
             
             except Exception as e:
                 error_msg = str(e)
@@ -2203,17 +2240,12 @@ class EasyCutApp:
                 
                 try:
                     output_template = str(self.output_dir / "%(title)s.%(ext)s")
-                    base_opts = {
-                        'format': 'best',
-                        'outtmpl': output_template,
-                        'quiet': True,
-                    }
+                    base_opts = self._build_download_options(output_template, "best", "full", quiet=True)
                     ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
                     
-                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                        info = ydl.extract_info(url, download=True)
-                        success += 1
-                        self.batch_log.add_log(f"[{i}/{len(urls)}] {info.get('title', 'Video')[:30]}")
+                    info = self._run_ydl_download(url, ydl_opts)
+                    success += 1
+                    self.batch_log.add_log(f"[{i}/{len(urls)}] {info.get('title', 'Video')[:30]}")
                 
                 except Exception as e:
                     error_msg = str(e)
