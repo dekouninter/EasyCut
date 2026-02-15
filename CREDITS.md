@@ -26,7 +26,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 - **Why**: The backbone of EasyCut, providing robust YouTube downloading capabilities
 
 #### FFmpeg (GPL-2.0+)
-- **Purpose**: Optional media processing and audio conversion (not invoked by current code)
+- **Purpose**: Audio/video processing and audio conversion (MP3, WAV, M4A, OPUS extraction)
 - **Project**: FFmpeg team
 - **Website**: https://ffmpeg.org/
 - **License**: GPL-2.0 or later (with optional components)
@@ -139,9 +139,17 @@ If you find EasyCut useful, consider:
 
 ### v1.2.0 (Current)
 - OAuth 2.0 authentication with token and cookies storage
+- Audio conversion: MP3, WAV, M4A, OPUS with 4 bitrate options
+- Time range downloads with yt-dlp download_sections
+- Playlist & channel download modes
+- Batch downloads with concurrency control (max 3 simultaneous)
+- Structured logging with RotatingFileHandler (5MB, 3 backups)
+- Graceful shutdown with active download detection
+- Download history with search/filter and clear button
 - New download history UI with card layout
 - Live stream recording flow improvements
 - UI refinements and design system cleanup
+- Project structure reorganization (src/, scripts/, static/, internal/)
 
 ### v1.1.2
 - Footer button alignment fixes in collapsed sidebar
@@ -149,23 +157,23 @@ If you find EasyCut useful, consider:
 - Hover effect enhancements
 
 ### v1.1.1
-- ✨ Complete UI redesign with modern design system
-- 🎨 Professional color palette (dark/light themes)
-- 🔤 Inter font integration for better typography
-- 📦 Feather Icons integration (286 icons)
-- 🌐 Full internationalization (EN/PT)
-- 🎯 Improved user experience
-- 📱 Responsive layout design
-- ⚡ Performance optimizations
-- 🐛 Bug fixes and stability improvements
+- Complete UI redesign with modern design system
+- Professional color palette (dark/light themes)
+- Inter font integration for better typography
+- Feather Icons integration (286 icons)
+- Full internationalization (EN/PT)
+- Improved user experience
+- Responsive layout design
+- Performance optimizations
+- Bug fixes and stability improvements
 
 ### Coming Soon
-- 🎬 Playlist support
-- 📹 Multiple simultaneous downloads
-- 🎨 Custom themes creation
-- 🌍 More language support
-- 📊 Download statistics
-- ⚙️ Advanced settings panel
+- Smart format selection with fallback
+- Thumbnail display in history
+- Subtitle downloads (auto + manual, multi-language)
+- YouTube Chapters & Shorts support
+- Archive mode with duplicate detection
+- Live stream enhancements
 
 ## 🤝 Contributing
 

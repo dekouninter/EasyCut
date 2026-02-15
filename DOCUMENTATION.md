@@ -63,7 +63,7 @@ Welcome to the EasyCut documentation hub. This index helps you find the right do
 
 These documents are in `.gitignore` as they contain planning information not intended for public repositories:
 
-- **REFACTORING_PLAN.md** — Internal strategic refactoring plan
+- **FEATURES_AND_INTEGRATIONS.md** — Feature tracking and library integration status
 - **ROADMAP.md** — Internal product roadmap and planning
 - **DOCUMENTATION_UPDATES.md** — Internal change log for documentation updates
 

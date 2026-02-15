@@ -7,7 +7,7 @@ Verifies all dependencies and project structure.
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
-License: MIT
+License: GPL-3.0
 
 Usage:
     python scripts/check_installation.py
@@ -110,10 +110,15 @@ for dir_name in required_dirs:
 # Check main files
 print("\n[7] Checking main files...")
 required_files = [
+    'main.py',
     'src/easycut.py',
     'src/oauth_manager.py',
     'src/i18n.py',
     'src/ui_enhanced.py',
+    'src/design_system.py',
+    'src/modern_components.py',
+    'src/icon_manager.py',
+    'src/font_loader.py',
     'src/donation_system.py',
     'requirements.txt',
     'README.md',
@@ -132,7 +137,7 @@ for file_name in required_files:
 print("\n" + "="*60)
 if all_exist:
     print("  ✓ Installation verified successfully!")
-    print("  Ready to launch: python src/easycut.py")
+    print("  Ready to launch: python main.py")
 else:
     print("  ✗ Some files are missing")
     print("  Please verify your installation")

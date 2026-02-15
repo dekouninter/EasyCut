@@ -60,15 +60,21 @@ Want to contribute or run from source? See [Installation](#installation) below.
 ### ✨ Key Features (Current Code)
 
 - ✅ **Single Video Download**: Download YouTube videos with quality presets (Best, MP4 Best, 1080p, 720p)
-- ✅ **Batch Downloads**: Paste multiple URLs (UI indicates up to 50 at once)
+- ✅ **Audio Conversion**: Extract audio as MP3, WAV, M4A, OPUS with bitrate options (128-320 kbps)
+- ✅ **Time Range Downloads**: Download specific segments (Start/End time in HH:MM:SS format)
+- ✅ **Batch Downloads**: Paste multiple URLs (up to 50) with concurrency control (max 3 simultaneous)
+- ✅ **Playlist Downloads**: Download entire YouTube playlists with progress tracking
+- ✅ **Channel Downloads**: Download latest 10 videos from a YouTube channel
 - ✅ **Live Stream Recording**: Record live streams with quality presets (Best, 1080p, 720p, 480p)
 - ✅ **YouTube OAuth 2.0**: One-click "Sync with YouTube" authentication
 - ✅ **Persistent Auth**: Tokens in `config/youtube_token.pickle`, cookies in `config/yt_cookies.txt`
-- ✅ **Download History**: Stored in `config/history_downloads.json` (last 100 items)
+- ✅ **Download History**: Stored in `config/history_downloads.json` with search/filter and clear button
 - ✅ **Output Folder Selection**: Default `downloads/`, changeable in UI
-- ✅ **Real-Time Logs**: Download, batch, and live logs in the UI
+- ✅ **Real-Time Logs**: Download, batch, and live logs in the UI with progress hooks
 - ✅ **Light/Dark Theme**: Instant theme switch
-- ✅ **Multi-Language**: English and Portuguese
+- ✅ **Multi-Language**: English and Portuguese (200+ translated strings)
+- ✅ **Structured Logging**: RotatingFileHandler (5MB max, 3 backups) + console output
+- ✅ **Graceful Shutdown**: Config save and active download check on close
 - ✅ **Donation Buttons**: Buy Me a Coffee and Livepix links
 - ✅ **Custom Fonts**: Inter Display with Segoe UI fallback
 
@@ -79,7 +85,7 @@ Want to contribute or run from source? See [Installation](#installation) below.
 - **Python**: 3.8 or higher
 - **Tkinter**: Usually bundled with Python on Windows
 - **Windows**: Primary target (font loading and folder opening are Windows-optimized)
-- **FFmpeg**: Not required by the current download flow; will be needed if audio conversion is wired in later
+- **FFmpeg**: Required for audio conversion (MP3, WAV, M4A, OPUS extraction)
 
 ### Python Dependencies
 
@@ -204,10 +210,9 @@ python main.py
 ## ⚠️ Known Limitations (Current Code)
 
 - These items are documented and planned, but not prioritized yet.
-- **Time Range Inputs**: Start/End time fields exist in the UI but are not applied to downloads yet.
-- **Audio Format Selector**: MP3/WAV/M4A/OPUS selection is shown in the UI, but downloads currently use video formats only.
-- **Output Folder Key**: Default is read from `output_folder`, but the UI writes to `output_dir` (both may appear in `config/config.json`).
-- **Version Strings**: About tab uses hardcoded version values (e.g., 1.1.1 / Python 3.13) that may not match README or `setup.py`.
+- **Download Cancellation**: The stop button sets a flag but cannot cancel an in-progress yt-dlp download.
+- **Browser Cookie Extraction**: The browser cookie UI exists but is disabled in favor of OAuth flow.
+- **Thread Safety**: Some background operations update UI directly without `root.after()` scheduling.
 
 ## 🔐 Security
 
@@ -249,7 +254,7 @@ Want to create standalone executables? See [BUILD.md](BUILD.md) for complete ins
 **Quick build:**
 ```bash
 pip install pyinstaller
-python build.py
+python scripts/build.py
 ```
 
 This creates `dist/EasyCut.exe` with embedded OAuth credentials - ready to distribute!

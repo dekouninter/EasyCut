@@ -167,7 +167,7 @@ class EasyCutApp:
         # --- HEADER (45px) ---
         self.create_header(root_frame)
         
-        # --- BROWSER AUTH BANNER (replaces old login) ---
+        # --- OAuth AUTHENTICATION BANNER ---
         self.create_login_banner(root_frame)
         
         # --- BODY (sidebar + content) ---
@@ -592,8 +592,8 @@ class EasyCutApp:
         # Bottom border
         tk.Frame(parent, bg=self.design.get_color("border"), height=1).pack(fill=tk.X)
     
-    def create_login_banner(self, parent):
-        """Create browser authentication banner"""
+    def create_browser_auth_banner(self, parent):
+        """Create browser authentication banner (reserved for future use)"""
         tr = self.translator.get
         bg = self.design.get_color("bg_secondary")
         fg = self.design.get_color("fg_primary")
@@ -1537,14 +1537,6 @@ class EasyCutApp:
         history_search_entry.pack(side=tk.LEFT)
         history_search_entry.bind("<KeyRelease>", lambda _e: self.refresh_history())
 
-        # Clear History button
-        ttk.Button(
-            action_frame,
-            text=tr("history_clear", "Clear History"),
-            command=self.clear_history,
-            style="Secondary.TButton"
-        ).pack(side=tk.LEFT, padx=(Spacing.SM, 0))
-
         # === HISTORY TABLE CARD ===
         table_card = ModernCard(main, title=tr("history_records", "Download Records"), dark_mode=self.dark_mode)
         table_card.pack(fill=tk.BOTH, expand=True, pady=(Spacing.MD, 0))
@@ -1661,7 +1653,7 @@ class EasyCutApp:
         info_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         info_data = [
-            ("Version", "1.1.1"),
+            ("Version", "1.2.0"),
             ("Author", "Deko Costa"),
             ("License", "GPL-3.0"),
             ("Release", "2026")
@@ -1791,6 +1783,7 @@ class EasyCutApp:
     def change_language(self, lang):
         """Change language with instant reload"""
         if self.translator.set_language(lang):
+            self.language = lang
             self.config_manager.set("language", lang)
             self.setup_ui()
             self.log_app(f"✓ Language changed to {lang.upper()}")
@@ -2297,7 +2290,7 @@ class EasyCutApp:
         # Save current config
         try:
             self.config_manager.set("output_dir", str(self.output_dir))
-            self.config_manager.set("language", self.current_lang)
+            self.config_manager.set("language", self.language)
             self.logger.info("Configuration saved")
         except Exception as e:
             self.logger.error(f"Error saving configuration: {e}")

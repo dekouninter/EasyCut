@@ -24,10 +24,10 @@ EasyCut/
 │
 ├── 📂 internal/            # Internal documentation (NOT in Git)
 │   ├── README.md           # Internal docs guide
-│   ├── REFACTORING_PLAN.md # Development planning
+│   ├── DOCUMENTATION_UPDATES.md # Documentation change log
+│   ├── FEATURES_AND_INTEGRATIONS.md # Feature & integration tracking
 │   ├── ROADMAP.md          # Feature roadmap
-│   ├── TESTING_SPRINT4.md  # Testing guides
-│   └── ...                 # Other internal notes
+│   └── TESTING_SPRINT4.md  # Testing guides
 │
 ├── 📂 scripts/             # Build & utility scripts
 │   ├── build.py            # PyInstaller build script

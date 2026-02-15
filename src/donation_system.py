@@ -5,7 +5,7 @@ Manages donation links and support interface with professional UI
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
-License: MIT
+License: GPL-3.0
 
 Features:
 - Multiple donation platforms (Buy Me a Coffee, Livepix)
@@ -99,13 +99,14 @@ class DonationWindow:
         buttons_frame.pack(pady=10)
         
         # Get accent color from theme
+        accent = "#4A90D9"
+        accent_hover = "#3A7BC8"
         try:
             tokens = DesignTokens()
             accent = tokens.get_color("accent_primary")
             accent_hover = tokens.get_color("accent_hover")
         except Exception:
-            accent = tokens.get_color("accent_primary") if DesignTokens else "#4A90D9"
-            accent_hover = tokens.get_color("accent_hover") if DesignTokens else "#3A7BC8"
+            pass  # Use defaults
         
         # Donation platform buttons
         for key, donation in self.donation_links.items():
@@ -174,13 +175,14 @@ class DonationButton:
             root_window: Root window for button placement
         """
         # Get accent color from theme
+        accent = "#4A90D9"
+        accent_hover = "#3A7BC8"
         try:
             tokens = DesignTokens()
             accent = tokens.get_color("accent_primary")
             accent_hover = tokens.get_color("accent_hover")
         except Exception:
-            accent = tokens.get_color("accent_primary") if DesignTokens else "#4A90D9"
-            accent_hover = tokens.get_color("accent_hover") if DesignTokens else "#3A7BC8"
+            pass  # Use defaults
         
         # Floating button frame
         floating_frame = ttk.Frame(root_window)

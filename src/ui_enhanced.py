@@ -5,8 +5,8 @@ Professional User Interface with Theme and Configuration Management
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
-Version: 1.1.2
-License: MIT
+Version: 1.2.0
+License: GPL-3.0
 
 This module provides:
 - Theme Manager: Dark/Light theme with instant hot-reload
@@ -149,7 +149,7 @@ class ConfigManager:
         self.default_config = {
             "dark_mode": True,
             "language": "pt",
-            "output_folder": "downloads",
+            "output_dir": "downloads",
             "log_level": "INFO",
             "browser_cookies": "chrome",     # Browser for cookie extraction or "file"
             "browser_profile": "",           # Browser profile name (e.g., "Profile 1", "Default")
@@ -345,7 +345,7 @@ class StatusBar(ttk.Frame):
             "status_ready": "Ready",
             "login_not_logged": "Not logged in",
             "login_logged_prefix": "Logged in as",
-            "version_label": "v1.0.0 Professional",
+            "version_label": "v1.2.0 Professional",
         }
         
         # Status label
@@ -363,7 +363,7 @@ class StatusBar(ttk.Frame):
         ttk.Frame(self).pack(side=tk.LEFT, expand=True)
         
         # Version label
-        version_label = ttk.Label(self, text=self.labels.get("version_label", "v1.0.0 Professional"))
+        version_label = ttk.Label(self, text=self.labels.get("version_label", "v1.2.0 Professional"))
         version_label.pack(side=tk.RIGHT, padx=5)
     
     def set_status(self, message):

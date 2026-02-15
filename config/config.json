@@ -1,8 +1,8 @@
 {
   "dark_mode": true,
   "language": "pt",
-  "output_folder": "downloads",
+  "output_dir": "downloads",
   "log_level": "INFO",
   "browser_cookies": "chrome",
-  "browser_profile": "Default"
+  "browser_profile": ""
 }

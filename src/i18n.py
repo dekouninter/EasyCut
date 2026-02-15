@@ -6,7 +6,7 @@ Supports: English (Default), Portuguese
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
-License: MIT
+License: GPL-3.0
 
 This module provides complete translation management for the EasyCut application,
 enabling seamless language switching between English and Portuguese with 150+ strings.
@@ -252,9 +252,8 @@ TRANSLATIONS = {
         "about_version_info": "Version 1.2.0 - Professional Edition",
         "about_github": "GitHub: https://github.com/dekouninter/EasyCut",
         "about_support": "Support: buymeacoffee.com/dekocosta | livepix.gg/dekocosta",
-        "about_license": "License: MIT",
-        "about_credits_libs": "Libraries: yt-dlp, FFmpeg, Google OAuth",
-        "about_credits_tools": "Tools: Python, Tkinter",
+        "about_license": "License: GPL-3.0",
+        "about_credits_libs": "Libraries: yt-dlp, FFmpeg, Google OAuth",        "about_credits_tools": "Tools: Python, Tkinter",
         "about_tech_text": "Core: Python, Tkinter, yt-dlp, FFmpeg, OAuth",
         "about_thanks_text": "Thanks to the open-source community and creators.",
         "about_features_list": [
@@ -534,10 +533,11 @@ TRANSLATIONS = {
         "about_link_coffee": "Buy Me a Coffee",
         "about_link_livepix": "Doar via Livepix",
         "about_description": "EasyCut é um simples e seguro baixador de vídeos YouTube com suporte a downloads em lote e extração de áudio.",
-        "about_author": "Autor: Equipe EasyCut",
-        "about_version_info": "Versão 1.2.0",
-        "about_github": "GitHub: https://github.com/easycut",
-        "about_license": "Licença: MIT",
+        "about_author": "Autor: Deko Costa",
+        "about_version_info": "Versão 1.2.0 - Edição Profissional",
+        "about_github": "GitHub: https://github.com/dekouninter/EasyCut",
+        "about_license": "Licença: GPL-3.0",
+        "about_support": "Apoie: buymeacoffee.com/dekocosta | livepix.gg/dekocosta",
         "about_credits_libs": "Bibliotecas: yt-dlp, FFmpeg, Google OAuth",
         "about_credits_tools": "Ferramentas: Python, Tkinter",
         "about_tech_text": "Base: Python, Tkinter, yt-dlp, FFmpeg, OAuth",
@@ -578,6 +578,7 @@ TRANSLATIONS = {
         
         # Logs
         "log_starting": "Iniciando aplicativo...",
+        "log_startup_complete": "Inicialização do aplicativo concluída com sucesso",
         "log_checking_ffmpeg": "Verificando instalação do FFmpeg...",
         "log_ffmpeg_found": "FFmpeg encontrado.",
         "log_ffmpeg_not_found": "FFmpeg não encontrado. Conversão de áudio pode não funcionar.",
