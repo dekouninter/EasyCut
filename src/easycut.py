@@ -1881,6 +1881,36 @@ class EasyCutApp:
         history_search_entry = ttk.Entry(action_frame, textvariable=self.history_search_var, width=28)
         history_search_entry.pack(side=tk.LEFT)
         history_search_entry.bind("<KeyRelease>", lambda _e: self.refresh_history())
+        
+        # === SORT & FILTER BAR ===
+        filter_frame = ttk.Frame(main)
+        filter_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        # Sort
+        ttk.Label(filter_frame, text=f"{tr('history_sort', 'Sort')}:", style="Caption.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.XS))
+        self._history_sort_var = tk.StringVar(value="date_desc")
+        sort_combo = ttk.Combobox(
+            filter_frame, textvariable=self._history_sort_var,
+            values=["date_desc", "date_asc", "title_asc", "title_desc", "status"],
+            width=12, state="readonly"
+        )
+        sort_combo.pack(side=tk.LEFT, padx=(0, Spacing.MD))
+        sort_combo.bind("<<ComboboxSelected>>", lambda _e: self.refresh_history())
+        
+        # Filter by status
+        ttk.Label(filter_frame, text=f"{tr('history_filter_status', 'Status')}:", style="Caption.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.XS))
+        self._history_filter_status_var = tk.StringVar(value="all")
+        filter_combo = ttk.Combobox(
+            filter_frame, textvariable=self._history_filter_status_var,
+            values=["all", "success", "error"],
+            width=10, state="readonly"
+        )
+        filter_combo.pack(side=tk.LEFT, padx=(0, Spacing.MD))
+        filter_combo.bind("<<ComboboxSelected>>", lambda _e: self.refresh_history())
+        
+        # History count label
+        self._history_count_label = ttk.Label(filter_frame, text="", style="Caption.TLabel")
+        self._history_count_label.pack(side=tk.RIGHT)
 
         # === HISTORY TABLE CARD ===
         table_card = ModernCard(main, title=tr("history_records", "Download Records"), dark_mode=self.dark_mode)
@@ -3662,6 +3692,22 @@ class EasyCutApp:
         except (ValueError, TypeError):
             return None
 
+    @staticmethod
+    def _format_duration(seconds):
+        """Format duration in seconds to HH:MM:SS or MM:SS string"""
+        if not seconds:
+            return ""
+        try:
+            seconds = int(seconds)
+            if seconds < 3600:
+                return f"{seconds // 60}:{seconds % 60:02d}"
+            hours = seconds // 3600
+            minutes = (seconds % 3600) // 60
+            secs = seconds % 60
+            return f"{hours}:{minutes:02d}:{secs:02d}"
+        except (ValueError, TypeError):
+            return ""
+
     def _run_ydl_download(self, url: str, ydl_opts: dict):
         """Run yt-dlp download with a concurrency limit."""
         with self.download_semaphore:
@@ -3781,6 +3827,10 @@ class EasyCutApp:
                     "thumbnail": info.get('thumbnail', ''),
                     "video_id": info.get('id', ''),
                     "is_live": info.get('is_live', False) or False,
+                    "uploader": info.get('uploader', '') or info.get('channel', '') or '',
+                    "quality": quality,
+                    "duration": self._format_duration(info.get('duration')),
+                    "format": info.get('ext', '') or mode,
                 }
                 self.config_manager.add_to_history(entry)
                 
@@ -4020,7 +4070,11 @@ class EasyCutApp:
                         "status": "success",
                         "url": url,
                         "thumbnail": info.get('thumbnail', ''),
-                        "video_id": info.get('id', '')
+                        "video_id": info.get('id', ''),
+                        "uploader": info.get('uploader', '') or info.get('channel', '') or '',
+                        "quality": quality,
+                        "duration": self._format_duration(info.get('duration')),
+                        "format": info.get('ext', '') or mode,
                     }
                     self.config_manager.add_to_history(entry)
                 
@@ -4153,7 +4207,7 @@ class EasyCutApp:
 
     
     def refresh_history(self):
-        """Refresh download history with improved card layout"""
+        """Refresh download history with improved card layout, sorting, and filtering"""
         tr = self.translator.get
         
         # Clear existing records
@@ -4162,6 +4216,7 @@ class EasyCutApp:
         
         history = self.config_manager.load_history()
 
+        # Text search filter
         query = ""
         if hasattr(self, "history_search_var"):
             query = self.history_search_var.get().strip().lower()
@@ -4169,13 +4224,47 @@ class EasyCutApp:
         if query:
             filtered = []
             for item in history:
-                filename = str(item.get("filename", "")).lower()
-                url = str(item.get("url", "")).lower()
-                status = str(item.get("status", "")).lower()
-                date = str(item.get("date", "")).lower()
-                if query in filename or query in url or query in status or query in date:
+                searchable = ' '.join([
+                    str(item.get("filename", "")),
+                    str(item.get("url", "")),
+                    str(item.get("status", "")),
+                    str(item.get("date", "")),
+                    str(item.get("uploader", "")),
+                    str(item.get("quality", "")),
+                    str(item.get("format", "")),
+                ]).lower()
+                if query in searchable:
                     filtered.append(item)
             history = filtered
+        
+        # Status filter
+        if hasattr(self, '_history_filter_status_var'):
+            status_filter = self._history_filter_status_var.get()
+            if status_filter != "all":
+                history = [h for h in history if h.get("status") == status_filter]
+        
+        # Sort
+        sort_key = "date_desc"
+        if hasattr(self, '_history_sort_var'):
+            sort_key = self._history_sort_var.get()
+        
+        if sort_key == "date_desc":
+            history = sorted(history, key=lambda h: h.get("date", ""), reverse=True)
+        elif sort_key == "date_asc":
+            history = sorted(history, key=lambda h: h.get("date", ""))
+        elif sort_key == "title_asc":
+            history = sorted(history, key=lambda h: str(h.get("filename", "")).lower())
+        elif sort_key == "title_desc":
+            history = sorted(history, key=lambda h: str(h.get("filename", "")).lower(), reverse=True)
+        elif sort_key == "status":
+            history = sorted(history, key=lambda h: h.get("status", ""))
+        
+        # Update count label
+        if hasattr(self, '_history_count_label'):
+            total = len(self.config_manager.load_history())
+            self._history_count_label.config(
+                text=tr("history_count", "{} of {} shown").format(len(history), total)
+            )
 
         if not history:
             empty_label = ttk.Label(
@@ -4186,8 +4275,8 @@ class EasyCutApp:
             empty_label.pack(pady=Spacing.XXL)
             return
         
-        # Display records as cards
-        for item in reversed(history):
+        # Display records as cards (already sorted, no need for reversed())
+        for item in history:
             try:
                 date_obj = datetime.fromisoformat(item.get("date", ""))
                 date_str = date_obj.strftime("%d/%m/%Y %H:%M")
@@ -4299,6 +4388,34 @@ class EasyCutApp:
                         relief="flat"
                     ).pack(side=tk.RIGHT, padx=(Spacing.XS, 0))
                 
+                # Metadata detail line (uploader, quality, duration, format)
+                meta_parts = []
+                uploader = item.get("uploader", "")
+                quality = item.get("quality", "")
+                duration = item.get("duration", "")
+                fmt = item.get("format", "")
+                if uploader:
+                    meta_parts.append(f"👤 {uploader}")
+                if quality:
+                    meta_parts.append(f"📺 {quality}")
+                if duration:
+                    meta_parts.append(f"⏱ {duration}")
+                if fmt:
+                    meta_parts.append(f"📦 {fmt}")
+                
+                if meta_parts:
+                    tk.Label(
+                        info_frame,
+                        text="  •  ".join(meta_parts),
+                        font=(LOADED_FONT_FAMILY, 8),
+                        fg=self.design.get_color("fg_tertiary"),
+                        bg=self.design.get_color("bg_tertiary"),
+                        anchor=tk.W
+                    ).pack(fill=tk.X, pady=(2, 0))
+                
+                # Right-click context menu
+                self._bind_history_context_menu(record_card, item)
+                
             except Exception as e:
                 self.logger.warning(f"Error displaying history record: {e}")
     
@@ -4333,6 +4450,128 @@ class EasyCutApp:
                 pass  # Silently fail — placeholder stays
         
         threading.Thread(target=fetch, daemon=True).start()
+    
+    def _bind_history_context_menu(self, card_widget, item: dict):
+        """Bind right-click context menu to a history card for post-processing"""
+        tr = self.translator.get
+        
+        def show_menu(event):
+            menu = tk.Menu(self.root, tearoff=0)
+            
+            url = item.get("url", "")
+            filename = item.get("filename", "unknown")
+            
+            # Copy URL
+            if url:
+                menu.add_command(
+                    label=f"📋 {tr('pp_copy_url', 'Copy URL')}",
+                    command=lambda: self._copy_to_clipboard(url)
+                )
+            
+            # Open output folder
+            menu.add_command(
+                label=f"📂 {tr('pp_open_folder', 'Open Output Folder')}",
+                command=self._open_output_folder
+            )
+            
+            # Re-download
+            if url:
+                menu.add_separator()
+                menu.add_command(
+                    label=f"🔄 {tr('pp_redownload', 'Re-download')}",
+                    command=lambda: self._redownload_from_history(url)
+                )
+            
+            # Extract audio (post-process from local file)
+            if item.get("status") == "success" and url:
+                menu.add_command(
+                    label=f"🎵 {tr('pp_extract_audio', 'Extract Audio (MP3)')}",
+                    command=lambda: self._pp_extract_audio(url, filename)
+                )
+            
+            menu.add_separator()
+            
+            # Delete entry
+            menu.add_command(
+                label=f"🗑️ {tr('pp_delete_entry', 'Delete from History')}",
+                command=lambda: self._delete_history_entry(item)
+            )
+            
+            menu.tk_popup(event.x_root, event.y_root)
+        
+        # Bind to card and all children
+        card_widget.bind("<Button-3>", show_menu)
+        for child in card_widget.winfo_children():
+            child.bind("<Button-3>", show_menu)
+            for grandchild in child.winfo_children():
+                grandchild.bind("<Button-3>", show_menu)
+                for ggchild in grandchild.winfo_children():
+                    ggchild.bind("<Button-3>", show_menu)
+    
+    def _copy_to_clipboard(self, text: str):
+        """Copy text to system clipboard"""
+        self.root.clipboard_clear()
+        self.root.clipboard_append(text)
+        self.download_log.add_log(f"📋 {self.translator.get('pp_copied', 'Copied to clipboard')}")
+    
+    def _open_output_folder(self):
+        """Open the output folder in file explorer"""
+        import subprocess
+        try:
+            subprocess.Popen(f'explorer "{self.output_dir}"')
+        except Exception:
+            pass
+    
+    def _redownload_from_history(self, url: str):
+        """Re-download a video from history by populating download tab"""
+        self.download_url_entry.delete(0, tk.END)
+        self.download_url_entry.insert(0, url)
+        self._switch_section("download")
+        self.download_log.add_log(f"🔄 {self.translator.get('pp_redownload_ready', 'Ready to re-download. Click Start.')}")
+    
+    def _pp_extract_audio(self, url: str, filename: str):
+        """Post-process: extract audio from a previously downloaded video URL"""
+        tr = self.translator.get
+        
+        if not shutil.which("ffmpeg"):
+            messagebox.showerror(tr("msg_error", "Error"), tr("log_ffmpeg_not_found", "FFmpeg not found."))
+            return
+        
+        self.download_log.add_log(f"🎵 {tr('pp_extracting_audio', 'Extracting audio...')}: {filename[:40]}")
+        
+        def extract_thread():
+            try:
+                output_template = str(self.output_dir / "%(title)s.%(ext)s")
+                opts = {
+                    'format': 'bestaudio/best',
+                    'outtmpl': output_template,
+                    'quiet': True,
+                    'postprocessors': [{
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'mp3',
+                        'preferredquality': '192',
+                    }],
+                }
+                ydl_opts = self.get_ydl_opts_with_cookies(opts)
+                
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.extract_info(url, download=True)
+                
+                self.download_log.add_log(f"🎵 ✅ {tr('pp_audio_done', 'Audio extracted successfully')}")
+            except Exception as e:
+                self.download_log.add_log(f"🎵 ❌ {tr('msg_error', 'Error')}: {str(e)[:60]}", "ERROR")
+        
+        threading.Thread(target=extract_thread, daemon=True).start()
+    
+    def _delete_history_entry(self, item: dict):
+        """Delete a single entry from history"""
+        tr = self.translator.get
+        if messagebox.askyesno(tr("msg_confirm", "Confirm"), tr("pp_delete_confirm", "Delete this entry?")):
+            history = self.config_manager.load_history()
+            # Match by date + url (unique enough)
+            history = [h for h in history if not (h.get("date") == item.get("date") and h.get("url") == item.get("url"))]
+            self.config_manager.save_history(history)
+            self.refresh_history()
     
     def clear_history(self):
         """Clear download history"""

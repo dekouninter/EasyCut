@@ -505,6 +505,23 @@ TRANSLATIONS = {
         "scheduler_completed": "Scheduled download completed",
         "scheduler_failed": "Scheduled download failed",
         "scheduler_no_url": "Enter a URL to schedule",
+
+        # Enhanced History (Q1 2027)
+        "history_sort": "Sort",
+        "history_filter_status": "Status",
+        "history_count": "{} of {} shown",
+
+        # Post-Processing Hub (Q1 2027)
+        "pp_copy_url": "Copy URL",
+        "pp_open_folder": "Open Output Folder",
+        "pp_redownload": "Re-download",
+        "pp_redownload_ready": "Ready to re-download. Click Start.",
+        "pp_extract_audio": "Extract Audio (MP3)",
+        "pp_extracting_audio": "Extracting audio...",
+        "pp_audio_done": "Audio extracted successfully",
+        "pp_delete_entry": "Delete from History",
+        "pp_delete_confirm": "Delete this entry from history?",
+        "pp_copied": "Copied to clipboard",
     },
     
     "pt": {
@@ -999,6 +1016,23 @@ TRANSLATIONS = {
         "scheduler_completed": "Download agendado concluído",
         "scheduler_failed": "Download agendado falhou",
         "scheduler_no_url": "Insira uma URL para agendar",
+
+        # Histórico Aprimorado (Q1 2027)
+        "history_sort": "Ordenar",
+        "history_filter_status": "Status",
+        "history_count": "{} de {} exibidos",
+
+        # Hub de Pós-Processamento (Q1 2027)
+        "pp_copy_url": "Copiar URL",
+        "pp_open_folder": "Abrir Pasta de Saída",
+        "pp_redownload": "Baixar Novamente",
+        "pp_redownload_ready": "Pronto para baixar novamente. Clique em Iniciar.",
+        "pp_extract_audio": "Extrair Áudio (MP3)",
+        "pp_extracting_audio": "Extraindo áudio...",
+        "pp_audio_done": "Áudio extraído com sucesso",
+        "pp_delete_entry": "Excluir do Histórico",
+        "pp_delete_confirm": "Excluir esta entrada do histórico?",
+        "pp_copied": "Copiado para a área de transferência",
     }
 }
 

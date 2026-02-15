@@ -611,6 +611,55 @@ Update this file as features are implemented.
 
 ---
 
+## 22. Enhanced History (Q1 2027) — IMPLEMENTED
+
+### 22.1 Sort & Filter UI
+- [ ] Sort combobox in history (date_desc, date_asc, title_asc, title_desc, status)
+- [ ] Status filter combobox (all, success, error)
+- [ ] Sort/filter trigger instant refresh
+- [ ] History count label shows "X of Y shown"
+
+### 22.2 Sort Logic
+- [ ] date_desc: newest first (default)
+- [ ] date_asc: oldest first
+- [ ] title_asc: alphabetical A-Z
+- [ ] title_desc: alphabetical Z-A
+- [ ] status: grouped by status
+
+### 22.3 Enhanced Metadata
+- [ ] Uploader shown in history cards (👤)
+- [ ] Quality shown in history cards (📺)
+- [ ] Duration shown in history cards (⏱)
+- [ ] Format shown in history cards (📦)
+- [ ] Metadata saved with download entries
+
+### 22.4 Search Enhancement
+- [ ] Search now includes: filename, URL, date, uploader, quality, format
+
+---
+
+## 23. Post-Processing Hub (Q1 2027) — IMPLEMENTED
+
+### 23.1 Context Menu
+- [ ] Right-click on any history card shows context menu
+- [ ] Menu items: Copy URL, Open Folder, Re-download, Extract Audio, Delete
+- [ ] Context menu binds to card + all children widgets
+
+### 23.2 Post-Processing Actions
+- [ ] Copy URL copies to system clipboard
+- [ ] Open Output Folder opens explorer to output_dir
+- [ ] Re-download populates download tab URL + switches tab
+- [ ] Extract Audio (MP3): downloads bestaudio + FFmpegExtractAudio 192kbps
+- [ ] Extract Audio requires FFmpeg (shows error if missing)
+- [ ] Delete from History removes single entry (with confirm dialog)
+
+### 23.3 i18n
+- [ ] All pp_* keys present (EN)
+- [ ] All pp_* keys present (PT)
+- [ ] All history_sort/filter/count keys present (EN + PT)
+
+---
+
 ## Test URLs
 
 ### Standard Videos

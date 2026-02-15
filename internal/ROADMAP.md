@@ -240,27 +240,20 @@ This roadmap defines **realistic feature development** for a YouTube downloader.
 **Goal**: Enhanced history management, post-processing hub
 
 ### History Transformation
-- [ ] **Enhanced history area**
-  - No longer just a list: full media gallery with thumbnails
-  - Search/filter by: date, uploader, format, quality, duration
-  - Sort: date, title, uploader, file size
-- [ ] **Post-processing hub**
-  - Right-click context menu: Extract Audio, Cut Segments, Upscale, etc.
-  - Batch post-processing (select multiple videos)
-  - Apply custom filters without re-downloading
+- [x] **Enhanced history area**
+  - Full media gallery with thumbnails, metadata (uploader, quality, duration, format)
+  - Search/filter by: text search, status filter (all/success/error)
+  - Sort: date (asc/desc), title (asc/desc), status
+  - History count label shows filtered vs total
+- [x] **Post-processing hub**
+  - Right-click context menu: Copy URL, Open Folder, Re-download, Extract Audio (MP3), Delete Entry
+  - Extract audio downloads bestaudio + FFmpegExtractAudio
+  - Delete single entries from history
+  - Re-download populates URL in download tab
 - [ ] **Video upscaling**
   - Upscale 480p/720p to 1080p (optional, requires GPU or extra processing)
   - Audio enhancement: normalize, noise reduction
   - Video enhancement: denoise, stabilize (optional filters)
-
-### Editor Integration
-- [ ] **Shotcut integration**
-  - "Open in Shotcut" button from history
-  - Pass video to Shotcut for editing
-  - Auto-import cut segments back to history
-- [ ] **External editor support**
-  - Support for: DaVinci Resolve, HandBrake, FFmpeg GUI
-  - Context menu: Open with [Editor]
 
 ### Automatic Retries & Scheduling
 - [x] **Automatic retries**
