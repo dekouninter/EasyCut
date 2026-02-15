@@ -81,7 +81,7 @@ class EasyCutApp:
         self.browser_var = None  # Browser selection variable
         
         # Paths
-        self.output_dir = Path(self.config_manager.get("output_folder", "downloads"))
+        self.output_dir = Path(self.config_manager.get("output_dir", "downloads"))
         self.output_dir.mkdir(exist_ok=True)
         
         # Setup
