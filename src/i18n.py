@@ -158,6 +158,8 @@ TRANSLATIONS = {
         "download_invalid_time": "Invalid time format. Use MM:SS",
         "download_range_error": "End time must be greater than start time",
         "download_time_help": "Use start/end for range. Use only end for until mode.",
+        "download_time_invalid": "Invalid time format. Use HH:MM:SS or MM:SS.",
+        "download_time_order": "End time must be greater than start time.",
         
         # Batch Download Operations
         "batch_urls": "URLs (one per line)",
@@ -204,6 +206,7 @@ TRANSLATIONS = {
         
         # Download History
         "history_title": "Download History",
+        "history_search": "Search",
         "history_update": "Update",
         "history_clear": "Clear History",
         "history_date": "Date",
@@ -211,6 +214,7 @@ TRANSLATIONS = {
         "history_status": "Status",
         "history_url": "URL",
         "history_empty": "No downloads yet",
+        "history_no_results": "No downloads match your search",
         
         # About Application
         "about_tab_about": "About",
@@ -435,6 +439,8 @@ TRANSLATIONS = {
         "download_invalid_time": "Formato de tempo inválido. Use MM:SS",
         "download_range_error": "Tempo final deve ser maior que tempo inicial",
         "download_time_help": "Use inicio/fim para intervalo. Use apenas fim para modo ate o tempo.",
+        "download_time_invalid": "Formato de tempo invalido. Use HH:MM:SS ou MM:SS.",
+        "download_time_order": "O tempo final deve ser maior que o tempo inicial.",
         
         # Lote (Batch)
         "batch_urls": "URLs (uma por linha)",
@@ -481,6 +487,7 @@ TRANSLATIONS = {
         
         # Histórico
         "history_title": "Histórico de Downloads",
+        "history_search": "Buscar",
         "history_update": "Atualizar",
         "history_clear": "Limpar Histórico",
         "history_date": "Data",
@@ -488,6 +495,7 @@ TRANSLATIONS = {
         "history_status": "Status",
         "history_url": "URL",
         "history_empty": "Nenhum download ainda",
+        "history_no_results": "Nenhum download encontrado",
         
         # Sobre
         "about_tab_about": "Sobre",

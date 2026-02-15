@@ -1492,7 +1492,18 @@ class EasyCutApp:
             variant="danger",
             width=14
         ).pack(side=tk.LEFT)
-        
+
+        ttk.Label(
+            action_frame,
+            text=f"{tr('history_search', 'Search')}:",
+            style="Caption.TLabel"
+        ).pack(side=tk.LEFT, padx=(Spacing.LG, Spacing.SM))
+
+        self.history_search_var = tk.StringVar()
+        history_search_entry = ttk.Entry(action_frame, textvariable=self.history_search_var, width=28)
+        history_search_entry.pack(side=tk.LEFT)
+        history_search_entry.bind("<KeyRelease>", lambda _e: self.refresh_history())
+
         # === HISTORY TABLE CARD ===
         table_card = ModernCard(main, title=tr("history_records", "Download Records"), dark_mode=self.dark_mode)
         table_card.pack(fill=tk.BOTH, expand=True, pady=(Spacing.MD, 0))
@@ -2208,11 +2219,26 @@ class EasyCutApp:
             widget.destroy()
         
         history = self.config_manager.load_history()
-        
+
+        query = ""
+        if hasattr(self, "history_search_var"):
+            query = self.history_search_var.get().strip().lower()
+
+        if query:
+            filtered = []
+            for item in history:
+                filename = str(item.get("filename", "")).lower()
+                url = str(item.get("url", "")).lower()
+                status = str(item.get("status", "")).lower()
+                date = str(item.get("date", "")).lower()
+                if query in filename or query in url or query in status or query in date:
+                    filtered.append(item)
+            history = filtered
+
         if not history:
             empty_label = ttk.Label(
                 self.history_records_frame,
-                text=tr("history_empty", "No downloads yet"),
+                text=tr("history_no_results", "No downloads match your search") if query else tr("history_empty", "No downloads yet"),
                 style="Caption.TLabel"
             )
             empty_label.pack(pady=Spacing.XXL)
