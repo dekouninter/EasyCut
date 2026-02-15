@@ -200,6 +200,7 @@ class EasyCutApp:
         self.section_frames["batch"] = self.create_batch_tab()
         self.section_frames["live"] = self.create_live_tab()
         self.section_frames["history"] = self.create_history_tab()
+        self.section_frames["settings"] = self.create_settings_tab()
         self.section_frames["about"] = self.create_about_tab()
         
         # Select initial section
@@ -258,6 +259,7 @@ class EasyCutApp:
             ("batch",    "📦", tr("tab_batch", "Batch")),
             ("live",     "🔴", tr("tab_live", "Live")),
             ("history",  "📜", tr("tab_history", "History")),
+            ("settings", "⚙️", tr("tab_settings", "Settings")),
             ("about",    "ℹ️",  tr("tab_about", "About")),
         ]
         
@@ -1306,6 +1308,54 @@ class EasyCutApp:
                 value=br
             ).pack(side=tk.LEFT, padx=(0, Spacing.LG))
         
+        # === SUBTITLE CARD ===
+        sub_card = ModernCard(main, title=tr("sub_title", "Subtitles"), dark_mode=self.dark_mode)
+        sub_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        # Enable subtitles checkbox
+        self.sub_enable_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            sub_card.body,
+            text=tr("sub_enable", "Download Subtitles"),
+            variable=self.sub_enable_var
+        ).pack(anchor=tk.W, pady=(0, Spacing.SM))
+        
+        # Subtitle type
+        sub_type_frame = ttk.Frame(sub_card.body)
+        sub_type_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        self.sub_type_var = tk.StringVar(value="auto")
+        for value, text in [("auto", tr("sub_auto", "Auto-generated")), ("manual", tr("sub_manual", "Manual")), ("both", tr("sub_both", "Both"))]:
+            ttk.Radiobutton(sub_type_frame, text=text, variable=self.sub_type_var, value=value).pack(side=tk.LEFT, padx=(0, Spacing.LG))
+        
+        # Language code
+        lang_frame = ttk.Frame(sub_card.body)
+        lang_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        ttk.Label(lang_frame, text=f"{tr('sub_language', 'Language')}:", style="Subtitle.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self.sub_lang_entry = ttk.Entry(lang_frame, width=20)
+        self.sub_lang_entry.insert(0, "en")
+        self.sub_lang_entry.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        ttk.Label(lang_frame, text=tr("sub_help", "e.g., en, pt, es"), style="Caption.TLabel").pack(side=tk.LEFT)
+        
+        # Subtitle format
+        fmt_sub_frame = ttk.Frame(sub_card.body)
+        fmt_sub_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        ttk.Label(fmt_sub_frame, text=f"{tr('sub_format', 'Format')}:", style="Subtitle.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self.sub_format_var = tk.StringVar(value="srt")
+        sub_format_combo = ttk.Combobox(fmt_sub_frame, textvariable=self.sub_format_var, values=["srt", "vtt", "ass", "json3"], width=8, state="readonly")
+        sub_format_combo.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        
+        # Embed in video
+        self.sub_embed_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            sub_card.body,
+            text=tr("sub_embed", "Embed in video"),
+            variable=self.sub_embed_var
+        ).pack(anchor=tk.W)
+        
         # === ACTION BUTTONS ===
         action_frame = ttk.Frame(main)
         action_frame.pack(fill=tk.X, pady=(Spacing.MD, 0))
@@ -1661,6 +1711,309 @@ class EasyCutApp:
         self.refresh_history()
 
         return frame
+    
+    def create_settings_tab(self):
+        """Create settings configuration section"""
+        tr = self.translator.get
+        from tkinter import filedialog
+        
+        frame = ttk.Frame(self.section_container)
+        frame.grid(row=0, column=0, sticky="nsew")
+        
+        # Scrollable content
+        main_canvas = tk.Canvas(frame, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=main_canvas.yview)
+        main = ttk.Frame(main_canvas, padding=Spacing.LG)
+        
+        main.bind("<Configure>", lambda e: main_canvas.configure(scrollregion=main_canvas.bbox("all")))
+        main_canvas.create_window((0, 0), window=main, anchor="nw")
+        main_canvas.configure(yscrollcommand=scrollbar.set)
+        
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        main_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
+        # === SECTION HEADER ===
+        hdr = tk.Frame(main, bg=self.design.get_color("bg_primary"))
+        hdr.pack(fill=tk.X, pady=(0, Spacing.LG))
+        tk.Label(
+            hdr, text=tr("tab_settings", "Settings"),
+            bg=self.design.get_color("bg_primary"),
+            fg=self.design.get_color("fg_primary"),
+            font=(Typography.FONT_FAMILY, Typography.SIZE_H1, "bold")
+        ).pack(anchor="w")
+        tk.Label(
+            hdr, text=tr("settings_subtitle", "Configure application preferences"),
+            bg=self.design.get_color("bg_primary"),
+            fg=self.design.get_color("fg_secondary"),
+            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION)
+        ).pack(anchor="w")
+        
+        # === NETWORK CARD ===
+        net_card = ModernCard(main, title=tr("settings_network", "Network"), dark_mode=self.dark_mode)
+        net_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        # Proxy
+        proxy_frame = ttk.Frame(net_card.body)
+        proxy_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        ttk.Label(proxy_frame, text=f"{tr('settings_proxy', 'Proxy URL')}:", style="Subtitle.TLabel").pack(anchor=tk.W)
+        self._settings_proxy_entry = ttk.Entry(proxy_frame, font=(LOADED_FONT_FAMILY, Typography.SIZE_MD))
+        self._settings_proxy_entry.insert(0, self.config_manager.get("proxy", ""))
+        self._settings_proxy_entry.pack(fill=tk.X, pady=(Spacing.XS, 0))
+        ttk.Label(proxy_frame, text=tr("settings_proxy_help", "HTTP/SOCKS proxy"), style="Caption.TLabel").pack(anchor=tk.W)
+        
+        # Rate limit
+        rate_frame = ttk.Frame(net_card.body)
+        rate_frame.pack(fill=tk.X, pady=(Spacing.SM, Spacing.SM))
+        ttk.Label(rate_frame, text=f"{tr('settings_rate_limit', 'Speed Limit')}:", style="Subtitle.TLabel").pack(anchor=tk.W)
+        self._settings_rate_entry = ttk.Entry(rate_frame, width=15)
+        self._settings_rate_entry.insert(0, self.config_manager.get("rate_limit", ""))
+        self._settings_rate_entry.pack(anchor=tk.W, pady=(Spacing.XS, 0))
+        ttk.Label(rate_frame, text=tr("settings_rate_limit_help", "e.g., 5M, 500K"), style="Caption.TLabel").pack(anchor=tk.W)
+        
+        # Max retries
+        retries_frame = ttk.Frame(net_card.body)
+        retries_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        ttk.Label(retries_frame, text=f"{tr('settings_retries', 'Max Retries')}:", style="Subtitle.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self._settings_retries_var = tk.IntVar(value=self.config_manager.get("max_retries", 3))
+        ttk.Spinbox(retries_frame, from_=1, to=10, textvariable=self._settings_retries_var, width=5).pack(side=tk.LEFT)
+        
+        # Cookie file
+        cookie_frame = ttk.Frame(net_card.body)
+        cookie_frame.pack(fill=tk.X, pady=(0, 0))
+        ttk.Label(cookie_frame, text=f"{tr('settings_cookies', 'Cookie File')}:", style="Subtitle.TLabel").pack(anchor=tk.W)
+        cookie_row = ttk.Frame(cookie_frame)
+        cookie_row.pack(fill=tk.X, pady=(Spacing.XS, 0))
+        self._settings_cookie_entry = ttk.Entry(cookie_row, font=(LOADED_FONT_FAMILY, Typography.SIZE_MD))
+        self._settings_cookie_entry.insert(0, self.config_manager.get("cookies_file", ""))
+        self._settings_cookie_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, Spacing.SM))
+        ModernButton(
+            cookie_row,
+            text=tr("settings_cookies_browse", "Browse..."),
+            command=lambda: self._browse_cookie_file(),
+            variant="outline", size="sm", width=10
+        ).pack(side=tk.LEFT)
+        ttk.Label(cookie_frame, text=tr("settings_cookies_help", "Netscape format"), style="Caption.TLabel").pack(anchor=tk.W)
+        
+        # === ARCHIVE CARD ===
+        archive_card = ModernCard(main, title=tr("settings_archive", "Archive & Tracking"), dark_mode=self.dark_mode)
+        archive_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        # Enable archive
+        self._settings_archive_var = tk.BooleanVar(value=self.config_manager.get("archive_enabled", False))
+        ttk.Checkbutton(
+            archive_card.body,
+            text=tr("archive_enable", "Enable Archive Mode"),
+            variable=self._settings_archive_var
+        ).pack(anchor=tk.W, pady=(0, Spacing.XS))
+        ttk.Label(archive_card.body, text=tr("archive_help", "Track downloaded videos and skip duplicates automatically"), style="Caption.TLabel").pack(anchor=tk.W, pady=(0, Spacing.SM))
+        
+        # Archive stats
+        archive_path = Path(self.config_manager.config_dir) / "download_archive.txt"
+        archive_count = 0
+        if archive_path.exists():
+            archive_count = sum(1 for _ in open(archive_path, encoding='utf-8', errors='ignore'))
+        
+        self._archive_count_label = ttk.Label(
+            archive_card.body,
+            text=tr("archive_count", "{} videos archived").format(archive_count),
+            style="Caption.TLabel"
+        )
+        self._archive_count_label.pack(anchor=tk.W, pady=(0, Spacing.SM))
+        
+        # Archive buttons
+        archive_btn_frame = ttk.Frame(archive_card.body)
+        archive_btn_frame.pack(fill=tk.X)
+        
+        ModernButton(archive_btn_frame, text=tr("archive_export", "Export"), command=self._export_archive, variant="outline", size="sm", width=10).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        ModernButton(archive_btn_frame, text=tr("archive_import", "Import"), command=self._import_archive, variant="outline", size="sm", width=10).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        ModernButton(archive_btn_frame, text=tr("archive_clear", "Clear"), command=self._clear_archive, variant="danger", size="sm", width=10).pack(side=tk.LEFT)
+        
+        # === QUALITY PROFILES CARD ===
+        profile_card = ModernCard(main, title=tr("profile_title", "Quality Profiles"), dark_mode=self.dark_mode)
+        profile_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+        
+        # Profile selector
+        profile_row = ttk.Frame(profile_card.body)
+        profile_row.pack(fill=tk.X, pady=(0, Spacing.SM))
+        
+        self._profile_var = tk.StringVar()
+        profiles = self.config_manager.get("quality_profiles", {})
+        profile_names = list(profiles.keys()) if profiles else []
+        
+        self._profile_combo = ttk.Combobox(profile_row, textvariable=self._profile_var, values=profile_names, width=25, state="readonly")
+        self._profile_combo.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        if profile_names:
+            self._profile_combo.current(0)
+        
+        ModernButton(profile_row, text=tr("profile_load", "Load"), command=self._load_profile, variant="outline", size="sm", width=8).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        ModernButton(profile_row, text=tr("profile_delete", "Delete"), command=self._delete_profile, variant="danger", size="sm", width=8).pack(side=tk.LEFT)
+        
+        # Save new profile
+        save_profile_row = ttk.Frame(profile_card.body)
+        save_profile_row.pack(fill=tk.X, pady=(0, 0))
+        
+        self._profile_name_entry = ttk.Entry(save_profile_row, width=25)
+        self._profile_name_entry.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self._profile_name_entry.insert(0, tr("profile_name", "Profile Name"))
+        self._profile_name_entry.bind("<FocusIn>", lambda e: self._profile_name_entry.delete(0, tk.END) if self._profile_name_entry.get() == tr("profile_name", "Profile Name") else None)
+        
+        ModernButton(save_profile_row, text=tr("profile_save", "Save Current"), command=self._save_profile, variant="primary", size="sm", width=14).pack(side=tk.LEFT)
+        
+        # === SAVE BUTTON ===
+        save_frame = ttk.Frame(main)
+        save_frame.pack(fill=tk.X, pady=(Spacing.LG, 0))
+        
+        ModernButton(
+            save_frame,
+            text=tr("settings_save", "Save Settings"),
+            icon_name="save",
+            command=self._save_settings,
+            variant="primary",
+            size="lg",
+            width=18
+        ).pack(side=tk.LEFT)
+        
+        self.enable_mousewheel_scroll(main_canvas, main)
+        
+        return frame
+    
+    def _save_settings(self):
+        """Save all settings to config"""
+        tr = self.translator.get
+        self.config_manager.set("proxy", self._settings_proxy_entry.get().strip())
+        self.config_manager.set("rate_limit", self._settings_rate_entry.get().strip())
+        self.config_manager.set("max_retries", self._settings_retries_var.get())
+        self.config_manager.set("cookies_file", self._settings_cookie_entry.get().strip())
+        self.config_manager.set("archive_enabled", self._settings_archive_var.get())
+        self.download_log.add_log(tr("settings_saved", "Settings saved successfully!"))
+    
+    def _browse_cookie_file(self):
+        """Browse for cookie file"""
+        from tkinter import filedialog
+        path = filedialog.askopenfilename(
+            title="Select cookies.txt",
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+        )
+        if path:
+            self._settings_cookie_entry.delete(0, tk.END)
+            self._settings_cookie_entry.insert(0, path)
+    
+    def _export_archive(self):
+        """Export archive file"""
+        from tkinter import filedialog
+        tr = self.translator.get
+        archive_path = Path(self.config_manager.config_dir) / "download_archive.txt"
+        if not archive_path.exists():
+            messagebox.showinfo(tr("msg_info", "Info"), tr("archive_count", "{} videos archived").format(0))
+            return
+        dest = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Text files", "*.txt")],
+            initialfile="easycut_archive.txt"
+        )
+        if dest:
+            import shutil
+            shutil.copy2(archive_path, dest)
+            messagebox.showinfo(tr("msg_info", "Info"), tr("settings_saved", "Exported!"))
+    
+    def _import_archive(self):
+        """Import archive file"""
+        from tkinter import filedialog
+        tr = self.translator.get
+        src = filedialog.askopenfilename(filetypes=[("Text files", "*.txt")])
+        if src:
+            archive_path = Path(self.config_manager.config_dir) / "download_archive.txt"
+            # Merge: append imported entries (deduplicate)
+            existing = set()
+            if archive_path.exists():
+                with open(archive_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    existing = set(line.strip() for line in f if line.strip())
+            with open(src, 'r', encoding='utf-8', errors='ignore') as f:
+                new_entries = set(line.strip() for line in f if line.strip())
+            merged = existing | new_entries
+            with open(archive_path, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(sorted(merged)) + '\n')
+            count = len(merged)
+            self._archive_count_label.config(text=tr("archive_count", "{} videos archived").format(count))
+            messagebox.showinfo(tr("msg_info", "Info"), tr("archive_count", "{} videos archived").format(count))
+    
+    def _clear_archive(self):
+        """Clear archive file"""
+        tr = self.translator.get
+        archive_path = Path(self.config_manager.config_dir) / "download_archive.txt"
+        if not archive_path.exists():
+            return
+        count = sum(1 for _ in open(archive_path, encoding='utf-8', errors='ignore'))
+        if messagebox.askyesno(tr("msg_confirm", "Confirm"), tr("archive_cleared", "Clear archive ({} entries)?").format(count)):
+            archive_path.unlink()
+            self._archive_count_label.config(text=tr("archive_count", "{} videos archived").format(0))
+    
+    def _save_profile(self):
+        """Save current quality/mode settings as a named profile"""
+        tr = self.translator.get
+        name = self._profile_name_entry.get().strip()
+        if not name or name == tr("profile_name", "Profile Name"):
+            return
+        
+        profile = {
+            "quality": self.download_quality_var.get(),
+            "mode": self.download_mode_var.get(),
+            "audio_format": self.audio_format_var.get(),
+            "audio_bitrate": self.audio_bitrate_var.get(),
+            "subtitles": self.sub_enable_var.get(),
+            "sub_type": self.sub_type_var.get(),
+            "sub_lang": self.sub_lang_entry.get(),
+            "sub_format": self.sub_format_var.get(),
+        }
+        
+        profiles = self.config_manager.get("quality_profiles", {}) or {}
+        profiles[name] = profile
+        self.config_manager.set("quality_profiles", profiles)
+        
+        # Refresh combo
+        self._profile_combo['values'] = list(profiles.keys())
+        self._profile_var.set(name)
+        self.download_log.add_log(tr("profile_saved", "Profile '{}' saved").format(name))
+    
+    def _load_profile(self):
+        """Load a saved quality profile"""
+        tr = self.translator.get
+        name = self._profile_var.get()
+        if not name:
+            return
+        
+        profiles = self.config_manager.get("quality_profiles", {}) or {}
+        profile = profiles.get(name)
+        if not profile:
+            return
+        
+        # Apply settings
+        self.download_quality_var.set(profile.get("quality", "best"))
+        self.download_mode_var.set(profile.get("mode", "full"))
+        self.audio_format_var.set(profile.get("audio_format", "mp3"))
+        self.audio_bitrate_var.set(profile.get("audio_bitrate", "320"))
+        self.sub_enable_var.set(profile.get("subtitles", False))
+        self.sub_type_var.set(profile.get("sub_type", "auto"))
+        self.sub_lang_entry.delete(0, tk.END)
+        self.sub_lang_entry.insert(0, profile.get("sub_lang", "en"))
+        self.sub_format_var.set(profile.get("sub_format", "srt"))
+        
+        self.download_log.add_log(tr("profile_loaded", "Profile '{}' loaded").format(name))
+    
+    def _delete_profile(self):
+        """Delete a saved quality profile"""
+        tr = self.translator.get
+        name = self._profile_var.get()
+        if not name:
+            return
+        
+        profiles = self.config_manager.get("quality_profiles", {}) or {}
+        if name in profiles:
+            del profiles[name]
+            self.config_manager.set("quality_profiles", profiles)
+            self._profile_combo['values'] = list(profiles.keys())
+            self._profile_var.set("")
+            self.download_log.add_log(tr("profile_deleted", "Profile '{}' deleted").format(name))
     
     def create_about_tab(self):
         """Create about section"""
@@ -2247,6 +2600,14 @@ class EasyCutApp:
                 self._video_formats = formats
                 self._populate_format_combo(formats)
                 
+                # --- Available Subtitles ---
+                subtitles = info.get('subtitles', {})
+                auto_subs = info.get('automatic_captions', {})
+                all_sub_langs = sorted(set(list(subtitles.keys()) + list(auto_subs.keys())))
+                if all_sub_langs:
+                    sub_msg = tr("sub_found", "Subtitles found: {}").format(", ".join(all_sub_langs[:20]))
+                    self.root.after(0, lambda: self.download_log.add_log(f"📝 {sub_msg}"))
+                
                 # --- Duplicate Detection ---
                 self._check_duplicate(video_id, title)
                 
@@ -2505,7 +2866,66 @@ class EasyCutApp:
                 }
             ]
 
+        # Subtitle options
+        if hasattr(self, 'sub_enable_var') and self.sub_enable_var.get():
+            sub_type = self.sub_type_var.get()
+            sub_lang = self.sub_lang_entry.get().strip() or "en"
+            sub_format = self.sub_format_var.get() or "srt"
+            
+            base_opts['subtitleslangs'] = [l.strip() for l in sub_lang.split(',')]
+            base_opts['subtitlesformat'] = sub_format
+            
+            if sub_type == "auto":
+                base_opts['writeautomaticsub'] = True
+            elif sub_type == "manual":
+                base_opts['writesubtitles'] = True
+            else:  # both
+                base_opts['writeautomaticsub'] = True
+                base_opts['writesubtitles'] = True
+            
+            # Embed subtitles in video if requested
+            if self.sub_embed_var.get() and mode != "audio":
+                if 'postprocessors' not in base_opts:
+                    base_opts['postprocessors'] = []
+                base_opts['postprocessors'].append({
+                    'key': 'FFmpegEmbedSubtitle',
+                    'already_have_subtitle': False,
+                })
+
+        # Network settings from config
+        proxy = self.config_manager.get("proxy", "")
+        rate_limit = self.config_manager.get("rate_limit", "")
+        max_retries = self.config_manager.get("max_retries", 3)
+        
+        if proxy:
+            base_opts['proxy'] = proxy
+        if rate_limit:
+            base_opts['ratelimit'] = self._parse_rate_limit(rate_limit)
+        if max_retries:
+            base_opts['retries'] = int(max_retries)
+
+        # Archive mode — use yt-dlp's built-in download_archive
+        if self.config_manager.get("archive_enabled", False):
+            archive_path = str(Path(self.config_manager.config_dir) / "download_archive.txt")
+            base_opts['download_archive'] = archive_path
+
         return base_opts
+    
+    @staticmethod
+    def _parse_rate_limit(rate_str: str):
+        """Parse rate limit string like '5M', '500K' to bytes/sec"""
+        rate_str = rate_str.strip().upper()
+        if not rate_str:
+            return None
+        try:
+            if rate_str.endswith('M'):
+                return int(float(rate_str[:-1]) * 1024 * 1024)
+            elif rate_str.endswith('K'):
+                return int(float(rate_str[:-1]) * 1024)
+            else:
+                return int(rate_str)
+        except (ValueError, TypeError):
+            return None
 
     def _run_ydl_download(self, url: str, ydl_opts: dict):
         """Run yt-dlp download with a concurrency limit."""
