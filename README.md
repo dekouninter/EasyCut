@@ -62,11 +62,11 @@ Want to contribute or run from source? See [Installation](#installation) below.
 #### 📥 Download & Recording
 - ✅ **Single Video Download**: Quality presets (Best, MP4 Best, 1080p, 720p) with smart format selection
 - ✅ **Audio Conversion**: Extract audio as MP3, WAV, M4A, OPUS with bitrate options (128-320 kbps)
-- ✅ **Time Range Downloads**: Download specific segments (Start/End time in HH:MM:SS format)
+- ✅ **Time Range Downloads**: Download specific segments — range (start to end) or until (beginning to timestamp) in HH:MM:SS format
 - ✅ **Batch Downloads**: Paste multiple URLs with download queue, pause/resume, and per-batch quality presets
 - ✅ **Playlist Downloads**: Download entire YouTube playlists with video count and total duration display
 - ✅ **Channel Downloads**: Download latest N videos from a channel (configurable 1-500)
-- ✅ **Live Stream Recording**: Record with quality presets, preferred codec (H.264/VP9/AV1), post-processing (audio extraction, subtitles)
+- ✅ **Live Stream Recording**: Record with 3 modes (continuous, duration, until time), quality presets, preferred codec (H.264/VP9/AV1), post-processing (audio extraction, subtitles)
 - ✅ **YouTube Chapters**: Detect and download individual chapters as separate files
 - ✅ **YouTube Shorts**: Auto-detect and download Shorts with vertical video badge
 - ✅ **Subtitles**: Download auto-generated or manual captions in SRT/VTT/ASS/JSON3 with embed and auto-translate support
@@ -88,11 +88,11 @@ Want to contribute or run from source? See [Installation](#installation) below.
 #### 🔐 Authentication & Settings
 - ✅ **YouTube OAuth 2.0**: One-click popup authentication with auto-closing browser tab (3s countdown)
 - ✅ **Persistent Auth**: Tokens in `config/youtube_token.pickle`, cookies in `config/yt_cookies.txt`
-- ✅ **Settings Tab**: Network proxy, rate limiting, retries, cookie file, archive, and scheduler configuration
+- ✅ **Settings Tab**: Network proxy, rate limiting, retries, cookie file, archive, scheduler, and browser cookie extraction (Chrome, Firefox, Edge, Opera, Brave, Safari)
 
 #### 🎨 UI & Experience
 - ✅ **Light/Dark Theme**: Instant theme switch with persistent preference
-- ✅ **Multi-Language**: 7 languages — English, Portuguese, Spanish, French, German, Italian, Japanese (250+ keys each)
+- ✅ **Multi-Language**: 7 languages — English, Portuguese, Spanish, French, German, Italian, Japanese (426 keys each)
 - ✅ **Custom Fonts**: Inter Display with Segoe UI fallback
 - ✅ **Keyboard Shortcuts**: Ctrl+1-5 (sections), Ctrl+T (theme), Ctrl+L (log), Ctrl+O (folder), Esc (close log)
 - ✅ **Collapsible Sidebar**: Hamburger menu to expand/collapse navigation
@@ -215,6 +215,7 @@ python main.py
 
 - `config/config.json` — App settings (theme, language, output folder)
 - `config/history_downloads.json` — Download history (last 100 entries)
+- `config/download_archive.txt` — Archive of downloaded video IDs (duplicate tracking)
 - `config/app.log` — Application logs
 - `config/youtube_token.pickle` — OAuth token cache
 - `config/yt_cookies.txt` — Cookies for yt-dlp authentication
@@ -233,9 +234,7 @@ python main.py
 ## ⚠️ Known Limitations
 
 - **Download Cancellation**: The stop button sets a flag but cannot cancel an in-progress yt-dlp download mid-stream.
-- **Browser Cookie Extraction**: The browser cookie UI exists but is disabled in favor of OAuth flow.
 - **Thread Safety**: Some background operations update UI directly without `root.after()` scheduling.
-- **Donation Window Language**: The donation popup always displays in English regardless of the app's language setting.
 
 ## 🔐 Security
 
@@ -313,4 +312,5 @@ This creates `dist/EasyCut.exe` with embedded OAuth credentials - ready to distr
 
 **Repository:** [github.com/dekouninter/EasyCut](https://github.com/dekouninter/EasyCut)  
 **Support:** [buymeacoffee.com/dekocosta](https://buymeacoffee.com/dekocosta)  
+**Ko-fi:** [ko-fi.com/dekocosta](https://ko-fi.com/dekocosta)  
 **Livepix:** [livepix.gg/dekocosta](https://livepix.gg/dekocosta)

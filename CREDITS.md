@@ -139,7 +139,7 @@ If you find EasyCut useful, consider:
 
 ### v1.3.0 (Current)
 - OAuth browser auto-close after 3 seconds (fixed HTML content-type for JS execution)
-- 5 new languages: Spanish, French, German, Italian, Japanese (250+ keys each)
+- 5 new languages: Spanish, French, German, Italian, Japanese (426 keys each)
 - Language selector expanded to 7 languages in UI
 - Smart format selection with categorized format listing
 - Video metadata display (title, duration, uploader, views, upload date)
@@ -200,11 +200,6 @@ If you find EasyCut useful, consider:
 - Responsive layout design
 - Performance optimizations
 - Bug fixes and stability improvements
-
-### Coming Soon
-- Additional video enhancement filters
-- Drag & drop URL support
-- System tray notifications
 
 ## 🤝 Contributing
 

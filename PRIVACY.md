@@ -21,6 +21,7 @@ When you click "Sync with YouTube":
 - OAuth access tokens (stored in `config/youtube_token.pickle`)
 - YouTube cookies (stored in `config/yt_cookies.txt`)
 - Download history (stored in `config/history_downloads.json`)
+- Download archive — list of downloaded video IDs (stored in `config/download_archive.txt`)
 - Application settings (stored in `config/config.json`)
 - Application logs (stored in `config/app.log`)
 

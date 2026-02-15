@@ -1,6 +1,6 @@
 # 🧪 EasyCut Testing Guide
 
-**Last Updated**: February 20, 2026  
+**Last Updated**: February 15, 2026  
 **Version**: 1.3.0
 
 This document tracks all manual and automated test cases for EasyCut features.  
@@ -82,8 +82,11 @@ Update this file as features are implemented.
 - [ ] Record active live stream
 - [ ] Check stream status (live vs offline)
 - [ ] Stop recording button works
-- [ ] Duration mode recording
+- [ ] Continuous mode recording
+- [ ] Duration mode recording (hours/minutes/seconds)
+- [ ] Until-time mode recording
 - [ ] Quality presets (Best, 1080p, 720p, 480p)
+- [ ] Preferred codec selection (auto, H.264, VP9, AV1)
 - [ ] Record stream that ends during recording
 - [ ] URL that is not a live stream (should warn)
 
@@ -161,7 +164,7 @@ Update this file as features are implemented.
 
 ---
 
-## 5. Smart Format Selection (Q2 2026) — IMPLEMENTED
+## 5. Smart Format Selection — IMPLEMENTED
 
 ### 5.1 Format Listing
 - [ ] Verify button fetches all available formats via `extract_info`
@@ -187,7 +190,7 @@ Update this file as features are implemented.
 
 ---
 
-## 6. Metadata Display (Q2 2026) — IMPLEMENTED
+## 6. Metadata Display — IMPLEMENTED
 
 ### 6.1 Pre-Download Info
 - [ ] Title displayed (truncated at 80 chars)
@@ -202,7 +205,7 @@ Update this file as features are implemented.
 
 ---
 
-## 7. Thumbnail Integration (Q2 2026) — IMPLEMENTED
+## 7. Thumbnail Integration — IMPLEMENTED
 
 ### 7.1 Download Tab Thumbnail
 - [ ] Thumbnail loads from video URL after verify
@@ -214,12 +217,11 @@ Update this file as features are implemented.
 - [ ] Graceful fallback if network error on thumbnail fetch
 
 ### 7.2 Future
-- [ ] History list thumbnails (not yet implemented)
 - [ ] Local thumbnail cache (not yet implemented)
 
 ---
 
-## 8. Duplicate Detection (Q2 2026) — IMPLEMENTED
+## 8. Duplicate Detection — IMPLEMENTED
 
 ### 8.1 Pre-Download Warning (Single)
 - [ ] Warning shown before download if video ID found in history
@@ -309,7 +311,7 @@ Update this file as features are implemented.
 
 ---
 
-## 9. Subtitles (Q3 2026) — IMPLEMENTED
+## 9. Subtitles — IMPLEMENTED
 
 ### 9.1 Subtitle UI
 - [ ] Subtitle card visible in download tab (below audio format)
@@ -351,7 +353,7 @@ Update this file as features are implemented.
 
 ---
 
-## 10. Archive Mode (Q3 2026) — IMPLEMENTED
+## 10. Archive Mode — IMPLEMENTED
 
 ### 10.1 Archive Toggle
 - [ ] Archive enabled/disabled in Settings tab
@@ -391,7 +393,7 @@ Update this file as features are implemented.
 
 ---
 
-## 11. Download Queue Management (Q2 2026) — IMPLEMENTED
+## 11. Download Queue Management — IMPLEMENTED
 
 ### 11.1 Queue UI
 - [ ] Queue card visible in batch tab (below URL input)
@@ -416,7 +418,7 @@ Update this file as features are implemented.
 
 ---
 
-## 12. Per-Channel Quality Defaults (Q3 2026) — IMPLEMENTED
+## 12. Per-Channel Quality Defaults — IMPLEMENTED
 
 ### 12.1 Settings UI
 - [ ] Per-Channel Defaults card visible in Settings tab
@@ -433,7 +435,7 @@ Update this file as features are implemented.
 
 ---
 
-## 13. Live Stream Enhancements (Q4 2026) — IMPLEMENTED
+## 13. Live Stream Enhancements — IMPLEMENTED
 
 ### 13.1 Live Detection
 - [ ] Verify video detects `is_live` from metadata
@@ -452,7 +454,7 @@ Update this file as features are implemented.
 
 ---
 
-## 14. YouTube Chapters (Q4 2026) — IMPLEMENTED
+## 14. YouTube Chapters — IMPLEMENTED
 
 ### 14.1 Chapter Detection
 - [ ] Verify detects chapters from `info['chapters']`
@@ -471,7 +473,7 @@ Update this file as features are implemented.
 
 ---
 
-## 15. YouTube Shorts (Q4 2026) — IMPLEMENTED
+## 15. YouTube Shorts — IMPLEMENTED
 
 ### 15.1 Shorts Detection
 - [ ] /shorts/ URLs detected on verify
@@ -521,7 +523,7 @@ Update this file as features are implemented.
 
 ---
 
-## 18. Live Post-Processing (Q4 2026) — IMPLEMENTED
+## 18. Live Post-Processing — IMPLEMENTED
 
 ### 18.1 Audio Extraction in Live
 - [ ] "Extract audio only" checkbox in Live tab
@@ -551,7 +553,7 @@ Update this file as features are implemented.
 
 ---
 
-## 19. Batch Quality Selector (Q2 2026) — IMPLEMENTED
+## 19. Batch Quality Selector — IMPLEMENTED
 
 ### 19.1 Quality UI
 - [ ] Batch Quality card visible in batch tab
@@ -567,7 +569,7 @@ Update this file as features are implemented.
 
 ---
 
-## 20. Automatic Retries (Q1 2027) — IMPLEMENTED
+## 20. Automatic Retries — IMPLEMENTED
 
 ### 20.1 Single Download
 - [ ] Network errors trigger retry (connection, timeout, 429, 5xx)
@@ -584,7 +586,7 @@ Update this file as features are implemented.
 
 ---
 
-## 21. Download Scheduler (Q1 2027) — IMPLEMENTED
+## 21. Download Scheduler — IMPLEMENTED
 
 ### 21.1 Scheduler UI
 - [ ] Scheduler card visible in Settings tab
@@ -612,7 +614,7 @@ Update this file as features are implemented.
 
 ---
 
-## 22. Enhanced History (Q1 2027) — IMPLEMENTED
+## 22. Enhanced History — IMPLEMENTED
 
 ### 22.1 Sort & Filter UI
 - [ ] Sort combobox in history (date_desc, date_asc, title_asc, title_desc, status)
@@ -639,7 +641,7 @@ Update this file as features are implemented.
 
 ---
 
-## 23. Post-Processing Hub (Q1 2027) — IMPLEMENTED
+## 23. Post-Processing Hub — IMPLEMENTED
 
 ### 23.1 Context Menu
 - [ ] Right-click on any history card shows context menu
@@ -660,7 +662,7 @@ Update this file as features are implemented.
 
 ---
 
-## 24. Video/Audio Enhancement via FFmpeg (Q1 2027) — IMPLEMENTED
+## 24. Video/Audio Enhancement via FFmpeg — IMPLEMENTED
 
 ### 24.1 Enhancement Submenu
 - [ ] Right-click a **successful** history entry → "✨ Enhance..." submenu appears

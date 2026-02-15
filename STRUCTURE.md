@@ -11,9 +11,14 @@ EasyCut/
 │   └── feather-main/       # Feather icon library
 │
 ├── 📂 config/              # Configuration files
-│   ├── config.json         # User settings (output folder, language)
+│   ├── config.json         # User settings (theme, language, output folder)
 │   ├── credentials.json    # OAuth credentials (gitignored)
-│   └── history_downloads.json  # Download history
+│   ├── credentials_template.json # OAuth credentials template
+│   ├── history_downloads.json  # Download history (max 100 entries)
+│   ├── download_archive.txt # Archive of downloaded video IDs (gitignored)
+│   ├── youtube_token.pickle # OAuth token cache (gitignored)
+│   ├── yt_cookies.txt      # Cookies for yt-dlp auth (gitignored)
+│   └── app.log             # Application logs (gitignored)
 │
 ├── 📂 docs/                # Public documentation (committed to Git)
 │   └── (reserved for future documentation)
@@ -24,10 +29,7 @@ EasyCut/
 │
 ├── 📂 internal/            # Internal documentation (NOT in Git)
 │   ├── README.md           # Internal docs guide
-│   ├── DOCUMENTATION_UPDATES.md # Documentation change log
-│   ├── FEATURES_AND_INTEGRATIONS.md # Feature & integration tracking
-│   ├── ROADMAP.md          # Feature roadmap
-│   └── TESTING_SPRINT4.md  # Testing guides
+│   └── TESTING.md          # Internal copy of testing guide
 │
 ├── 📂 scripts/             # Build & utility scripts
 │   ├── build.py            # PyInstaller build script
@@ -39,7 +41,7 @@ EasyCut/
 ├── 📂 src/                 # Python source code
 │   ├── easycut.py          # Main application logic
 │   ├── oauth_manager.py    # OAuth authentication
-│   ├── i18n.py             # Internationalization (EN/PT)
+│   ├── i18n.py             # Internationalization (7 languages: EN/PT/ES/FR/DE/IT/JA)
 │   ├── ui_enhanced.py      # Enhanced UI components
 │   ├── design_system.py    # Design system constants
 │   ├── modern_components.py # Modern UI widgets
@@ -67,7 +69,8 @@ EasyCut/
 ├── 📄 README.md            # Main README
 ├── 📄 requirements.txt     # Python dependencies
 ├── 📄 STRUCTURE.md         # Project structure (this file)
-└── 📄 TERMS.md             # Terms of service (Markdown)
+├── 📄 TERMS.md             # Terms of service (Markdown)
+└── 📄 TESTING.md           # Manual test cases for all features
 ```
 
 ## Key Principles
@@ -91,13 +94,13 @@ EasyCut/
 - `BUILD.md` - Build & distribution guide
 - `OAUTH_SETUP.md` - OAuth configuration
 - `DOCUMENTATION.md` - Documentation index
+- `TESTING.md` - Manual test cases
+- `STRUCTURE.md` - Project layout (this file)
+- `CREDITS.md` - Attribution & credits
 - `PRIVACY.md`, `TERMS.md` - Legal docs
 
 **Internal** (gitignored, in `internal/`):
-- Sprint testing guides
-- Refactoring plans
-- Development roadmaps
-- Feature planning documents
+- Development notes and testing guides
 
 ### 🛠️ Scripts Organization
 All executable scripts moved to `scripts/` folder:
@@ -119,8 +122,6 @@ If you're updating from an older version, note these path changes:
 - `index.html` → `static/index.html`
 - `PRIVACY.html` → `static/PRIVACY.html`
 - `TERMS.html` → `static/TERMS.html`
-- `REFACTORING_PLAN.md` → `internal/REFACTORING_PLAN.md`
-- `TESTING_*.md` → `internal/TESTING_*.md`
 
 ### Commands Updated
 Documentation now uses updated paths:
@@ -144,4 +145,4 @@ python scripts/check_installation.py
 
 ---
 
-**Last Updated:** Sprint 4 Refactoring (February 2026)
+**Last Updated:** v1.3.0 (February 2026)

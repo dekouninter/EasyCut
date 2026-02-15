@@ -286,6 +286,9 @@ Maintainers will build and release executables separately.
 
 - [OAUTH_SETUP.md](OAUTH_SETUP.md) - How to create OAuth credentials
 - [README.md](README.md) - Main documentation
+- [TESTING.md](TESTING.md) - Manual test cases
+- [DOCUMENTATION.md](DOCUMENTATION.md) - Documentation index
+- [CREDITS.md](CREDITS.md) - Credits and licenses
 
 ---
 

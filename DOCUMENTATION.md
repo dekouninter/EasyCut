@@ -29,6 +29,7 @@ Welcome to the EasyCut documentation hub. This index helps you find the right do
 | [TESTING.md](TESTING.md) | Manual test cases for all features | Testers & Contributors |
 | [OAUTH_SETUP.md](OAUTH_SETUP.md) | OAuth credential creation walkthrough | Developers |
 | [BUILD.md](BUILD.md) | Building standalone executables | Maintainers & Packagers |
+| [STRUCTURE.md](STRUCTURE.md) | Project directory layout and organization | Developers |
 
 ### ⚖️ Legal & Credits
 
@@ -65,7 +66,6 @@ Welcome to the EasyCut documentation hub. This index helps you find the right do
 These documents support development, testing, and project management:
 
 - **[TESTING.md](TESTING.md)** — Comprehensive manual test cases for all 24 feature areas
-- **FEATURES_AND_INTEGRATIONS.md** — Feature tracking and library integration status (internal)
 
 Note: Internal planning documents are kept in the `internal/` folder for team coordination.
 
@@ -88,7 +88,7 @@ Note: Internal planning documents are kept in the `internal/` folder for team co
 - [ ] Sync documentation with code changes
 
 ### Annual Review
-- [ ] Strategic review of roadmap and planning
+- [ ] Strategic review of project direction
 - [ ] Assess project direction
 - [ ] Plan next year's initiatives
 
@@ -126,6 +126,7 @@ Note: Internal planning documents are kept in the `internal/` folder for team co
 - **Issues**: Report bugs on [GitHub Issues](https://github.com/dekouninter/EasyCut/issues)
 - **Discussions**: Ask questions on [GitHub Discussions](https://github.com/dekouninter/EasyCut/discussions)
 - **Donations**: Support development at [buymeacoffee.com/dekocosta](https://buymeacoffee.com/dekocosta)
+- **Ko-fi**: Support development at [ko-fi.com/dekocosta](https://ko-fi.com/dekocosta)
 - **Donations - Brazil**: Support development at [Livepix](https://livepix.gg/dekocosta)
 
 ---
