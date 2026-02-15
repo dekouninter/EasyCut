@@ -17,7 +17,7 @@ TRANSLATIONS = {
     "en": {
         # Application Titles and Headers
         "app_title": "EasyCut",
-        "version": "1.2.0",
+        "version": "1.2.1",
         
         # Menu and Shortcuts
         "menu_file": "File",
@@ -249,7 +249,7 @@ TRANSLATIONS = {
         "about_link_livepix": "Livepix Donate",
         "about_description": "EasyCut is a simple and secure YouTube video downloader with support for batch downloads and audio extraction.",
         "about_author": "Author: Deko Costa",
-        "about_version_info": "Version 1.2.0 - Professional Edition",
+        "about_version_info": "Version 1.2.1 - Professional Edition",
         "about_github": "GitHub: https://github.com/dekouninter/EasyCut",
         "about_support": "Support: buymeacoffee.com/dekocosta | livepix.gg/dekocosta",
         "about_license": "License: GPL-3.0",
@@ -304,7 +304,7 @@ TRANSLATIONS = {
     "pt": {
         # Títulos e cabeçalhos
         "app_title": "EasyCut",
-        "version": "1.2.0",
+        "version": "1.2.1",
         
         # Menu e atalhos
         "menu_file": "Arquivo",
@@ -534,7 +534,7 @@ TRANSLATIONS = {
         "about_link_livepix": "Doar via Livepix",
         "about_description": "EasyCut é um simples e seguro baixador de vídeos YouTube com suporte a downloads em lote e extração de áudio.",
         "about_author": "Autor: Deko Costa",
-        "about_version_info": "Versão 1.2.0 - Edição Profissional",
+        "about_version_info": "Versão 1.2.1 - Edição Profissional",
         "about_github": "GitHub: https://github.com/dekouninter/EasyCut",
         "about_license": "Licença: GPL-3.0",
         "about_support": "Apoie: buymeacoffee.com/dekocosta | livepix.gg/dekocosta",

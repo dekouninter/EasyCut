@@ -187,7 +187,7 @@ def main():
         config = load_build_config()
         oauth_creds = config['oauth_credentials']
         app_name = config.get('app_name', 'EasyCut')
-        version = config.get('app_version', '1.2.0')
+        version = config.get('app_version', '1.2.1')
         print(f"✓ Building {app_name} v{version}")
         
         # 3. Prepare build directory

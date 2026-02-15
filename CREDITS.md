@@ -137,7 +137,12 @@ If you find EasyCut useful, consider:
 
 ## 📝 Version History
 
-### v1.2.0 (Current)
+### v1.2.1 (Current)
+- Complete codebase audit: version normalization, license corrections, bug fixes
+- Documentation accuracy review and update
+- All version strings synchronized to single source
+
+### v1.2.0
 - OAuth 2.0 authentication with token and cookies storage
 - Audio conversion: MP3, WAV, M4A, OPUS with 4 bitrate options
 - Time range downloads with yt-dlp download_sections

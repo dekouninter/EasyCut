@@ -5,7 +5,7 @@ Professional Desktop Application using Tkinter
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
-Version: 1.2.0
+Version: 1.2.1
 License: GPL-3.0
 
 Features:
@@ -137,7 +137,7 @@ class EasyCutApp:
         self.logger = logging.getLogger(__name__)
         self.logger.info("="*60)
         self.logger.info("EasyCut Application Started")
-        self.logger.info(f"Version: 1.2.0")
+        self.logger.info(f"Version: 1.2.1")
     
     def setup_window(self):
         """Setup main window"""
@@ -205,7 +205,7 @@ class EasyCutApp:
         
         # --- STATUS BAR ---
         tr = self.translator.get
-        version_label = tr("version", "1.2.0")
+        version_label = tr("version", "1.2.1")
         status_labels = {
             "status_ready": tr("status_ready", "Ready"),
             "login_not_logged": tr("status_not_logged_in", "Not logged in"),
@@ -359,7 +359,7 @@ class EasyCutApp:
 
         # Version (moved below buttons)
         version_lbl = tk.Label(
-            footer, text=f"v{tr('version', '1.2.0')}", bg=bg, fg=fg_sec,
+            footer, text=f"v{tr('version', '1.2.1')}", bg=bg, fg=fg_sec,
             font=(Typography.FONT_FAMILY, Typography.SIZE_TINY)
         )
         version_lbl.pack(anchor="w", pady=(Spacing.SM, 0))
@@ -1653,7 +1653,7 @@ class EasyCutApp:
         info_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         info_data = [
-            ("Version", "1.2.0"),
+            ("Version", "1.2.1"),
             ("Author", "Deko Costa"),
             ("License", "GPL-3.0"),
             ("Release", "2026")

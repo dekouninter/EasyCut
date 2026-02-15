@@ -1,6 +1,6 @@
 # 🎬 EasyCut - Professional YouTube Downloader
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
 ![Author](https://img.shields.io/badge/author-Deko%20Costa-brightgreen.svg)
 
