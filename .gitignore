@@ -151,3 +151,6 @@ OAUTH_CHECKLIST.md
 REFACTORING_PLAN.md
 ROADMAP.md
 DOCUMENTATION_UPDATES.md
+
+# Local workspace temp
+.tmp/
