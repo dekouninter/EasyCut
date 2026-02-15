@@ -54,7 +54,7 @@ pyinstaller --version
 2. **Run the build script**:
 
 ```bash
-python build.py
+python scripts/build.py
 ```
 
 3. **Find your executable**:
@@ -69,7 +69,7 @@ That's it! 🎉
 
 ## 📦 What the Build Script Does
 
-The `build.py` script automates the entire packaging process:
+The `scripts/build.py` script automates the entire packaging process:
 
 ### Step 1: Validation
 - Checks PyInstaller is installed
@@ -105,7 +105,7 @@ The `build.py` script automates the entire packaging process:
 ## 🔐 Security Considerations
 
 ### Safe Files (Committed to Git)
-- ✅ `build.py` - Build script (no secrets)
+- ✅ `scripts/build.py` - Build script (no secrets)
 - ✅ `config/credentials_template.json` - Empty template
 - ✅ `src/oauth_manager.py` - Loads credentials from file
 - ✅ `.gitignore` - Protects secret files
@@ -173,7 +173,7 @@ The `build.py` script automates the entire packaging process:
 
 ### Custom Build Options
 
-Edit `build.py` to customize:
+Edit `scripts/build.py` to customize:
 
 ```python
 # Change application icon
@@ -222,7 +222,7 @@ cp config/credentials_template.json build_config.json
 
 ### "Module not found" errors in executable
 
-Add hidden imports to `build.py`:
+Add hidden imports to `scripts/build.py`:
 
 ```python
 "--hidden-import", "missing_module_name"
@@ -257,7 +257,7 @@ Before each release:
 - [ ] Update version in `src/i18n.py` (`TRANSLATIONS['en']['version']` and `['pt']['version']`)
 - [ ] Update About tab version in `src/easycut.py` (Application Info card)
 - [ ] Test locally with `python main.py`
-- [ ] Run `python build.py`
+- [ ] Run `python scripts/build.py`
 - [ ] Test executable on clean Windows machine
 - [ ] Create GitHub Release with executable
 - [ ] Update release notes
@@ -300,7 +300,7 @@ A: Technically yes, but OAuth requires user consent anyway. The real risk is quo
 A: No! Use GitHub Releases. Don't commit large binaries to Git repository.
 
 **Q: How do I update OAuth credentials?**  
-A: Edit `build_config.json`, rebuild with `python build.py`, create new GitHub Release.
+A: Edit `build_config.json`, rebuild with `python scripts/build.py`, create new GitHub Release.
 
 ---
 

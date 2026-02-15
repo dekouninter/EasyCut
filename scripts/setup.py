@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Setup script for EasyCut
-For packaging: python setup.py sdist bdist_wheel
+For packaging: python scripts/setup.py sdist bdist_wheel
 """
 
 from setuptools import setup, find_packages

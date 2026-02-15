@@ -10,7 +10,7 @@ Repository: https://github.com/dekouninter/EasyCut
 License: MIT
 
 Usage:
-    python check_installation.py
+    python scripts/check_installation.py
 """
 
 import sys

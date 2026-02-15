@@ -50,7 +50,7 @@ Welcome to the EasyCut documentation hub. This index helps you find the right do
 - **Installation**: [README.md](README.md#installation) — Setup from source
 - **Running**: [README.md](README.md#usage) — How to run the app
 - **Building**: [BUILD.md](BUILD.md#quick-start) — Quick build instructions
-- **Verification**: [README.md](README.md#4-verify-installation-optional) — check_installation.py usage
+- **Verification**: [README.md](README.md#4-verify-installation-optional) — scripts/check_installation.py usage
 
 ### Troubleshooting
 - **OAuth Issues**: [OAUTH_SETUP.md](OAUTH_SETUP.md#troubleshooting) — Common problems

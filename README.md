@@ -136,7 +136,7 @@ pip install -r requirements.txt
 ### 4. Verify Installation (Optional)
 
 ```bash
-python check_installation.py
+python scripts/check_installation.py
 ```
 
 This checks Python, yt-dlp, OAuth dependencies, Tkinter, and FFmpeg.
@@ -174,7 +174,7 @@ If you're running from source, you need to create OAuth credentials:
 python main.py
 ```
 
-**Or double-click:** `START.bat`
+**Or double-click:** `scripts\START.bat`
 
 ### First Run
 

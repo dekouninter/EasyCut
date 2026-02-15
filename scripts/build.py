@@ -3,7 +3,7 @@ Build Script for EasyCut
 Creates standalone executable with embedded OAuth credentials
 
 Usage:
-    python build.py
+    python scripts/build.py
     
 Output:
     dist/EasyCut.exe - Standalone Windows executable

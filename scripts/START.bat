@@ -15,7 +15,8 @@ echo.
 echo ========================================
 echo.
 
-cd /d "%~dp0"
+REM Change to project root (parent of scripts/)
+cd /d "%~dp0.."
 
 REM Check if virtual environment exists
 if exist venv (

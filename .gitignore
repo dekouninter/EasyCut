@@ -146,12 +146,9 @@ build_config.json
 # Build artifacts
 build_temp/
 *.spec
-# Planning & Refactoring Documents (Local Development Only)
-OAUTH_CHECKLIST.md
-REFACTORING_PLAN.md
-ROADMAP.md
-DOCUMENTATION_UPDATES.md
-TESTING_*.md
+
+# Internal documentation (Local Development Only)
+internal/
 
 # Local workspace temp
 .tmp/

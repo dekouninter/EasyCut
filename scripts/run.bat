@@ -10,6 +10,9 @@ echo   EasyCut - YouTube Downloader
 echo =================================
 echo.
 
+REM Change to project root (parent of scripts/)
+cd /d "%~dp0.."
+
 REM Check if Python is installed
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
