@@ -1,7 +1,7 @@
 # 🧪 EasyCut Testing Guide
 
 **Last Updated**: February 15, 2026  
-**Version**: 1.3.0
+**Version**: 1.4.0
 
 This document tracks all manual and automated test cases for EasyCut features.  
 Update this file as features are implemented.

@@ -46,7 +46,7 @@ pyinstaller --version
       "redirect_uris": ["http://localhost"]
     }
   },
-  "app_version": "1.3.0",
+  "app_version": "1.4.0",
   "app_name": "EasyCut"
 }
 ```
@@ -154,7 +154,7 @@ The `scripts/build.py` script automates the entire packaging process:
 
 3. **Create GitHub Release**:
    - Go to GitHub → Releases → New Release
-   - Tag: `v1.3.0`
+   - Tag: `v1.4.0`
    - Upload: `dist/EasyCut.exe`
    - Write release notes
    - Publish

@@ -1,7 +1,7 @@
 # 📚 EasyCut Documentation Index
 
 **Last Updated**: February 15, 2026  
-**Version**: 1.3.0
+**Version**: 1.4.0
 
 Welcome to the EasyCut documentation hub. This index helps you find the right document for your needs.
 

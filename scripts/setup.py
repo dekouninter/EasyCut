@@ -11,7 +11,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="EasyCut",
-    version="1.3.0",
+    version="1.4.0",
     author="Deko Costa",
     description="YouTube Video Downloader and Audio Converter with OAuth Authentication",
     long_description=long_description,

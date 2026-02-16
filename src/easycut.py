@@ -5,7 +5,7 @@ Professional Desktop Application using Tkinter
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
-Version: 1.3.0
+Version: 1.4.0
 License: GPL-3.0
 
 Features:
@@ -40,7 +40,8 @@ from donation_system import DonationButton
 from icon_manager import icon_manager, get_ui_icon, set_icon_theme
 from design_system import ModernTheme, DesignTokens, Typography, Spacing, Icons
 from modern_components import (
-    ModernButton, ModernCard
+    ModernButton, ModernCard, SectionHeader, StatusDot, Tooltip, Badge, Divider,
+    EMOJI_ICONS
 )
 from font_loader import setup_fonts, LOADED_FONT_FAMILY
 
@@ -145,7 +146,7 @@ class EasyCutApp:
         self.logger = logging.getLogger(__name__)
         self.logger.info("="*60)
         self.logger.info("EasyCut Application Started")
-        self.logger.info(f"Version: 1.3.0")
+        self.logger.info(f"Version: 1.4.0")
     
     def setup_window(self):
         """Setup main window"""
@@ -183,7 +184,7 @@ class EasyCutApp:
         body.pack(fill=tk.BOTH, expand=True)
         
         # Sidebar
-        self.sidebar_frame = tk.Frame(body, bg=self.design.get_color("bg_secondary"), width=200)
+        self.sidebar_frame = tk.Frame(body, bg=self.design.get_color("sidebar_bg"), width=200)
         self.sidebar_frame.pack(side=tk.LEFT, fill=tk.Y)
         self.sidebar_frame.pack_propagate(False)
         self._build_sidebar()
@@ -214,7 +215,7 @@ class EasyCutApp:
         
         # --- STATUS BAR ---
         tr = self.translator.get
-        version_label = tr("version", "1.3.0")
+        version_label = tr("version", "1.4.0")
         status_labels = {
             "status_ready": tr("status_ready", "Ready"),
             "login_not_logged": tr("status_not_logged_in", "Not logged in"),
@@ -237,17 +238,21 @@ class EasyCutApp:
     # ──────────────────────────────────────────
     
     def _build_sidebar(self):
-        """Build the sidebar navigation"""
+        """Build the refined sidebar navigation with pill indicators"""
         tr = self.translator.get
-        bg = self.design.get_color("bg_secondary")
+        bg = self.design.get_color("sidebar_bg")
         fg = self.design.get_color("fg_primary")
         fg_sec = self.design.get_color("fg_secondary")
-        accent = self.design.get_color("accent_primary")
-        hover_bg = self.design.get_color("bg_hover")
+        accent = self.design.get_color("sidebar_indicator")
+        hover_bg = self.design.get_color("sidebar_hover")
+        active_bg = self.design.get_color("sidebar_active")
         
-        # Toggle button
+        # Set sidebar bg
+        self.sidebar_frame.config(bg=bg)
+        
+        # Toggle button with hover effect
         toggle_frame = tk.Frame(self.sidebar_frame, bg=bg)
-        toggle_frame.pack(fill=tk.X, padx=Spacing.SM, pady=(Spacing.SM, Spacing.MD))
+        toggle_frame.pack(fill=tk.X, padx=Spacing.SM, pady=(Spacing.MD, Spacing.LG))
         
         self.sidebar_toggle_btn = tk.Label(
             toggle_frame, text="☰", bg=bg, fg=fg_sec,
@@ -255,8 +260,10 @@ class EasyCutApp:
         )
         self.sidebar_toggle_btn.pack(anchor="w", padx=Spacing.SM)
         self.sidebar_toggle_btn.bind("<Button-1>", lambda e: self._toggle_sidebar())
+        self.sidebar_toggle_btn.bind("<Enter>", lambda e: self.sidebar_toggle_btn.config(fg=fg))
+        self.sidebar_toggle_btn.bind("<Leave>", lambda e: self.sidebar_toggle_btn.config(fg=fg_sec))
         
-        # Navigation items
+        # Navigation items with refined emojis
         nav_items = [
             ("download", "⬇️", tr("tab_download", "Download")),
             ("batch",    "📦", tr("tab_batch", "Batch")),
@@ -267,23 +274,27 @@ class EasyCutApp:
         ]
         
         nav_container = tk.Frame(self.sidebar_frame, bg=bg)
-        nav_container.pack(fill=tk.BOTH, expand=True)
+        nav_container.pack(fill=tk.BOTH, expand=True, padx=Spacing.SM)
         
         for key, icon, label in nav_items:
-            btn_frame = tk.Frame(nav_container, bg=bg, cursor="hand2")
-            btn_frame.pack(fill=tk.X, pady=1)
+            # Outer padding frame for the pill effect
+            outer = tk.Frame(nav_container, bg=bg)
+            outer.pack(fill=tk.X, pady=2)
+            
+            btn_frame = tk.Frame(outer, bg=bg, cursor="hand2")
+            btn_frame.pack(fill=tk.X, padx=Spacing.XS)
             btn_frame.pack_propagate(False)
-            btn_frame.config(height=40)
+            btn_frame.config(height=Spacing.SIDEBAR_ITEM_H)
             btn_frame.grid_columnconfigure(2, weight=1)
             
-            # Active indicator (left accent bar)
+            # Active indicator (left rounded accent bar)
             indicator = tk.Frame(btn_frame, bg=bg, width=3)
-            indicator.grid(row=0, column=0, sticky="ns")
+            indicator.grid(row=0, column=0, sticky="ns", padx=(2, 0))
             
             # Icon
             icon_lbl = tk.Label(
                 btn_frame, text=icon, bg=bg, fg=fg,
-                font=("Segoe UI Emoji", 14),
+                font=(Typography.FONT_EMOJI, 14),
                 width=2, anchor="center"
             )
             icon_lbl.grid(row=0, column=1, padx=(Spacing.MD, Spacing.SM), pady=Spacing.SM)
@@ -304,11 +315,16 @@ class EasyCutApp:
                 "text": text_lbl,
             }
             
-            # Click binding
+            # Click & hover bindings
             for widget in (btn_frame, icon_lbl, text_lbl):
                 widget.bind("<Button-1>", lambda e, k=key: self._switch_section(k))
                 widget.bind("<Enter>", lambda e, k=key: self._nav_hover(k, True))
                 widget.bind("<Leave>", lambda e, k=key: self._nav_hover(k, False))
+        
+        # Separator before footer
+        tk.Frame(self.sidebar_frame, bg=self.design.get_color("border"), height=1).pack(
+            fill=tk.X, padx=Spacing.LG, pady=Spacing.SM
+        )
         
         # Footer
         footer = tk.Frame(self.sidebar_frame, bg=bg)
@@ -330,7 +346,7 @@ class EasyCutApp:
         open_btn.pack(fill=tk.X)
         
         # Icon-only version for collapsed state
-        border_color = self.design.get_color("border_primary")
+        border_color = self.design.get_color("border_hover")
         open_icon = get_ui_icon("folder", size=20)
         open_icon_lbl = tk.Label(
             open_btn_frame, image=open_icon, bg=bg, 
@@ -340,7 +356,7 @@ class EasyCutApp:
         )
         open_icon_lbl.image = open_icon
         open_icon_lbl.bind("<Button-1>", lambda e: self.open_output_folder())
-        open_icon_lbl.bind("<Enter>", lambda e: open_icon_lbl.config(bg=self.design.get_color("bg_hover")))
+        open_icon_lbl.bind("<Enter>", lambda e: open_icon_lbl.config(bg=hover_bg))
         open_icon_lbl.bind("<Leave>", lambda e: open_icon_lbl.config(bg=bg))
         
         # Select Folder button/frame
@@ -364,12 +380,12 @@ class EasyCutApp:
         )
         select_icon_lbl.image = select_icon
         select_icon_lbl.bind("<Button-1>", lambda e: self.select_output_folder())
-        select_icon_lbl.bind("<Enter>", lambda e: select_icon_lbl.config(bg=self.design.get_color("bg_hover")))
+        select_icon_lbl.bind("<Enter>", lambda e: select_icon_lbl.config(bg=hover_bg))
         select_icon_lbl.bind("<Leave>", lambda e: select_icon_lbl.config(bg=bg))
 
         # Version (moved below buttons)
         version_lbl = tk.Label(
-            footer, text=f"v{tr('version', '1.3.0')}", bg=bg, fg=fg_sec,
+            footer, text=f"v{tr('version', '1.4.0')}", bg=bg, fg=fg_sec,
             font=(Typography.FONT_FAMILY, Typography.SIZE_TINY)
         )
         version_lbl.pack(anchor="w", pady=(Spacing.SM, 0))
@@ -389,25 +405,28 @@ class EasyCutApp:
         }
     
     def _switch_section(self, key):
-        """Switch active content section"""
+        """Switch active content section with refined pill indicators"""
         self.active_section = key
-        bg = self.design.get_color("bg_secondary")
+        bg = self.design.get_color("sidebar_bg")
         fg = self.design.get_color("fg_primary")
         fg_sec = self.design.get_color("fg_secondary")
-        accent = self.design.get_color("accent_primary")
+        accent = self.design.get_color("sidebar_indicator")
+        active_bg = self.design.get_color("sidebar_active")
         
         # Update sidebar visuals
         for k, refs in self.nav_buttons.items():
             if k == key:
                 refs["indicator"].config(bg=accent)
-                refs["frame"].config(bg=self.design.get_color("bg_tertiary"))
-                refs["icon"].config(bg=self.design.get_color("bg_tertiary"))
-                refs["text"].config(bg=self.design.get_color("bg_tertiary"), fg=fg)
+                refs["frame"].config(bg=active_bg)
+                refs["icon"].config(bg=active_bg)
+                refs["text"].config(bg=active_bg, fg=fg,
+                                    font=(Typography.FONT_FAMILY, Typography.SIZE_BODY, "bold"))
             else:
                 refs["indicator"].config(bg=bg)
                 refs["frame"].config(bg=bg)
                 refs["icon"].config(bg=bg)
-                refs["text"].config(bg=bg, fg=fg_sec)
+                refs["text"].config(bg=bg, fg=fg_sec,
+                                    font=(Typography.FONT_FAMILY, Typography.SIZE_BODY))
         
         # Switch visible section frame
         frame = self.section_frames.get(key)
@@ -415,12 +434,12 @@ class EasyCutApp:
             frame.tkraise()
     
     def _nav_hover(self, key, entering):
-        """Handle sidebar nav hover effects"""
+        """Handle sidebar nav hover effects with smooth color transition"""
         if key == self.active_section:
             return
         refs = self.nav_buttons[key]
-        bg = self.design.get_color("bg_secondary")
-        hover_bg = self.design.get_color("bg_hover")
+        bg = self.design.get_color("sidebar_bg")
+        hover_bg = self.design.get_color("sidebar_hover")
         color = hover_bg if entering else bg
         refs["frame"].config(bg=color)
         refs["icon"].config(bg=color)
@@ -462,19 +481,26 @@ class EasyCutApp:
     # ──────────────────────────────────────────
     
     def _build_log_panel(self, parent):
-        """Build collapsible log panel at bottom"""
+        """Build collapsible log panel at bottom with refined styling"""
         self.log_panel_visible = False
         
-        # Toggle bar
-        self.log_toggle_bar = tk.Frame(parent, bg=self.design.get_color("bg_secondary"), height=28, cursor="hand2")
+        log_bg = self.design.get_color("bg_secondary")
+        fg_sec = self.design.get_color("fg_secondary")
+        accent = self.design.get_color("accent_primary")
+        
+        # Toggle bar with accent indicator
+        self.log_toggle_bar = tk.Frame(parent, bg=log_bg, height=30, cursor="hand2")
         self.log_toggle_bar.pack(fill=tk.X)
         self.log_toggle_bar.pack_propagate(False)
+        
+        # Small accent dot
+        tk.Frame(self.log_toggle_bar, bg=accent, width=3).pack(side=tk.LEFT, fill=tk.Y)
         
         toggle_label = tk.Label(
             self.log_toggle_bar,
             text="▲ Log",
-            bg=self.design.get_color("bg_secondary"),
-            fg=self.design.get_color("fg_secondary"),
+            bg=log_bg,
+            fg=fg_sec,
             font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION),
             cursor="hand2"
         )
@@ -484,7 +510,7 @@ class EasyCutApp:
             w.bind("<Button-1>", lambda e: self._toggle_log_panel())
         
         # Log content frame
-        self.log_panel = tk.Frame(parent, bg=self.design.get_color("bg_secondary"))
+        self.log_panel = tk.Frame(parent, bg=log_bg)
         # Start hidden
         
         self.global_log = LogWidget(self.log_panel, theme=self.design, height=8)
@@ -532,20 +558,22 @@ class EasyCutApp:
             self._toggle_log_panel()
     
     def create_header(self, parent):
-        """Create slim 45px header — Logo + Title + Controls"""
+        """Create refined 52px header — Logo + Title + Controls"""
         tr = self.translator.get
-        bg = self.design.get_color("bg_secondary")
+        bg = self.design.get_color("header_bg")
         fg = self.design.get_color("fg_primary")
         fg_sec = self.design.get_color("fg_secondary")
+        accent = self.design.get_color("accent_primary")
+        hover_bg = self.design.get_color("bg_hover")
         
-        header = tk.Frame(parent, bg=bg, height=45)
+        header = tk.Frame(parent, bg=bg, height=Spacing.HEADER_HEIGHT)
         header.pack(fill=tk.X)
         header.pack_propagate(False)
         
         inner = tk.Frame(header, bg=bg)
-        inner.pack(fill=tk.BOTH, expand=True, padx=Spacing.LG, pady=Spacing.XS)
+        inner.pack(fill=tk.BOTH, expand=True, padx=Spacing.XL, pady=Spacing.SM)
         
-        # Left: Icon + Title
+        # Left: Icon + Title + Version badge
         left = tk.Frame(inner, bg=bg)
         left.pack(side=tk.LEFT, fill=tk.Y)
         
@@ -554,7 +582,7 @@ class EasyCutApp:
             icon_path = Path(__file__).parent.parent / "assets" / "headerapp_icon.ico"
             if icon_path.exists():
                 img = Image.open(icon_path)
-                img = img.resize((24, 24), Image.Resampling.LANCZOS)
+                img = img.resize((28, 28), Image.Resampling.LANCZOS)
                 app_icon = ImageTk.PhotoImage(img)
                 icon_label = tk.Label(left, image=app_icon, bg=bg)
                 icon_label.image = app_icon
@@ -567,19 +595,36 @@ class EasyCutApp:
             font=(Typography.FONT_FAMILY, Typography.SIZE_H2, "bold")
         ).pack(side=tk.LEFT)
         
-        # Right: Controls
+        # Version pill badge next to title
+        version_text = tr('version', '1.4.0')
+        version_pill = tk.Label(
+            left, text=f" v{version_text} ",
+            bg=self.design.get_color("accent_muted") if len(self.design.get_color("accent_muted")) <= 7 else bg,
+            fg=accent,
+            font=(Typography.FONT_FAMILY, Typography.SIZE_TINY, "bold"),
+        )
+        version_pill.pack(side=tk.LEFT, padx=(Spacing.SM, 0), pady=1)
+        
+        # Right: Controls group
         right = tk.Frame(inner, bg=bg)
         right.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Theme toggle (icon only — compact)
+        # Theme toggle — circular feel with hover effect
         theme_icon = "🌙" if self.dark_mode else "☀️"
         theme_btn = tk.Label(
             right, text=theme_icon, bg=bg, fg=fg_sec,
-            font=("Segoe UI Emoji", 14), cursor="hand2",
-            padx=Spacing.SM
+            font=(Typography.FONT_EMOJI, 15), cursor="hand2",
+            padx=Spacing.SM, pady=Spacing.XS
         )
         theme_btn.pack(side=tk.LEFT, padx=Spacing.XS)
         theme_btn.bind("<Button-1>", lambda e: self.toggle_theme())
+        theme_btn.bind("<Enter>", lambda e: theme_btn.config(bg=hover_bg))
+        theme_btn.bind("<Leave>", lambda e: theme_btn.config(bg=bg))
+        Tooltip(theme_btn, tr("tooltip_theme", "Toggle Dark/Light Theme (Ctrl+T)"), dark_mode=self.dark_mode)
+        
+        # Separator dot
+        tk.Label(right, text="·", bg=bg, fg=fg_sec,
+                 font=(Typography.FONT_FAMILY, 14)).pack(side=tk.LEFT, padx=2)
         
         # Language selector
         lang_options = [
@@ -595,17 +640,16 @@ class EasyCutApp:
         lang_labels = [label for _, label in lang_options]
         
         lang_combo = ttk.Combobox(
-            right, values=lang_labels, state="readonly", width=10
+            right, values=lang_labels, state="readonly", width=11
         )
         current_index = lang_codes.index(self.language) if self.language in lang_codes else 0
         lang_combo.set(lang_labels[current_index])
         lang_combo.bind("<<ComboboxSelected>>", lambda e: self.change_language(lang_codes[lang_combo.current()]))
         lang_combo.pack(side=tk.LEFT, padx=Spacing.XS)
         
-
-        
-        # Bottom border
-        tk.Frame(parent, bg=self.design.get_color("border"), height=1).pack(fill=tk.X)
+        # Bottom accent border (subtle gradient effect with two-tone line)
+        tk.Frame(parent, bg=self.design.get_color("header_border"), height=1).pack(fill=tk.X)
+        tk.Frame(parent, bg=self.design.get_color("border_subtle"), height=1).pack(fill=tk.X)
     
     def create_browser_auth_banner(self, parent):
         """Create browser authentication banner (reserved for future use)"""
@@ -851,38 +895,55 @@ class EasyCutApp:
         tk.Frame(parent, bg=self.design.get_color("border"), height=1).pack(fill=tk.X)
     
     def create_login_banner(self, parent):
-        """Create OAuth authentication banner"""
+        """Create OAuth authentication banner with modern styling"""
         tr = self.translator.get
-        bg = self.design.get_color("bg_secondary")
+        bg = self.design.get_color("bg_tertiary")
         fg = self.design.get_color("fg_primary")
         fg_sec = self.design.get_color("fg_secondary")
+        accent = self.design.get_color("accent")
         
-        banner = tk.Frame(parent, bg=bg)
-        banner.pack(fill=tk.X, padx=Spacing.LG, pady=Spacing.SM)
+        # Outer wrapper with accent left strip
+        banner_outer = tk.Frame(parent, bg=accent)
+        banner_outer.pack(fill=tk.X, padx=Spacing.LG, pady=Spacing.SM)
         
-        # Title
+        banner = tk.Frame(banner_outer, bg=bg)
+        banner.pack(fill=tk.BOTH, expand=True, padx=(3, 0))  # 3px accent left border
+        
+        inner = tk.Frame(banner, bg=bg)
+        inner.pack(fill=tk.X, padx=Spacing.MD, pady=Spacing.SM)
+        
+        # Title row with icon
+        title_row = tk.Frame(inner, bg=bg)
+        title_row.pack(fill=tk.X, pady=(0, Spacing.XS))
+        
         tk.Label(
-            banner, 
+            title_row, text=EMOJI_ICONS.get("lock", "\U0001f512"),
+            bg=bg, fg=accent,
+            font=(Typography.FONT_EMOJI, Typography.SIZE_H3)
+        ).pack(side=tk.LEFT, padx=(0, Spacing.XS))
+        
+        tk.Label(
+            title_row, 
             text="YouTube Authentication",
             bg=bg, fg=fg,
             font=(Typography.FONT_FAMILY, Typography.SIZE_H3, "bold")
-        ).pack(anchor="w", pady=(0, Spacing.XS))
+        ).pack(side=tk.LEFT)
         
         # Info text
         info_text = (
-            "Authenticate with Google to download videos and live streams.\n"
+            "Authenticate with Google to download videos and live streams. "
             "Your browser stays free to browse YouTube while downloads happen."
         )
         tk.Label(
-            banner,
+            inner,
             text=info_text,
             bg=bg, fg=fg_sec,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION),
-            justify=tk.LEFT
+            font=(Typography.FONT_FAMILY, Typography.SIZE_BODY_SM),
+            justify=tk.LEFT, wraplength=700
         ).pack(anchor="w", pady=(0, Spacing.SM))
         
         # Control frame
-        control_frame = tk.Frame(banner, bg=bg)
+        control_frame = tk.Frame(inner, bg=bg)
         control_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
         
         # Sync button
@@ -987,35 +1048,33 @@ class EasyCutApp:
             width=10
         ).pack(side=tk.LEFT)
         
-        # Account Status
-        status_frame = tk.Frame(banner, bg=bg)
-        status_frame.pack(fill=tk.X, pady=(Spacing.SM, 0))
+        # Account Status with StatusDot
+        status_frame = tk.Frame(inner, bg=bg)
+        status_frame.pack(fill=tk.X, pady=(Spacing.XS, 0))
         
-        tk.Label(
-            status_frame,
-            text="Status:",
-            bg=bg, fg=fg_sec,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION, "bold")
-        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        
-        # Status label
+        # Status dot indicator
         if self.oauth_manager.is_authenticated():
-            status_text = "✓ Authenticated and ready"
+            status_text = "Authenticated and ready"
             status_color = self.design.get_color("success")
+            dot_status = "online"
         else:
             status_text = "Not authenticated yet"
             status_color = self.design.get_color("fg_secondary")
+            dot_status = "offline"
+        
+        self.auth_status_dot = StatusDot(status_frame, status=dot_status, size=8, dark_mode=self.dark_mode)
+        self.auth_status_dot.pack(side=tk.LEFT, padx=(0, Spacing.XS))
         
         self.account_status_label = tk.Label(
             status_frame,
             text=status_text,
             bg=bg, fg=status_color,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION)
+            font=(Typography.FONT_FAMILY, Typography.SIZE_BODY_SM)
         )
         self.account_status_label.pack(side=tk.LEFT)
         
-        # Bottom border
-        tk.Frame(parent, bg=self.design.get_color("border"), height=1).pack(fill=tk.X)
+        # Subtle bottom separator
+        Divider(parent, dark_mode=self.dark_mode).pack(fill=tk.X, padx=Spacing.LG)
     
     
     def create_download_tab(self):
@@ -1042,23 +1101,14 @@ class EasyCutApp:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         # === SECTION HEADER ===
-        hdr = tk.Frame(main, bg=self.design.get_color("bg_primary"))
-        hdr.pack(fill=tk.X, pady=(0, Spacing.LG))
-        tk.Label(
-            hdr, text=tr("tab_download", "Download"),
-            bg=self.design.get_color("bg_primary"),
-            fg=self.design.get_color("fg_primary"),
-            font=(Typography.FONT_FAMILY, Typography.SIZE_H1, "bold")
-        ).pack(anchor="w")
-        tk.Label(
-            hdr, text=tr("download_subtitle", "Download videos and audio from YouTube"),
-            bg=self.design.get_color("bg_primary"),
-            fg=self.design.get_color("fg_secondary"),
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION)
-        ).pack(anchor="w")
+        SectionHeader(
+            main, title=tr("tab_download", "Download"),
+            subtitle=tr("download_subtitle", "Download videos and audio from YouTube"),
+            dark_mode=self.dark_mode
+        ).pack(fill=tk.X, pady=(0, Spacing.LG))
         
         # === URL INPUT CARD ===
-        url_card = ModernCard(main, title=tr("download_url", "YouTube URL"), dark_mode=self.dark_mode)
+        url_card = ModernCard(main, title=tr("download_url", "YouTube URL"), dark_mode=self.dark_mode, accent_color=self.design.get_color("accent"))
         url_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         url_container = ttk.Frame(url_card.body)
@@ -1478,23 +1528,14 @@ class EasyCutApp:
         main.pack(fill=tk.BOTH, expand=True)
         
         # === SECTION HEADER ===
-        hdr = tk.Frame(main, bg=self.design.get_color("bg_primary"))
-        hdr.pack(fill=tk.X, pady=(0, Spacing.LG))
-        tk.Label(
-            hdr, text=tr("tab_batch", "Batch Downloads"),
-            bg=self.design.get_color("bg_primary"),
-            fg=self.design.get_color("fg_primary"),
-            font=(Typography.FONT_FAMILY, Typography.SIZE_H1, "bold")
-        ).pack(anchor="w")
-        tk.Label(
-            hdr, text=tr("batch_subtitle", "Download multiple videos at once"),
-            bg=self.design.get_color("bg_primary"),
-            fg=self.design.get_color("fg_secondary"),
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION)
-        ).pack(anchor="w")
+        SectionHeader(
+            main, title=tr("tab_batch", "Batch Downloads"),
+            subtitle=tr("batch_subtitle", "Download multiple videos at once"),
+            dark_mode=self.dark_mode
+        ).pack(fill=tk.X, pady=(0, Spacing.LG))
         
         # === URLS INPUT CARD ===
-        urls_card = ModernCard(main, title=tr("batch_urls", "YouTube URLs"), dark_mode=self.dark_mode)
+        urls_card = ModernCard(main, title=tr("batch_urls", "YouTube URLs"), dark_mode=self.dark_mode, accent_color=self.design.get_color("accent"))
         urls_card.pack(fill=tk.BOTH, expand=True, pady=(0, Spacing.MD))
         
         # Info text
@@ -1573,7 +1614,7 @@ class EasyCutApp:
         ).pack(anchor=tk.W, pady=(Spacing.XS, 0))
         
         # === DOWNLOAD QUEUE CARD ===
-        queue_card = ModernCard(main, title=tr("queue_title", "Download Queue"), dark_mode=self.dark_mode)
+        queue_card = ModernCard(main, title=tr("queue_title", "Download Queue"), dark_mode=self.dark_mode, accent_color=self.design.get_color("info"))
         queue_card.pack(fill=tk.BOTH, expand=True, pady=(0, Spacing.MD))
         
         # Queue status bar
@@ -1658,23 +1699,14 @@ class EasyCutApp:
         main.pack(fill=tk.BOTH, expand=True)
         
         # === SECTION HEADER ===
-        hdr = tk.Frame(main, bg=self.design.get_color("bg_primary"))
-        hdr.pack(fill=tk.X, pady=(0, Spacing.LG))
-        tk.Label(
-            hdr, text=tr("live_title", "Live Stream Recorder"),
-            bg=self.design.get_color("bg_primary"),
-            fg=self.design.get_color("fg_primary"),
-            font=(Typography.FONT_FAMILY, Typography.SIZE_H1, "bold")
-        ).pack(anchor="w")
-        tk.Label(
-            hdr, text=tr("live_subtitle", "Record live streams with customizable duration and quality"),
-            bg=self.design.get_color("bg_primary"),
-            fg=self.design.get_color("fg_secondary"),
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION)
-        ).pack(anchor="w")
+        SectionHeader(
+            main, title=tr("live_title", "Live Stream Recorder"),
+            subtitle=tr("live_subtitle", "Record live streams with customizable duration and quality"),
+            dark_mode=self.dark_mode
+        ).pack(fill=tk.X, pady=(0, Spacing.LG))
         
         # === URL INPUT CARD ===
-        url_card = ModernCard(main, title=tr("live_url", "Live Stream URL"), dark_mode=self.dark_mode)
+        url_card = ModernCard(main, title=tr("live_url", "Live Stream URL"), dark_mode=self.dark_mode, accent_color=self.design.get_color("accent"))
         url_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         url_row = ttk.Frame(url_card.body)
@@ -1694,7 +1726,7 @@ class EasyCutApp:
         ).pack(side=tk.LEFT)
         
         # === STREAM STATUS CARD ===
-        status_card = ModernCard(main, title=tr("live_status", "Stream Status"), dark_mode=self.dark_mode)
+        status_card = ModernCard(main, title=tr("live_status", "Stream Status"), dark_mode=self.dark_mode, accent_color=self.design.get_color("warning"))
         status_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         status_grid = ttk.Frame(status_card.body)
@@ -1839,20 +1871,11 @@ class EasyCutApp:
         main.pack(fill=tk.BOTH, expand=True)
         
         # === SECTION HEADER ===
-        hdr = tk.Frame(main, bg=self.design.get_color("bg_primary"))
-        hdr.pack(fill=tk.X, pady=(0, Spacing.LG))
-        tk.Label(
-            hdr, text=tr("history_title", "Download History"),
-            bg=self.design.get_color("bg_primary"),
-            fg=self.design.get_color("fg_primary"),
-            font=(Typography.FONT_FAMILY, Typography.SIZE_H1, "bold")
-        ).pack(anchor="w")
-        tk.Label(
-            hdr, text=tr("history_subtitle", "Track all your downloads in one place"),
-            bg=self.design.get_color("bg_primary"),
-            fg=self.design.get_color("fg_secondary"),
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION)
-        ).pack(anchor="w")
+        SectionHeader(
+            main, title=tr("history_title", "Download History"),
+            subtitle=tr("history_subtitle", "Track all your downloads in one place"),
+            dark_mode=self.dark_mode
+        ).pack(fill=tk.X, pady=(0, Spacing.LG))
         
         # === ACTION BUTTONS ===
         action_frame = ttk.Frame(main)
@@ -1955,33 +1978,30 @@ class EasyCutApp:
         frame = ttk.Frame(self.section_container)
         frame.grid(row=0, column=0, sticky="nsew")
         
-        # Scrollable content
-        main_canvas = tk.Canvas(frame, highlightthickness=0)
+        # Scrollable content with proper width tracking
+        main_canvas = tk.Canvas(frame, bg=self.design.get_color("bg_primary"), highlightthickness=0)
         scrollbar = ttk.Scrollbar(frame, orient="vertical", command=main_canvas.yview)
         main = ttk.Frame(main_canvas, padding=Spacing.LG)
         
         main.bind("<Configure>", lambda e: main_canvas.configure(scrollregion=main_canvas.bbox("all")))
-        main_canvas.create_window((0, 0), window=main, anchor="nw")
+        main_canvas.create_window((0, 0), window=main, anchor="nw", tags="content")
         main_canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Fix: Update inner frame width on canvas resize (was missing before)
+        main_canvas.bind("<Configure>", lambda e: main_canvas.itemconfig("content", width=e.width))
         
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         main_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
+        # Enable mouse wheel scroll for settings tab
+        self.enable_mousewheel_scroll(main_canvas, main)
+        
         # === SECTION HEADER ===
-        hdr = tk.Frame(main, bg=self.design.get_color("bg_primary"))
-        hdr.pack(fill=tk.X, pady=(0, Spacing.LG))
-        tk.Label(
-            hdr, text=tr("tab_settings", "Settings"),
-            bg=self.design.get_color("bg_primary"),
-            fg=self.design.get_color("fg_primary"),
-            font=(Typography.FONT_FAMILY, Typography.SIZE_H1, "bold")
-        ).pack(anchor="w")
-        tk.Label(
-            hdr, text=tr("settings_subtitle", "Configure application preferences"),
-            bg=self.design.get_color("bg_primary"),
-            fg=self.design.get_color("fg_secondary"),
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION)
-        ).pack(anchor="w")
+        SectionHeader(
+            main, title=tr("tab_settings", "Settings"),
+            subtitle=tr("settings_subtitle", "Configure application preferences"),
+            dark_mode=self.dark_mode
+        ).pack(fill=tk.X, pady=(0, Spacing.LG))
         
         # === NETWORK CARD ===
         net_card = ModernCard(main, title=tr("settings_network", "Network"), dark_mode=self.dark_mode)
@@ -2746,22 +2766,14 @@ class EasyCutApp:
         main.pack(fill=tk.BOTH, expand=True, pady=Spacing.LG)
         
         # === SECTION HEADER ===
-        hdr_bg = self.design.get_color("bg_primary")
-        hdr = tk.Frame(main, bg=hdr_bg)
-        hdr.pack(fill=tk.X, pady=(0, Spacing.LG))
-        tk.Label(
-            hdr, text=tr("about_title", "EasyCut"),
-            bg=hdr_bg, fg=self.design.get_color("fg_primary"),
-            font=(Typography.FONT_FAMILY, Typography.SIZE_H1, "bold")
-        ).pack(anchor="w")
-        tk.Label(
-            hdr, text=tr("about_subtitle", "Professional YouTube Downloader & Audio Converter"),
-            bg=hdr_bg, fg=self.design.get_color("fg_secondary"),
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION)
-        ).pack(anchor="w")
+        SectionHeader(
+            main, title=tr("about_title", "EasyCut"),
+            subtitle=tr("about_subtitle", "Professional YouTube Downloader & Audio Converter"),
+            dark_mode=self.dark_mode
+        ).pack(fill=tk.X, pady=(0, Spacing.LG))
         
         # === LEGAL DISCLAIMER CARD ===
-        disclaimer_card = ModernCard(main, title="⚠️ " + tr("about_section_legal", "Legal Notice - Personal Use Only"), dark_mode=self.dark_mode)
+        disclaimer_card = ModernCard(main, title="⚠️ " + tr("about_section_legal", "Legal Notice - Personal Use Only"), dark_mode=self.dark_mode, accent_color=self.design.get_color("error"))
         disclaimer_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         disclaimer_bg = self.design.get_color("warning") if not self.dark_mode else "#3d2f00"
@@ -2799,7 +2811,7 @@ class EasyCutApp:
         info_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         info_data = [
-            ("Version", "1.3.0"),
+            ("Version", "1.4.0"),
             ("Author", "Deko Costa"),
             ("License", "GPL-3.0"),
             ("Release", "2026")

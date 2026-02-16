@@ -137,7 +137,18 @@ If you find EasyCut useful, consider:
 
 ## 📝 Version History
 
-### v1.3.0 (Current)
+### v1.4.0 (Current)
+- Complete visual UI/UX overhaul with refined design system
+- New color palette: deep blue-tinted dark theme with vibrant accents
+- New components: SectionHeader, StatusDot, Tooltip, Badge, Divider
+- Redesigned header with version pill badge and two-tone border
+- Redesigned sidebar with pill-shaped indicators and hover effects
+- Colored log levels (INFO, ERROR, WARNING, DEBUG, SUCCESS)
+- StatusBar with dot indicator and professional styling
+- Fixed Settings tab canvas scrolling bug
+- Better typography, spacing, and elevation tokens
+
+### v1.3.0
 - OAuth browser auto-close after 3 seconds (fixed HTML content-type for JS execution)
 - 5 new languages: Spanish, French, German, Italian, Japanese (426 keys each)
 - Language selector expanded to 7 languages in UI

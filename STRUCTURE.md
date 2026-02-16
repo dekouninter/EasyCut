@@ -43,8 +43,8 @@ EasyCut/
 │   ├── oauth_manager.py    # OAuth authentication
 │   ├── i18n.py             # Internationalization (7 languages: EN/PT/ES/FR/DE/IT/JA)
 │   ├── ui_enhanced.py      # Enhanced UI components
-│   ├── design_system.py    # Design system constants
-│   ├── modern_components.py # Modern UI widgets
+│   ├── design_system.py    # Design system v2.0 (ColorPalette, Typography, Spacing, Elevation, BorderRadius, ModernTheme)
+│   ├── modern_components.py # Modern UI widgets (ModernButton, ModernCard, SectionHeader, StatusDot, Tooltip, Badge, Divider)
 │   ├── icon_manager.py     # Icon management
 │   ├── font_loader.py      # Font loading
 │   └── donation_system.py  # Donation integration
@@ -145,4 +145,4 @@ python scripts/check_installation.py
 
 ---
 
-**Last Updated:** v1.3.0 (February 2026)
+**Last Updated:** v1.4.0 (February 2026)

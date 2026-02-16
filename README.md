@@ -1,6 +1,6 @@
 # 🎬 EasyCut - Professional YouTube Downloader
 
-![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
 ![Author](https://img.shields.io/badge/author-Deko%20Costa-brightgreen.svg)
 
@@ -54,6 +54,22 @@ The standalone executable includes everything:
 ### For Developers
 
 Want to contribute or run from source? See [Installation](#installation) below.
+
+---
+
+### 🆕 What's New in v1.4.0
+
+**Complete Visual UI/UX Overhaul:**
+- 🎨 New refined color palette — deep blue-tinted dark theme with vibrant accents
+- 🏗️ New design system — Elevation, BorderRadius tokens; improved Typography & Spacing
+- 🧩 New components — SectionHeader, StatusDot, Tooltip, Badge, Divider
+- 🖥️ Redesigned header — version pill badge, two-tone border, Tooltip on theme toggle
+- 📁 Redesigned sidebar — pill-shaped indicators, hover effects, bold active text
+- 📋 Colored log levels — INFO (blue), ERROR (red), WARNING (amber), DEBUG (gray), SUCCESS (green)
+- 🔐 Modernized login banner — accent left border, StatusDot indicator, better layout
+- 🃏 Accent-colored cards — visual hierarchy for primary action areas
+- 🛠️ Fixed Settings tab canvas scrolling bug (missing width resize binding)
+- 🔧 StatusBar with dot indicator and professional "v1.4.0 Professional" label
 
 ---
 

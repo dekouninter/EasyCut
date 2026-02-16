@@ -17,7 +17,7 @@ TRANSLATIONS = {
     "en": {
         # Application Titles and Headers
         "app_title": "EasyCut",
-        "version": "1.3.0",
+        "version": "1.4.0",
         
         # Menu and Shortcuts
         "menu_file": "File",
@@ -261,7 +261,7 @@ TRANSLATIONS = {
         "about_title": "EasyCut",
         "about_description": "EasyCut is a simple and secure YouTube video downloader with support for batch downloads and audio extraction.",
         "about_author": "Author: Deko Costa",
-        "about_version_info": "Version 1.3.0 - Professional Edition",
+        "about_version_info": "Version 1.4.0 - Professional Edition",
         "about_github": "GitHub: https://github.com/dekouninter/EasyCut",
         "about_support": "Support: buymeacoffee.com/dekocosta | livepix.gg/dekocosta",
         "about_license": "License: GPL-3.0",
@@ -543,7 +543,7 @@ TRANSLATIONS = {
     "pt": {
         # Títulos e cabeçalhos
         "app_title": "EasyCut",
-        "version": "1.3.0",
+        "version": "1.4.0",
         
         # Menu e atalhos
         "menu_file": "Arquivo",
@@ -787,7 +787,7 @@ TRANSLATIONS = {
         "about_title": "EasyCut",
         "about_description": "EasyCut é um simples e seguro baixador de vídeos YouTube com suporte a downloads em lote e extração de áudio.",
         "about_author": "Autor: Deko Costa",
-        "about_version_info": "Versão 1.3.0 - Edição Profissional",
+        "about_version_info": "Versão 1.4.0 - Edição Profissional",
         "about_github": "GitHub: https://github.com/dekouninter/EasyCut",
         "about_license": "Licença: GPL-3.0",
         "about_support": "Apoie: buymeacoffee.com/dekocosta | livepix.gg/dekocosta",
@@ -1070,7 +1070,7 @@ TRANSLATIONS = {
     "es": {
         # Títulos y encabezados
         "app_title": "EasyCut",
-        "version": "1.3.0",
+        "version": "1.4.0",
         "menu_file": "Archivo",
         "menu_edit": "Editar",
         "menu_view": "Ver",
@@ -1287,7 +1287,7 @@ TRANSLATIONS = {
         "about_title": "EasyCut",
         "about_description": "EasyCut es un descargador de videos de YouTube simple y seguro con soporte para descargas en lote y extracción de audio.",
         "about_author": "Autor: Deko Costa",
-        "about_version_info": "Versión 1.3.0 - Edición Profesional",
+        "about_version_info": "Versión 1.4.0 - Edición Profesional",
         "about_github": "GitHub: https://github.com/dekouninter/EasyCut",
         "about_support": "Apoyo: buymeacoffee.com/dekocosta | livepix.gg/dekocosta",
         "about_license": "Licencia: GPL-3.0",
@@ -1520,7 +1520,7 @@ TRANSLATIONS = {
     "fr": {
         # Titres et en-têtes
         "app_title": "EasyCut",
-        "version": "1.3.0",
+        "version": "1.4.0",
         "menu_file": "Fichier",
         "menu_edit": "Éditer",
         "menu_view": "Affichage",
@@ -1737,7 +1737,7 @@ TRANSLATIONS = {
         "about_title": "EasyCut",
         "about_description": "EasyCut est un téléchargeur de vidéos YouTube simple et sécurisé avec support des téléchargements en lot et extraction audio.",
         "about_author": "Auteur : Deko Costa",
-        "about_version_info": "Version 1.3.0 - Édition Professionnelle",
+        "about_version_info": "Version 1.4.0 - Édition Professionnelle",
         "about_github": "GitHub : https://github.com/dekouninter/EasyCut",
         "about_support": "Soutien : buymeacoffee.com/dekocosta | livepix.gg/dekocosta",
         "about_license": "Licence : GPL-3.0",
@@ -1970,7 +1970,7 @@ TRANSLATIONS = {
     "de": {
         # Titel und Überschriften
         "app_title": "EasyCut",
-        "version": "1.3.0",
+        "version": "1.4.0",
         "menu_file": "Datei",
         "menu_edit": "Bearbeiten",
         "menu_view": "Ansicht",
@@ -2187,7 +2187,7 @@ TRANSLATIONS = {
         "about_title": "EasyCut",
         "about_description": "EasyCut ist ein einfacher und sicherer YouTube-Video-Downloader mit Unterstützung für Stapel-Downloads und Audio-Extraktion.",
         "about_author": "Autor: Deko Costa",
-        "about_version_info": "Version 1.3.0 - Professionelle Edition",
+        "about_version_info": "Version 1.4.0 - Professionelle Edition",
         "about_github": "GitHub: https://github.com/dekouninter/EasyCut",
         "about_support": "Unterstützung: buymeacoffee.com/dekocosta | livepix.gg/dekocosta",
         "about_license": "Lizenz: GPL-3.0",
@@ -2420,7 +2420,7 @@ TRANSLATIONS = {
     "it": {
         # Titoli e intestazioni
         "app_title": "EasyCut",
-        "version": "1.3.0",
+        "version": "1.4.0",
         "menu_file": "File",
         "menu_edit": "Modifica",
         "menu_view": "Visualizza",
@@ -2637,7 +2637,7 @@ TRANSLATIONS = {
         "about_title": "EasyCut",
         "about_description": "EasyCut è un downloader di video YouTube semplice e sicuro con supporto per download in lotto ed estrazione audio.",
         "about_author": "Autore: Deko Costa",
-        "about_version_info": "Versione 1.3.0 - Edizione Professionale",
+        "about_version_info": "Versione 1.4.0 - Edizione Professionale",
         "about_github": "GitHub: https://github.com/dekouninter/EasyCut",
         "about_support": "Supporto: buymeacoffee.com/dekocosta | livepix.gg/dekocosta",
         "about_license": "Licenza: GPL-3.0",
@@ -2870,7 +2870,7 @@ TRANSLATIONS = {
     "ja": {
         # タイトルとヘッダー
         "app_title": "EasyCut",
-        "version": "1.3.0",
+        "version": "1.4.0",
         "menu_file": "ファイル",
         "menu_edit": "編集",
         "menu_view": "表示",
@@ -3087,7 +3087,7 @@ TRANSLATIONS = {
         "about_title": "EasyCut",
         "about_description": "EasyCutは一括ダウンロードとオーディオ抽出に対応したシンプルで安全なYouTube動画ダウンローダーです。",
         "about_author": "作者：Deko Costa",
-        "about_version_info": "バージョン 1.3.0 - プロフェッショナルエディション",
+        "about_version_info": "バージョン 1.4.0 - プロフェッショナルエディション",
         "about_github": "GitHub: https://github.com/dekouninter/EasyCut",
         "about_support": "サポート: buymeacoffee.com/dekocosta | livepix.gg/dekocosta",
         "about_license": "ライセンス: GPL-3.0",

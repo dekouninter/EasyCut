@@ -1,9 +1,10 @@
 """
-EasyCut Design System
-Clean Minimal Design Tokens — Steel Blue Accent
+EasyCut Design System v2.0
+Modern Glassmorphic Design Tokens — Refined Dark/Light Themes
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
+Version: 1.4.0
 """
 
 from typing import Dict
@@ -15,130 +16,180 @@ except ImportError:
 
 
 class ColorPalette:
-    """Clean Minimal color palette — VS Code inspired"""
+    """Refined color palettes — Glassmorphic Dark & Clean Light"""
     
-    # === DARK THEME — VS Code Dark ===
+    # === DARK THEME — Deep Blue-tinted ===
     DARK = {
-        # Backgrounds
-        "bg_primary":    "#1E1E1E",    # Main background
-        "bg_secondary":  "#252526",    # Sidebar, secondary panels
-        "bg_tertiary":   "#2D2D2D",    # Cards, elevated surfaces
-        "bg_elevated":   "#333333",    # Hover states, modals
-        "bg_hover":      "#3C3C3C",    # Hover highlight
+        # Backgrounds — Blue-tinted dark with depth layers
+        "bg_primary":    "#13151C",    # Deep background
+        "bg_secondary":  "#191C26",    # Sidebar, panels
+        "bg_tertiary":   "#1F2230",    # Cards, surfaces
+        "bg_elevated":   "#262A38",    # Modals, dropdowns, hover surfaces
+        "bg_hover":      "#2C3042",    # Hover highlight
+        "bg_input":      "#171A24",    # Input field background
+        "bg_overlay":    "#0D0F14CC",  # Overlay backdrop (80% opacity hex)
         
-        # Foregrounds
-        "fg_primary":    "#E4E4E4",    # Main text
-        "fg_secondary":  "#A0A0A0",    # Secondary text, labels
-        "fg_tertiary":   "#6A6A6A",    # Placeholders, disabled text
-        "fg_disabled":   "#4A4A4A",    # Disabled elements
+        # Foregrounds — Cool white hierarchy
+        "fg_primary":    "#E8ECF4",    # Main text — high contrast
+        "fg_secondary":  "#8B92A8",    # Secondary text, labels
+        "fg_tertiary":   "#5C6278",    # Placeholders, disabled
+        "fg_disabled":   "#3D4258",    # Disabled elements
+        "fg_inverse":    "#13151C",    # Text on accent buttons
         
-        # Accent — Steel Blue
-        "accent_primary": "#4A90D9",   # Buttons, links, focus
-        "accent_secondary": "#5BA0E9", # Lighter variant
-        "accent_hover":   "#5BA0E9",   # Accent hover state
-        "accent_pressed": "#3A80C9",   # Accent pressed state
-        "accent_muted":   "#4A90D920", # 12% opacity for backgrounds
+        # Accent — Vibrant Blue-Violet
+        "accent_primary":   "#6C8EEF",   # Primary action color
+        "accent_secondary": "#7E9DF2",   # Lighter variant
+        "accent_hover":     "#7E9DF2",   # Hover state
+        "accent_pressed":   "#5A7ADB",   # Pressed state
+        "accent_muted":     "#6C8EEF18", # 9% opacity for subtle backgrounds
+        "accent_glow":      "#6C8EEF30", # 19% opacity for glow/focus rings
         
-        # Semantics
-        "success":     "#4CAF50",
-        "success_bg":  "#1B3A1F",
-        "warning":     "#FFA726",
-        "warning_bg":  "#3E2E1A",
-        "error":       "#EF5350",
-        "error_bg":    "#3A1F1F",
-        "info":        "#42A5F5",
-        "info_bg":     "#1A2E3E",
+        # Semantics — Vibrant flat colors
+        "success":       "#4ADE80",
+        "success_bg":    "#132B1F",
+        "success_muted": "#4ADE8025",
+        "warning":       "#FBBF24",
+        "warning_bg":    "#2B2211",
+        "warning_muted": "#FBBF2425",
+        "error":         "#F87171",
+        "error_bg":      "#2B1515",
+        "error_hover":   "#EF4444",
+        "error_pressed": "#DC2626",
+        "error_muted":   "#F8717125",
+        "info":          "#60A5FA",
+        "info_bg":       "#15202B",
+        "info_muted":    "#60A5FA25",
         
-        # Borders
-        "border":       "#3C3C3C",
-        "border_focus":  "#4A90D9",
-        "border_hover":  "#505050",
+        # Borders — Subtle
+        "border":        "#262A38",
+        "border_focus":  "#6C8EEF",
+        "border_hover":  "#353A4E",
+        "border_subtle": "#1F2230",
         
         # Shadow
-        "shadow":       "#00000040",
+        "shadow":        "#00000060",
         
         # Icons
-        "icon_primary": "#E4E4E4",
-        "icon_muted":   "#A0A0A0",
-        "icon_accent":  "#4A90D9",
+        "icon_primary":  "#E8ECF4",
+        "icon_muted":    "#8B92A8",
+        "icon_accent":   "#6C8EEF",
+        
+        # Sidebar specific
+        "sidebar_bg":       "#14161E",
+        "sidebar_active":   "#1E2234",
+        "sidebar_indicator": "#6C8EEF",
+        "sidebar_hover":    "#1A1E2C",
+        
+        # Header
+        "header_bg":       "#14161E",
+        "header_border":   "#1F2230",
     }
     
-    # === LIGHT THEME — Clean White ===
+    # === LIGHT THEME — Clean White with Blue accents ===
     LIGHT = {
         # Backgrounds
-        "bg_primary":    "#FFFFFF",
-        "bg_secondary":  "#F5F5F5",
-        "bg_tertiary":   "#FAFAFA",
+        "bg_primary":    "#F8F9FC",
+        "bg_secondary":  "#F0F1F7",
+        "bg_tertiary":   "#FFFFFF",
         "bg_elevated":   "#FFFFFF",
-        "bg_hover":      "#EEEEEE",
+        "bg_hover":      "#E8EAF2",
+        "bg_input":      "#FFFFFF",
+        "bg_overlay":    "#F8F9FCCC",
         
         # Foregrounds
-        "fg_primary":    "#1A1A1A",
-        "fg_secondary":  "#555555",
-        "fg_tertiary":   "#888888",
-        "fg_disabled":   "#BBBBBB",
+        "fg_primary":    "#1A1D2E",
+        "fg_secondary":  "#4A5068",
+        "fg_tertiary":   "#8890A5",
+        "fg_disabled":   "#B8BDD0",
+        "fg_inverse":    "#FFFFFF",
         
-        # Accent — Steel Blue (same in both themes)
-        "accent_primary": "#4A90D9",
-        "accent_secondary": "#3A80C9",
-        "accent_hover":   "#3A80C9",
-        "accent_pressed": "#2A70B9",
-        "accent_muted":   "#4A90D915",
+        # Accent — Slightly deeper blue for contrast
+        "accent_primary":   "#5B78E0",
+        "accent_secondary": "#4A68D0",
+        "accent_hover":     "#4A68D0",
+        "accent_pressed":   "#3A58C0",
+        "accent_muted":     "#5B78E012",
+        "accent_glow":      "#5B78E028",
         
-        # Semantics (darker for contrast on white)
-        "success":     "#2E7D32",
-        "success_bg":  "#E8F5E9",
-        "warning":     "#E65100",
-        "warning_bg":  "#FFF3E0",
-        "error":       "#C62828",
-        "error_bg":    "#FFEBEE",
-        "info":        "#1565C0",
-        "info_bg":     "#E3F2FD",
+        # Semantics — Richer for light backgrounds
+        "success":       "#22C55E",
+        "success_bg":    "#ECFDF5",
+        "success_muted": "#22C55E18",
+        "warning":       "#F59E0B",
+        "warning_bg":    "#FFFBEB",
+        "warning_muted": "#F59E0B18",
+        "error":         "#EF4444",
+        "error_bg":      "#FEF2F2",
+        "error_hover":   "#DC2626",
+        "error_pressed": "#B91C1C",
+        "error_muted":   "#EF444418",
+        "info":          "#3B82F6",
+        "info_bg":       "#EFF6FF",
+        "info_muted":    "#3B82F618",
         
         # Borders
-        "border":       "#E0E0E0",
-        "border_focus":  "#4A90D9",
-        "border_hover":  "#CCCCCC",
+        "border":        "#E2E4EF",
+        "border_focus":  "#5B78E0",
+        "border_hover":  "#C8CCDC",
+        "border_subtle": "#ECEDF5",
         
         # Shadow
-        "shadow":       "#00000015",
+        "shadow":        "#1A1D2E0A",
         
         # Icons
-        "icon_primary": "#1A1A1A",
-        "icon_muted":   "#555555",
-        "icon_accent":  "#4A90D9",
+        "icon_primary":  "#1A1D2E",
+        "icon_muted":    "#4A5068",
+        "icon_accent":   "#5B78E0",
+        
+        # Sidebar
+        "sidebar_bg":       "#F0F1F7",
+        "sidebar_active":   "#FFFFFF",
+        "sidebar_indicator": "#5B78E0",
+        "sidebar_hover":    "#E8EAF2",
+        
+        # Header
+        "header_bg":       "#FFFFFF",
+        "header_border":   "#E2E4EF",
     }
 
 
 class Typography:
-    """Typography scale — Clean Minimal hierarchy"""
+    """Typography system — Modern hierarchy with comfortable sizes"""
     
     FONT_FAMILY = LOADED_FONT_FAMILY
     FONT_MONO = "Consolas"
+    FONT_EMOJI = "Segoe UI Emoji"
     
-    # Sizes
-    SIZE_HERO    = 32    # App title only
-    SIZE_H1      = 24    # Section headers
-    SIZE_H2      = 18    # Card titles
-    SIZE_H3      = 15    # Subsection titles
-    SIZE_BODY    = 13    # Default body text, buttons, inputs
+    # Sizes — Slightly increased for better readability
+    SIZE_DISPLAY = 36    # Hero banners only
+    SIZE_H1      = 26    # Page titles
+    SIZE_H2      = 20    # Section headers
+    SIZE_H3      = 16    # Card titles, subsections
+    SIZE_BODY    = 13    # Default body text
+    SIZE_BODY_SM = 12    # Compact body text
     SIZE_CAPTION = 11    # Captions, timestamps
     SIZE_TINY    = 9     # Badges, version numbers
     
-    # Legacy alias used by batch_text font reference
+    # Legacy aliases
     SIZE_MD   = SIZE_BODY
+    SIZE_HERO = SIZE_DISPLAY
     
     # Weights
-    WEIGHT_BOLD     = "bold"
-    WEIGHT_NORMAL   = "normal"
+    WEIGHT_BOLD   = "bold"
+    WEIGHT_NORMAL = "normal"
+    
+    # Line heights (approximate — Tkinter doesn't support directly)
+    LINE_HEIGHT_TIGHT  = 1.2
+    LINE_HEIGHT_NORMAL = 1.5
+    LINE_HEIGHT_LOOSE  = 1.8
 
 
 class Spacing:
-    """4px grid spacing system"""
+    """Refined 4px grid spacing system with more granularity"""
     
     BASE = 4
     
-    XXS  = 2     # Micro gaps
+    XXS  = 2     # Micro gaps (icon internal)
     XS   = 4     # Icon padding, tight
     SM   = 8     # Between inline elements
     MD   = 12    # Card internal padding, rows
@@ -147,17 +198,43 @@ class Spacing:
     XXL  = 32    # Page margins
     XXXL = 48    # Large page gaps
     
-    # Padding shortcut (used by button styles)
-    PADDING_NORMAL      = (MD, LG)       # 12, 16
+    # Component-specific spacing
+    CARD_PADDING   = 16   # Internal card padding
+    CARD_GAP       = 12   # Gap between stacked cards
+    SIDEBAR_ITEM_H = 44   # Sidebar navigation item height
+    HEADER_HEIGHT  = 52   # Header height
+    
+    # Padding shortcut (legacy)
+    PADDING_NORMAL = (MD, LG)
+
+
+class Elevation:
+    """Elevation/depth levels for visual hierarchy"""
+    
+    LEVEL_0 = 0   # Flat — background surfaces
+    LEVEL_1 = 1   # Subtle — cards, panels
+    LEVEL_2 = 2   # Raised — dropdowns, tooltips
+    LEVEL_3 = 3   # Floating — modals, popovers
+
+
+class BorderRadius:
+    """Border radius tokens (for Canvas-drawn elements)"""
+    
+    NONE = 0
+    SM   = 4
+    MD   = 8
+    LG   = 12
+    XL   = 16
+    PILL = 999
 
 
 class Icons:
-    """Icon sizing"""
+    """Icon sizing system"""
     
     SIZE_XS  = 14
     SIZE_SM  = 18
     SIZE_MD  = 22
-    SIZE_LG  = 26
+    SIZE_LG  = 28
     SIZE_XL  = 36
     SIZE_XXL = 52
 
@@ -170,20 +247,22 @@ class DesignTokens:
         self.colors = ColorPalette.DARK if dark_mode else ColorPalette.LIGHT
         self.typography = Typography
         self.spacing = Spacing
+        self.elevation = Elevation
+        self.radius = BorderRadius
         self.icons = Icons
     
     def get_color(self, key: str) -> str:
         """Get color from current theme"""
-        return self.colors.get(key, "#000000")
+        return self.colors.get(key, "#FF00FF")  # Magenta = missing token
     
     def toggle_mode(self):
         """Toggle between dark and light mode"""
         self.dark_mode = not self.dark_mode
         self.colors = ColorPalette.DARK if self.dark_mode else ColorPalette.LIGHT
-    
+
 
 class ModernTheme:
-    """Theme implementation for ttk widgets"""
+    """Theme implementation for ttk widgets — v2.0"""
     
     def __init__(self, dark_mode: bool = True, font_family: str = None):
         self.tokens = DesignTokens(dark_mode)
@@ -196,32 +275,44 @@ class ModernTheme:
     
     def get_ttk_style_config(self) -> Dict:
         """Get complete ttk style configuration"""
-        colors = self.tokens.colors
+        c = self.tokens.colors
         sp = Spacing
         ty = Typography
         
         return {
-            # === TFrame ===
+            # ══════════════════════════════════════
+            # FRAMES
+            # ══════════════════════════════════════
             "TFrame": {
                 "configure": {
-                    "background": colors["bg_primary"],
+                    "background": c["bg_primary"],
                     "borderwidth": 0,
                 }
             },
             
             "Card.TFrame": {
                 "configure": {
-                    "background": colors["bg_tertiary"],
+                    "background": c["bg_tertiary"],
                     "borderwidth": 1,
                     "relief": "solid",
                 }
             },
             
-            # === TLabel ===
+            "Elevated.TFrame": {
+                "configure": {
+                    "background": c["bg_elevated"],
+                    "borderwidth": 1,
+                    "relief": "solid",
+                }
+            },
+            
+            # ══════════════════════════════════════
+            # LABELS
+            # ══════════════════════════════════════
             "TLabel": {
                 "configure": {
-                    "background": colors["bg_primary"],
-                    "foreground": colors["fg_primary"],
+                    "background": c["bg_primary"],
+                    "foreground": c["fg_primary"],
                     "font": self._font(ty.SIZE_BODY),
                 }
             },
@@ -229,32 +320,49 @@ class ModernTheme:
             "Title.TLabel": {
                 "configure": {
                     "font": self._font(ty.SIZE_H1, "bold"),
-                    "foreground": colors["fg_primary"],
+                    "foreground": c["fg_primary"],
                 }
             },
             
             "Subtitle.TLabel": {
                 "configure": {
                     "font": self._font(ty.SIZE_H3, "bold"),
-                    "foreground": colors["fg_secondary"],
+                    "foreground": c["fg_secondary"],
                 }
             },
             
             "Caption.TLabel": {
                 "configure": {
                     "font": self._font(ty.SIZE_CAPTION),
-                    "foreground": colors["fg_tertiary"],
+                    "foreground": c["fg_tertiary"],
                 }
             },
             
-            # === TButton ===
+            "Accent.TLabel": {
+                "configure": {
+                    "font": self._font(ty.SIZE_BODY, "bold"),
+                    "foreground": c["accent_primary"],
+                }
+            },
+            
+            "Badge.TLabel": {
+                "configure": {
+                    "font": self._font(ty.SIZE_TINY, "bold"),
+                    "foreground": c["accent_primary"],
+                    "padding": (6, 2),
+                }
+            },
+            
+            # ══════════════════════════════════════
+            # BUTTONS — Refined with better padding
+            # ══════════════════════════════════════
             "TButton": {
                 "configure": {
-                    "background": colors["accent_primary"],
-                    "foreground": "#FFFFFF",
-                    "bordercolor": colors["accent_primary"],
-                    "darkcolor": colors["accent_primary"],
-                    "lightcolor": colors["accent_primary"],
+                    "background": c["accent_primary"],
+                    "foreground": c.get("fg_inverse", "#FFFFFF"),
+                    "bordercolor": c["accent_primary"],
+                    "darkcolor": c["accent_primary"],
+                    "lightcolor": c["accent_primary"],
                     "borderwidth": 0,
                     "focusthickness": 0,
                     "focuscolor": "none",
@@ -263,73 +371,97 @@ class ModernTheme:
                 },
                 "map": {
                     "background": [
-                        ("active", colors["accent_hover"]),
-                        ("pressed", colors["accent_pressed"]),
-                        ("disabled", colors["bg_hover"]),
+                        ("active", c["accent_hover"]),
+                        ("pressed", c["accent_pressed"]),
+                        ("disabled", c["bg_hover"]),
                     ],
                     "foreground": [
-                        ("disabled", colors["fg_disabled"]),
+                        ("disabled", c["fg_disabled"]),
                     ],
                 }
             },
             
             "Secondary.TButton": {
                 "configure": {
-                    "background": colors["bg_tertiary"],
-                    "foreground": colors["fg_primary"],
-                    "bordercolor": colors["border"],
+                    "background": c["bg_tertiary"],
+                    "foreground": c["fg_primary"],
+                    "bordercolor": c["border"],
+                    "darkcolor": c["bg_tertiary"],
+                    "lightcolor": c["bg_tertiary"],
+                    "borderwidth": 1,
+                    "focusthickness": 0,
+                    "focuscolor": "none",
+                    "padding": (sp.LG, sp.MD),
+                    "font": self._font(ty.SIZE_BODY),
                 },
                 "map": {
                     "background": [
-                        ("active", colors["bg_hover"]),
-                        ("pressed", colors["bg_hover"]),
+                        ("active", c["bg_hover"]),
+                        ("pressed", c["bg_hover"]),
+                        ("disabled", c["bg_hover"]),
+                    ],
+                    "foreground": [
+                        ("disabled", c["fg_disabled"]),
                     ],
                 }
             },
             
             "Outline.TButton": {
                 "configure": {
-                    "background": colors["bg_primary"],
-                    "foreground": colors["accent_primary"],
-                    "bordercolor": colors["accent_primary"],
+                    "background": c["bg_primary"],
+                    "foreground": c["accent_primary"],
+                    "bordercolor": c["accent_primary"],
+                    "darkcolor": c["bg_primary"],
+                    "lightcolor": c["bg_primary"],
                     "borderwidth": 2,
+                    "focusthickness": 0,
+                    "focuscolor": "none",
+                    "padding": (sp.LG, sp.MD),
+                    "font": self._font(ty.SIZE_BODY),
                 },
                 "map": {
                     "background": [
-                        ("active", colors["bg_hover"]),
-                        ("pressed", colors["bg_tertiary"]),
+                        ("active", c["accent_muted"]),
+                        ("pressed", c["accent_muted"]),
+                        ("disabled", c["bg_hover"]),
                     ],
                     "foreground": [
-                        ("disabled", colors["fg_disabled"]),
+                        ("disabled", c["fg_disabled"]),
                     ],
                 }
             },
-
+            
             "IconOnly.Outline.TButton": {
                 "configure": {
-                    "background": colors["bg_primary"],
-                    "foreground": colors["accent_primary"],
-                    "bordercolor": colors["accent_primary"],
+                    "background": c["bg_primary"],
+                    "foreground": c["accent_primary"],
+                    "bordercolor": c["accent_primary"],
+                    "darkcolor": c["bg_primary"],
+                    "lightcolor": c["bg_primary"],
                     "borderwidth": 2,
                     "padding": (sp.XS, sp.XS),
                     "anchor": "center",
+                    "focusthickness": 0,
+                    "focuscolor": "none",
                 },
                 "map": {
                     "background": [
-                        ("active", colors["bg_hover"]),
-                        ("pressed", colors["bg_tertiary"]),
+                        ("active", c["accent_muted"]),
+                        ("pressed", c["accent_muted"]),
                     ],
                     "foreground": [
-                        ("disabled", colors["fg_disabled"]),
+                        ("disabled", c["fg_disabled"]),
                     ],
                 }
             },
             
             "Ghost.TButton": {
                 "configure": {
-                    "background": colors["bg_primary"],
-                    "foreground": colors["accent_primary"],
-                    "bordercolor": colors["bg_primary"],
+                    "background": c["bg_primary"],
+                    "foreground": c["accent_primary"],
+                    "bordercolor": c["bg_primary"],
+                    "darkcolor": c["bg_primary"],
+                    "lightcolor": c["bg_primary"],
                     "borderwidth": 0,
                     "focusthickness": 0,
                     "focuscolor": "none",
@@ -338,20 +470,22 @@ class ModernTheme:
                 },
                 "map": {
                     "background": [
-                        ("active", colors["bg_hover"]),
-                        ("pressed", colors["bg_hover"]),
+                        ("active", c["bg_hover"]),
+                        ("pressed", c["bg_hover"]),
                     ],
                     "foreground": [
-                        ("disabled", colors["fg_disabled"]),
+                        ("disabled", c["fg_disabled"]),
                     ],
                 }
             },
             
             "Danger.TButton": {
                 "configure": {
-                    "background": colors["bg_primary"],
-                    "foreground": colors["error"],
-                    "bordercolor": colors["error"],
+                    "background": c["bg_primary"],
+                    "foreground": c["error"],
+                    "bordercolor": c["error"],
+                    "darkcolor": c["bg_primary"],
+                    "lightcolor": c["bg_primary"],
                     "borderwidth": 2,
                     "focusthickness": 0,
                     "focuscolor": "none",
@@ -360,20 +494,22 @@ class ModernTheme:
                 },
                 "map": {
                     "background": [
-                        ("active", colors["error_bg"]),
-                        ("pressed", colors["error_bg"]),
+                        ("active", c["error_muted"]),
+                        ("pressed", c["error_muted"]),
                     ],
                     "foreground": [
-                        ("disabled", colors["fg_disabled"]),
+                        ("disabled", c["fg_disabled"]),
                     ],
                 }
             },
             
             "DangerFilled.TButton": {
                 "configure": {
-                    "background": colors["error"],
+                    "background": c["error"],
                     "foreground": "#FFFFFF",
-                    "bordercolor": colors["error"],
+                    "bordercolor": c["error"],
+                    "darkcolor": c["error"],
+                    "lightcolor": c["error"],
                     "borderwidth": 0,
                     "focusthickness": 0,
                     "focuscolor": "none",
@@ -382,12 +518,37 @@ class ModernTheme:
                 },
                 "map": {
                     "background": [
-                        ("active", colors.get("error_hover", "#D32F2F")),
-                        ("pressed", colors.get("error_pressed", "#B71C1C")),
-                        ("disabled", colors["bg_hover"]),
+                        ("active", c.get("error_hover", "#DC2626")),
+                        ("pressed", c.get("error_pressed", "#B91C1C")),
+                        ("disabled", c["bg_hover"]),
                     ],
                     "foreground": [
-                        ("disabled", colors["fg_disabled"]),
+                        ("disabled", c["fg_disabled"]),
+                    ],
+                }
+            },
+            
+            "Success.TButton": {
+                "configure": {
+                    "background": c["success"],
+                    "foreground": c.get("fg_inverse", "#FFFFFF"),
+                    "bordercolor": c["success"],
+                    "darkcolor": c["success"],
+                    "lightcolor": c["success"],
+                    "borderwidth": 0,
+                    "focusthickness": 0,
+                    "focuscolor": "none",
+                    "padding": (sp.LG, sp.MD),
+                    "font": self._font(ty.SIZE_BODY, "bold"),
+                },
+                "map": {
+                    "background": [
+                        ("active", c["success"]),
+                        ("pressed", c["success"]),
+                        ("disabled", c["bg_hover"]),
+                    ],
+                    "foreground": [
+                        ("disabled", c["fg_disabled"]),
                     ],
                 }
             },
@@ -407,93 +568,117 @@ class ModernTheme:
                 }
             },
             
-            # === TEntry ===
+            # ══════════════════════════════════════
+            # ENTRY — Refined inputs
+            # ══════════════════════════════════════
             "TEntry": {
                 "configure": {
-                    "fieldbackground": colors["bg_secondary"],
-                    "foreground": colors["fg_primary"],
-                    "bordercolor": colors["border"],
-                    "darkcolor": colors["bg_secondary"],
-                    "lightcolor": colors["bg_secondary"],
-                    "insertcolor": colors["fg_primary"],
+                    "fieldbackground": c["bg_input"],
+                    "foreground": c["fg_primary"],
+                    "bordercolor": c["border"],
+                    "darkcolor": c["bg_input"],
+                    "lightcolor": c["bg_input"],
+                    "insertcolor": c["accent_primary"],
+                    "selectbackground": c["accent_primary"],
+                    "selectforeground": "#FFFFFF",
                     "borderwidth": 1,
                     "padding": (sp.MD, sp.SM),
                     "font": self._font(ty.SIZE_BODY),
                 },
                 "map": {
                     "bordercolor": [
-                        ("focus", colors["border_focus"]),
-                        ("hover", colors["border_hover"]),
+                        ("focus", c["border_focus"]),
+                        ("hover", c["border_hover"]),
                     ],
                     "fieldbackground": [
-                        ("disabled", colors["bg_hover"]),
+                        ("disabled", c["bg_hover"]),
                     ],
                 }
             },
             
-            # === TCombobox ===
+            # ══════════════════════════════════════
+            # COMBOBOX
+            # ══════════════════════════════════════
             "TCombobox": {
                 "configure": {
-                    "fieldbackground": colors["bg_secondary"],
-                    "background": colors["bg_secondary"],
-                    "foreground": colors["fg_primary"],
-                    "bordercolor": colors["border"],
-                    "arrowcolor": colors["fg_secondary"],
-                    "insertcolor": colors["fg_primary"],
-                    "selectbackground": colors["accent_primary"],
+                    "fieldbackground": c["bg_input"],
+                    "background": c["bg_input"],
+                    "foreground": c["fg_primary"],
+                    "bordercolor": c["border"],
+                    "arrowcolor": c["fg_secondary"],
+                    "insertcolor": c["accent_primary"],
+                    "selectbackground": c["accent_primary"],
                     "selectforeground": "#FFFFFF",
                     "padding": (sp.MD, sp.SM),
                     "font": self._font(ty.SIZE_BODY),
                 },
                 "map": {
                     "bordercolor": [
-                        ("focus", colors["border_focus"]),
-                        ("hover", colors["border_hover"]),
+                        ("focus", c["border_focus"]),
+                        ("hover", c["border_hover"]),
                     ],
                     "fieldbackground": [
-                        ("readonly", colors["bg_secondary"]),
-                        ("disabled", colors["bg_hover"]),
+                        ("readonly", c["bg_input"]),
+                        ("disabled", c["bg_hover"]),
                     ],
                     "foreground": [
-                        ("readonly", colors["fg_primary"]),
-                        ("disabled", colors["fg_disabled"]),
+                        ("readonly", c["fg_primary"]),
+                        ("disabled", c["fg_disabled"]),
                     ],
                 }
             },
             
-            # === TCheckbutton & TRadiobutton ===
+            # ══════════════════════════════════════
+            # CHECKBUTTON & RADIOBUTTON
+            # ══════════════════════════════════════
             "TCheckbutton": {
                 "configure": {
-                    "background": colors["bg_primary"],
-                    "foreground": colors["fg_primary"],
+                    "background": c["bg_primary"],
+                    "foreground": c["fg_primary"],
                     "font": self._font(ty.SIZE_BODY),
                     "padding": (sp.SM, sp.XS),
+                    "focuscolor": "none",
+                },
+                "map": {
+                    "background": [
+                        ("active", c["bg_primary"]),
+                    ],
                 }
             },
             
             "TRadiobutton": {
                 "configure": {
-                    "background": colors["bg_primary"],
-                    "foreground": colors["fg_primary"],
+                    "background": c["bg_primary"],
+                    "foreground": c["fg_primary"],
                     "font": self._font(ty.SIZE_BODY),
                     "padding": (sp.SM, sp.XS),
+                    "focuscolor": "none",
+                },
+                "map": {
+                    "background": [
+                        ("active", c["bg_primary"]),
+                    ],
                 }
             },
             
-            # === TNotebook (tabs hidden — sidebar handles navigation) ===
+            # ══════════════════════════════════════
+            # NOTEBOOK (tabs hidden — sidebar handles navigation)
+            # ══════════════════════════════════════
             "TNotebook": {
                 "configure": {
-                    "background": colors["bg_primary"],
+                    "background": c["bg_primary"],
                     "borderwidth": 0,
                     "tabmargins": (0, 0, 0, 0),
                 }
             },
             
-            # === TLabelframe ===
+            # ══════════════════════════════════════
+            # LABELFRAME — Refined borders
+            # ══════════════════════════════════════
             "TLabelframe": {
                 "configure": {
-                    "background": colors["bg_tertiary"],
-                    "bordercolor": colors["border"],
+                    "background": c["bg_tertiary"],
+                    "bordercolor": c["border"],
                     "borderwidth": 1,
                     "relief": "flat",
                 }
@@ -501,49 +686,115 @@ class ModernTheme:
             
             "TLabelframe.Label": {
                 "configure": {
-                    "background": colors["bg_tertiary"],
-                    "foreground": colors["fg_primary"],
+                    "background": c["bg_tertiary"],
+                    "foreground": c["fg_primary"],
                     "font": self._font(ty.SIZE_BODY, "bold"),
                 }
             },
             
-            # === TScrollbar (thin, rounded feel) ===
+            "Accent.TLabelframe": {
+                "configure": {
+                    "background": c["bg_tertiary"],
+                    "bordercolor": c["accent_primary"],
+                    "borderwidth": 2,
+                    "relief": "flat",
+                }
+            },
+            
+            # ══════════════════════════════════════
+            # SCROLLBAR — Thin & modern
+            # ══════════════════════════════════════
             "TScrollbar": {
                 "configure": {
-                    "background": colors["bg_hover"],
-                    "bordercolor": colors["bg_primary"],
-                    "troughcolor": colors["bg_secondary"],
-                    "arrowcolor": colors["fg_secondary"],
+                    "background": c["bg_hover"],
+                    "bordercolor": c["bg_primary"],
+                    "troughcolor": c["bg_secondary"],
+                    "arrowcolor": c["fg_tertiary"],
                     "borderwidth": 0,
                     "relief": "flat",
-                    "width": 10,
+                    "width": 8,
                 },
                 "map": {
                     "background": [
-                        ("active", colors["accent_primary"]),
-                        ("pressed", colors["accent_hover"]),
-                        ("!active", colors["bg_hover"]),
+                        ("active", c["accent_primary"]),
+                        ("pressed", c["accent_hover"]),
+                        ("!active", c["bg_hover"]),
                     ],
                 }
             },
             
-            # === TSeparator ===
+            # ══════════════════════════════════════
+            # SEPARATOR
+            # ══════════════════════════════════════
             "TSeparator": {
                 "configure": {
-                    "background": colors["border"],
+                    "background": c["border"],
                 }
             },
             
-            # === TProgressbar ===
+            # ══════════════════════════════════════
+            # PROGRESSBAR — Modern accent bar
+            # ══════════════════════════════════════
             "TProgressbar": {
                 "configure": {
-                    "background": colors["accent_primary"],
-                    "troughcolor": colors["bg_tertiary"],
-                    "bordercolor": colors["bg_tertiary"],
-                    "lightcolor": colors["accent_primary"],
-                    "darkcolor": colors["accent_primary"],
+                    "background": c["accent_primary"],
+                    "troughcolor": c["bg_tertiary"],
+                    "bordercolor": c["bg_tertiary"],
+                    "lightcolor": c["accent_primary"],
+                    "darkcolor": c["accent_primary"],
                     "borderwidth": 0,
-                    "thickness": 6,
+                    "thickness": 8,
+                }
+            },
+            
+            "Success.Horizontal.TProgressbar": {
+                "configure": {
+                    "background": c["success"],
+                    "troughcolor": c["bg_tertiary"],
+                    "bordercolor": c["bg_tertiary"],
+                    "lightcolor": c["success"],
+                    "darkcolor": c["success"],
+                    "borderwidth": 0,
+                    "thickness": 8,
+                }
+            },
+            
+            # ══════════════════════════════════════
+            # SPINBOX
+            # ══════════════════════════════════════
+            "TSpinbox": {
+                "configure": {
+                    "fieldbackground": c["bg_input"],
+                    "foreground": c["fg_primary"],
+                    "bordercolor": c["border"],
+                    "darkcolor": c["bg_input"],
+                    "lightcolor": c["bg_input"],
+                    "arrowcolor": c["fg_secondary"],
+                    "insertcolor": c["accent_primary"],
+                    "borderwidth": 1,
+                    "padding": (sp.SM, sp.XS),
+                    "font": self._font(ty.SIZE_BODY),
+                },
+                "map": {
+                    "bordercolor": [
+                        ("focus", c["border_focus"]),
+                        ("hover", c["border_hover"]),
+                    ],
+                    "fieldbackground": [
+                        ("disabled", c["bg_hover"]),
+                    ],
+                }
+            },
+            
+            # ══════════════════════════════════════
+            # SCALE
+            # ══════════════════════════════════════
+            "TScale": {
+                "configure": {
+                    "background": c["bg_primary"],
+                    "troughcolor": c["bg_tertiary"],
+                    "borderwidth": 0,
+                    "sliderthickness": 16,
                 }
             },
         }

@@ -5,7 +5,7 @@ Professional User Interface with Theme and Configuration Management
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
-Version: 1.3.0
+Version: 1.4.0
 License: GPL-3.0
 
 This module provides:
@@ -13,8 +13,8 @@ This module provides:
 - Configuration Manager: Persistent JSON-based settings
 - Login Popup: Professional authentication dialog
 - Language Selector: Multi-language dropdown/menu
-- Log Widget: Auto-scrolling logging display
-- Status Bar: Real-time application status
+- Log Widget: Auto-scrolling logging display with colored log levels
+- Status Bar: Real-time application status with dot indicator
 """
 
 import tkinter as tk
@@ -262,9 +262,18 @@ class ConfigManager:
 class LogWidget(tk.Text):
     """Custom Log Display Widget
     
-    Auto-scrolling text widget with automatic timestamp annotation
-    and theme color support for professional log presentation.
+    Auto-scrolling text widget with automatic timestamp annotation,
+    colored log levels, and theme color support.
     """
+    
+    # Log level colors (dark theme defaults)
+    LEVEL_COLORS = {
+        "INFO":    "#60A5FA",  # Blue
+        "ERROR":   "#F87171",  # Red
+        "WARNING": "#FBBF24",  # Amber
+        "DEBUG":   "#8B92A8",  # Gray
+        "SUCCESS": "#4ADE80",  # Green
+    }
     
     def __init__(self, parent, theme=None, **kwargs):
         """Initialize log widget
@@ -277,43 +286,75 @@ class LogWidget(tk.Text):
         super().__init__(parent, **kwargs)
         self.theme = theme
         self.configure_colors()
+        self._setup_tags()
+    
+    def _setup_tags(self):
+        """Setup text tags for colored log levels"""
+        for level, color in self.LEVEL_COLORS.items():
+            self.tag_configure(f"level_{level}", foreground=color)
+        
+        # Timestamp tag — subtle color
+        ts_color = "#5C6278"
+        if self.theme and hasattr(self.theme, 'get_color'):
+            ts_color = self.theme.get_color("fg_tertiary")
+        self.tag_configure("timestamp", foreground=ts_color)
     
     def configure_colors(self):
         """Configure widget colors based on current theme"""
         if self.theme:
-            # Support both old Theme and new DesignTokens
             if hasattr(self.theme, 'get'):
-                # Old Theme interface
                 bg_color = self.theme.get("bg_entry")
                 fg_color = self.theme.get("fg_entry")
             elif hasattr(self.theme, 'get_color'):
-                # New DesignTokens interface
-                bg_color = self.theme.get_color("bg_secondary")
+                bg_color = self.theme.get_color("bg_input")
                 fg_color = self.theme.get_color("fg_primary")
             else:
-                # Fallback — match current dark palette
-                bg_color = "#1E1E1E"
-                fg_color = "#E4E4E4"
+                bg_color = "#13151C"
+                fg_color = "#E8ECF4"
             
             self.config(
                 bg=bg_color,
                 fg=fg_color,
-                insertbackground=fg_color
+                insertbackground=fg_color,
+                selectbackground="#6C8EEF",
+                selectforeground="#FFFFFF",
+                relief="flat",
+                borderwidth=0,
+                padx=8,
+                pady=4,
             )
     
     def add_log(self, message, level="INFO"):
-        """Add timestamped log message to display
+        """Add timestamped log message with colored level indicator
         
         Args:
             message (str): Log message content
-            level (str): Log level (INFO, ERROR, WARNING, DEBUG)
+            level (str): Log level (INFO, ERROR, WARNING, DEBUG, SUCCESS)
         """
         import datetime
         timestamp = datetime.datetime.now().strftime("%H:%M:%S")
-        log_line = f"[{timestamp}] [{level}] {message}\n"
         
         self.config(state=tk.NORMAL)
-        self.insert(tk.END, log_line)
+        
+        # Insert timestamp with subtle color
+        start_idx = self.index(tk.END)
+        self.insert(tk.END, f"[{timestamp}] ")
+        end_idx = self.index(tk.END)
+        self.tag_add("timestamp", start_idx, end_idx)
+        
+        # Insert level tag with color
+        level_upper = level.upper()
+        start_idx = self.index(tk.END)
+        self.insert(tk.END, f"[{level_upper}] ")
+        end_idx = self.index(tk.END)
+        tag_name = f"level_{level_upper}"
+        if tag_name in [self.tag_names()]:
+            pass
+        self.tag_add(tag_name, start_idx, end_idx)
+        
+        # Insert message
+        self.insert(tk.END, f"{message}\n")
+        
         self.see(tk.END)
         self.config(state=tk.DISABLED)
     
@@ -327,8 +368,8 @@ class LogWidget(tk.Text):
 class StatusBar(ttk.Frame):
     """Professional Status Bar Component
     
-    Displays application status, login information, and version details.
-    Auto-updates with theme changes.
+    Displays application status with colored dot indicator,
+    login information, and version details.
     """
     
     def __init__(self, parent, theme=None, labels=None, **kwargs):
@@ -345,34 +386,50 @@ class StatusBar(ttk.Frame):
             "status_ready": "Ready",
             "login_not_logged": "Not logged in",
             "login_logged_prefix": "Logged in as",
-            "version_label": "v1.3.0 Professional",
+            "version_label": "v1.4.0 Professional",
         }
+        
+        # Status dot indicator
+        self.status_dot = tk.Canvas(self, width=8, height=8, highlightthickness=0)
+        self.status_dot.pack(side=tk.LEFT, padx=(8, 4), pady=0)
+        self._draw_dot("#4ADE80")  # Green = ready
         
         # Status label
         self.status_label = ttk.Label(self, text=self.labels.get("status_ready", "Ready"))
-        self.status_label.pack(side=tk.LEFT, padx=5)
+        self.status_label.pack(side=tk.LEFT, padx=(0, 8))
         
         # Vertical separator
-        ttk.Separator(self, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
+        ttk.Separator(self, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=4)
         
         # Login status label
         self.login_label = ttk.Label(self, text=self.labels.get("login_not_logged", "Not logged in"))
-        self.login_label.pack(side=tk.LEFT, padx=5)
+        self.login_label.pack(side=tk.LEFT, padx=8)
         
         # Spacer
         ttk.Frame(self).pack(side=tk.LEFT, expand=True)
         
-        # Version label
-        version_label = ttk.Label(self, text=self.labels.get("version_label", "v1.3.0 Professional"))
-        version_label.pack(side=tk.RIGHT, padx=5)
+        # Version label (caption style)
+        version_label = ttk.Label(
+            self, text=self.labels.get("version_label", "v1.4.0 Professional"),
+            style="Caption.TLabel"
+        )
+        version_label.pack(side=tk.RIGHT, padx=8)
     
-    def set_status(self, message):
-        """Update status message
+    def _draw_dot(self, color):
+        """Draw colored status dot"""
+        self.status_dot.delete("all")
+        self.status_dot.create_oval(1, 1, 7, 7, fill=color, outline="")
+    
+    def set_status(self, message, dot_color=None):
+        """Update status message and optional dot color
         
         Args:
             message (str): New status message
+            dot_color (str): Optional dot color (#hex or name)
         """
         self.status_label.config(text=message)
+        if dot_color:
+            self._draw_dot(dot_color)
     
     def set_login_status(self, logged_in, email=""):
         """Update login status display
