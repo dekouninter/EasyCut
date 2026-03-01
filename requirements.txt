@@ -1,0 +1,8 @@
+yt-dlp>=2024.3.10
+keyring>=24.0.0
+pillow>=10.0.0
+google-auth-oauthlib>=1.2.0
+google-auth-httplib2>=0.3.0
+requests>=2.32.0
+pywinstyles>=1.8
+darkdetect>=0.8.0
