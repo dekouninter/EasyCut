@@ -19,7 +19,6 @@ import os
 import sys
 import json
 import ctypes
-from ctypes import wintypes
 from pathlib import Path
 from typing import Optional, Callable
 import random
@@ -31,39 +30,45 @@ logger = logging.getLogger(__name__)
 # Windows Named Pipe utilities (for mpv IPC)
 # ──────────────────────────────────────────
 
-kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+if sys.platform == "win32":
+    from ctypes import wintypes
+    kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+else:
+    wintypes = None
+    kernel32 = None
 
 GENERIC_READ = 0x80000000
 GENERIC_WRITE = 0x40000000
 OPEN_EXISTING = 3
 INVALID_HANDLE_VALUE = ctypes.c_void_p(-1).value
 
-kernel32.CreateFileW.argtypes = [
-    wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
-    ctypes.c_void_p, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE
-]
-kernel32.CreateFileW.restype = wintypes.HANDLE
+if sys.platform == "win32" and kernel32 and wintypes:
+    kernel32.CreateFileW.argtypes = [
+        wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+        ctypes.c_void_p, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE
+    ]
+    kernel32.CreateFileW.restype = wintypes.HANDLE
 
-kernel32.WriteFile.argtypes = [
-    wintypes.HANDLE, ctypes.c_void_p, wintypes.DWORD,
-    ctypes.POINTER(wintypes.DWORD), ctypes.c_void_p
-]
-kernel32.WriteFile.restype = wintypes.BOOL
+    kernel32.WriteFile.argtypes = [
+        wintypes.HANDLE, ctypes.c_void_p, wintypes.DWORD,
+        ctypes.POINTER(wintypes.DWORD), ctypes.c_void_p
+    ]
+    kernel32.WriteFile.restype = wintypes.BOOL
 
-kernel32.ReadFile.argtypes = [
-    wintypes.HANDLE, ctypes.c_void_p, wintypes.DWORD,
-    ctypes.POINTER(wintypes.DWORD), ctypes.c_void_p
-]
-kernel32.ReadFile.restype = wintypes.BOOL
+    kernel32.ReadFile.argtypes = [
+        wintypes.HANDLE, ctypes.c_void_p, wintypes.DWORD,
+        ctypes.POINTER(wintypes.DWORD), ctypes.c_void_p
+    ]
+    kernel32.ReadFile.restype = wintypes.BOOL
 
-kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
-kernel32.CloseHandle.restype = wintypes.BOOL
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel32.CloseHandle.restype = wintypes.BOOL
 
-kernel32.SetNamedPipeHandleState.argtypes = [
-    wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD),
-    ctypes.c_void_p, ctypes.c_void_p
-]
-kernel32.SetNamedPipeHandleState.restype = wintypes.BOOL
+    kernel32.SetNamedPipeHandleState.argtypes = [
+        wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD),
+        ctypes.c_void_p, ctypes.c_void_p
+    ]
+    kernel32.SetNamedPipeHandleState.restype = wintypes.BOOL
 
 
 def _pipe_connect(pipe_name: str, timeout: float = 8.0) -> Optional[int]:

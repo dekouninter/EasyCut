@@ -17,12 +17,15 @@ Provides:
 import tkinter as tk
 from tkinter import ttk, messagebox
 import json
+import logging
 import os
 import datetime
 from pathlib import Path
 
-from design_system import DesignTokens, Typography, Spacing, Animation
+from design_system import DesignTokens, Typography, Spacing
+from __version__ import __version__ as APP_VERSION
 
+logger = logging.getLogger(__name__)
 
 # ═══════════════════════════════════════════════════════════════════
 #  LOGIN POPUP — Premium authentication dialog
@@ -38,13 +41,13 @@ class LoginPopup:
         self.callback = callback
         self.design = design or DesignTokens(dark_mode=True)
         self.labels = labels or {
-            "email_label": "Email/Usuario do YouTube:",
-            "password_label": "Senha:",
-            "notice": "Login usado apenas pelo yt-dlp. Credenciais nao sao armazenadas.",
-            "button_ok": "Entrar",
-            "button_cancel": "Cancelar",
-            "warning_title": "Aviso",
-            "warning_message": "Preencha todos os campos.",
+            "email_label": "YouTube Email/Username:",
+            "password_label": "Password:",
+            "notice": "Login used only by yt-dlp. Credentials are not stored.",
+            "button_ok": "Sign In",
+            "button_cancel": "Cancel",
+            "warning_title": "Warning",
+            "warning_message": "Please fill in all fields.",
         }
         self.result = None
     
@@ -202,10 +205,11 @@ class ConfigManager:
         self.config_dir.mkdir(exist_ok=True)
         self.config_file = self.config_dir / "config.json"
         self.history_file = self.config_dir / "history_downloads.json"
+        self._cache = None  # In-memory config cache
         self.default_config = {
             "dark_mode": True,
             "language": "en",
-            "output_folder": "downloads",
+            "output_dir": "downloads",
             "log_level": "INFO",
             # user preference: automatically convert downloads to
             # Premiere-compatible MP4/H264 files when requested
@@ -215,21 +219,26 @@ class ConfigManager:
         }
     
     def load(self):
+        if self._cache is not None:
+            return self._cache
         if self.config_file.exists():
             try:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    self._cache = json.load(f)
+                    return self._cache
             except Exception as e:
-                print(f"Error loading configuration: {e}")
-        return self.default_config.copy()
+                logger.error(f"Error loading configuration: {e}")
+        self._cache = self.default_config.copy()
+        return self._cache
     
     def save(self, config):
         try:
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
+            self._cache = config  # Update cache after save
             return True
         except Exception as e:
-            print(f"Error saving configuration: {e}")
+            logger.error(f"Error saving configuration: {e}")
             return False
     
     def get(self, key, default=None):
@@ -247,7 +256,7 @@ class ConfigManager:
                 with open(self.history_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except Exception as e:
-                print(f"Error loading history: {e}")
+                logger.error(f"Error loading history: {e}")
         return []
     
     def save_history(self, history):
@@ -257,7 +266,7 @@ class ConfigManager:
                 json.dump(history, f, indent=2, ensure_ascii=False)
             return True
         except Exception as e:
-            print(f"Error saving history: {e}")
+            logger.error(f"Error saving history: {e}")
             return False
     
     def add_to_history(self, item):
@@ -377,7 +386,7 @@ class StatusBar(ttk.Frame):
             "status_ready": "Ready",
             "login_not_logged": "Not logged in",
             "login_logged_prefix": "Logged in as",
-            "version_label": "v1.9.0",
+            "version_label": f"v{APP_VERSION}",
         }
         
         # Use a tk.Frame inner for custom colors
@@ -419,7 +428,7 @@ class StatusBar(ttk.Frame):
         
         # Version (right) — login status removed: shown only in auth banner
         self._version_label = tk.Label(
-            content, text=self.labels.get("version_label", "v1.9.0"),
+            content, text=self.labels.get("version_label", f"v{APP_VERSION}"),
             bg=bg, fg=fg3,
             font=(Typography.FONT_FAMILY, Typography.SIZE_TINY)
         )

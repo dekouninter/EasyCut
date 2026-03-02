@@ -1,7 +1,7 @@
 # 🏗️ EasyCut - Architecture Documentation
 
 **Version**: 1.9.0  
-**Last Updated**: February 2026
+**Last Updated**: June 2025
 
 High-level architecture overview for developers working on EasyCut.
 
@@ -24,7 +24,7 @@ High-level architecture overview for developers working on EasyCut.
 
 ## 📌 Overview
 
-EasyCut is a professional desktop YouTube downloader, stream recorder, and live clipper built with **Python 3.13** and **Tkinter**. The application uses a modular architecture with specialized modules, each handling a distinct concern.
+EasyCut is a professional desktop YouTube downloader, stream recorder, and live clipper built with **Python 3.10+** and **Tkinter**. The application uses a modular architecture with specialized modules, each handling a distinct concern.
 
 ### Architecture Summary
 
@@ -32,26 +32,27 @@ All modules are in a flat `src/` directory for simplicity:
 
 | Concern | Module(s) | Lines |
 |---------|-----------|------:|
-| Main orchestrator | `easycut.py` | 5,273 |
-| Translations (7 languages) | `i18n.py` | 3,949 |
+| Main orchestrator | `easycut.py` | 6,830 |
+| Translations (7 languages) | `i18n.py` | 4,824 |
 | Design tokens & palette | `design_system.py` | 1,252 |
-| Custom widgets (16 components) | `modern_components.py` | 1,214 |
-| Embedded video player | `video_player.py` | 651 |
-| UI utilities | `ui_enhanced.py` | 431 |
-| SVG icon renderer | `icon_renderer.py` | 428 |
-| OAuth authentication | `oauth_manager.py` | 316 |
-| Channel monitor | `channel_monitor.py` | 281 |
-| Icon management | `icon_manager.py` | 277 |
-| Post-processing hub | `post_processor.py` | 237 |
+| Custom widgets (16 components) | `modern_components.py` | 1,220 |
+| Embedded video player | `video_player.py` | 721 |
+| UI utilities | `ui_enhanced.py` | 445 |
+| SVG icon renderer | `icon_renderer.py` | 427 |
+| OAuth authentication | `oauth_manager.py` | 378 |
+| Channel monitor | `channel_monitor.py` | 302 |
+| Post-processing hub | `post_processor.py` | 286 |
+| Icon management | `icon_manager.py` | 287 |
 | Donation UI | `donation_system.py` | 202 |
-| Font loading | `font_loader.py` | 146 |
-| **Total src/** | **13 modules** | **~14,657** |
+| Font loading | `font_loader.py` | 154 |
+| Version constant | `__version__.py` | 2 |
+| **Total src/** | **14 modules** | **~17,330** |
 
 ### Key Principles
 
 - **Separation of Concerns** — Each module handles one domain
 - **Hot-Reload** — Theme and language switch instantly without restart
-- **Secure Credentials** — OAuth stored via pickle, cookies via text file
+- **Secure Credentials** — OAuth stored via JSON, cookies via text file
 - **Threading** — Downloads run in background threads (non-blocking UI); UI updates from background threads use `root.after()` for safety (v1.7 fixes)
 - **SVG Icon Rendering** — Custom Feather SVG parser → Pillow → PhotoImage (no external SVG deps)
 - **Multi-Accent Design** — 6 accent color families (Blue, Purple, Orange, Red, Rose, Cyan) with gradients
@@ -74,7 +75,7 @@ EasyCut supports two authentication methods:
 
 1. **Google OAuth 2.0** (Primary, Always Enabled)
    - One-click YouTube authentication via browser
-   - Stored in `config/youtube_token.pickle`
+   - Stored in `config/youtube_token.json`
    - Method: `create_oauth_banner()` in easycut.py
    - Status: ✅ Production-ready
 
@@ -104,19 +105,20 @@ EasyCut/
 ├── check_installation.py           # Verifies dependencies and structure
 │
 ├── src/                            # All application source code (FLAT STRUCTURE)
-│   ├── easycut.py                  # Main application class (EasyCutApp) - 5,273 lines
-│   ├── i18n.py                     # Translation engine (7 languages, 509+ keys) - 3,949 lines
+│   ├── __version__.py              # Single source of truth for version string - 2 lines
+│   ├── easycut.py                  # Main application class (EasyCutApp) - 6,830 lines
+│   ├── i18n.py                     # Translation engine (7 languages, 509+ keys) - 4,824 lines
 │   ├── design_system.py            # Design tokens, 6 accent palettes, gradients - 1,252 lines
-│   ├── modern_components.py        # 16 custom widgets (buttons, cards, badges, etc.) - 1,214 lines
-│   ├── video_player.py             # Embedded mpv player (subprocess + IPC) - 651 lines
-│   ├── ui_enhanced.py              # ConfigManager, LogWidget, StatusBar - 431 lines
-│   ├── icon_renderer.py            # SVG Feather icon → Pillow renderer, gradients - 428 lines
-│   ├── oauth_manager.py            # OAuth 2.0 authentication manager - 316 lines
-│   ├── channel_monitor.py          # YouTube channel monitoring system - 281 lines
-│   ├── icon_manager.py             # Icon loading with emoji fallback - 277 lines
-│   ├── post_processor.py           # Post-download processing hub - 237 lines
+│   ├── modern_components.py        # 16 custom widgets (buttons, cards, badges, etc.) - 1,220 lines
+│   ├── video_player.py             # Embedded mpv player (subprocess + IPC) - 721 lines
+│   ├── ui_enhanced.py              # ConfigManager, LogWidget, StatusBar - 445 lines
+│   ├── icon_renderer.py            # SVG Feather icon → Pillow renderer, gradients - 427 lines
+│   ├── oauth_manager.py            # OAuth 2.0 authentication manager - 378 lines
+│   ├── channel_monitor.py          # YouTube channel monitoring system - 302 lines
+│   ├── post_processor.py           # Post-download processing hub - 286 lines
+│   ├── icon_manager.py             # Icon loading with emoji fallback - 287 lines
 │   ├── donation_system.py          # Donation window and button - 202 lines
-│   └── font_loader.py              # Loads Inter font via Windows GDI - 146 lines
+│   └── font_loader.py              # Loads Inter font via Windows GDI - 154 lines
 │
 ├── assets/                         # Static assets
 │   ├── fonts/Inter/                # Inter Display font files (TTC)
@@ -126,7 +128,7 @@ EasyCut/
 │   ├── config.json                 # User settings (theme, language, paths)
 │   ├── credentials.json            # OAuth credentials (developers only - gitignored)
 │   ├── credentials_template.json   # Template for OAuth credentials
-│   ├── youtube_token.pickle        # Saved OAuth tokens (gitignored)
+│   ├── youtube_token.json           # Saved OAuth tokens (gitignored)
 │   ├── yt_cookies.txt              # Cookies for yt-dlp (gitignored)
 │   ├── history_downloads.json      # Download history entries
 │   └── app.log                     # Application log file
@@ -396,7 +398,7 @@ EasyCutApp.change_language("pt" or "en")
 User clicks "Sync with YouTube"
     ↓
 OAuthManager.authenticate()
-    ├── Checks for existing token.pickle
+    ├── Checks for existing youtube_token.json
     │   ├── If valid: use existing token
     │   └── If expired/missing: start OAuth flow
     │
@@ -405,7 +407,7 @@ OAuthManager.authenticate()
     │   ├── User signs in and grants permissions
     │   ├── Google redirects with auth code
     │   ├── OAuthManager exchanges code for tokens
-    │   ├── Saves youtube_token.pickle
+    │   ├── Saves youtube_token.json
     │   └── Exports cookies to yt_cookies.txt
     │
     └── Returns authenticated session

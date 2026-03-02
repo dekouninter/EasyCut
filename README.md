@@ -2,10 +2,10 @@
 
 ![Version](https://img.shields.io/badge/version-1.9.0-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
-![Python](https://img.shields.io/badge/python-3.13-blue.svg)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 ![Author](https://img.shields.io/badge/author-Deko%20Costa-brightgreen.svg)
 
-**EasyCut** is a professional desktop application for downloading YouTube videos, recording live streams, clipping content in real-time, and extracting audio. Built with Python 3.13 and Tkinter featuring a premium visual design system with SVG icon rendering, multi-accent color palettes, gradient effects, glass-morphism UI, and 7-language support.
+**EasyCut** is a professional desktop application for downloading YouTube videos, recording live streams, clipping content in real-time, and extracting audio. Built with Python 3.10+ and Tkinter featuring a premium visual design system with SVG icon rendering, multi-accent color palettes, gradient effects, glass-morphism UI, and 7-language support.
 
 **Author:** Deko Costa  
 **Repository:** [github.com/dekouninter/EasyCut](https://github.com/dekouninter/EasyCut)  
@@ -14,8 +14,6 @@
 ---
 
 ## ✨ Key Features
-
-(Important live-player & clipper changes in v1.7 are integrated below in the Live Stream section.)
 
 ### 📥 Download Single Videos
 - YouTube URL input with instant verification
@@ -122,7 +120,7 @@
 ## 📦 System Requirements
 
 - **Windows**: Primary target (other OSes may work but unsupported)
-- **Python**: 3.13+
+- **Python**: 3.10+
 - **Tkinter**: Usually bundled with Python on Windows
 
 ### Dependencies
@@ -147,7 +145,7 @@
 
 ### Defaults
 
-- **Language:** Portuguese (can switch to any of 7 languages instantly)
+- **Language:** English (can switch to any of 7 languages instantly)
 - **Theme:** Dark (can toggle to Light instantly)
 - **Authentication:** OAuth 2.0 (one-click YouTube sync)
 - **Output Folder:** `downloads/` (user-selectable)
@@ -213,7 +211,7 @@ winget install FFmpeg
 
 If you're running from source, you need to create OAuth credentials:
 
-1. **Quick Setup**: Follow [OAUTH_SETUP.md](OAUTH_SETUP.md) to create your own Google OAuth credentials
+1. **Quick Setup**: See `config/credentials_template.json` for the required format to create your own Google OAuth credentials
 2. **Create** `config/credentials.json` with your credentials (see `config/credentials_template.json`)
 
 **Note**: End users who download releases don't need this - OAuth is embedded in the executable.
@@ -241,7 +239,7 @@ python main.py
 - `config/config.json` — App settings (theme, language, output folder)
 - `config/history_downloads.json` — Download history (last 100 entries)
 - `config/app.log` — Application logs
-- `config/youtube_token.pickle` — OAuth token cache
+- `config/youtube_token.json` — OAuth token cache
 - `config/yt_cookies.txt` — Cookies for yt-dlp authentication
 - `downloads/` — Default output folder
 
@@ -249,7 +247,7 @@ python main.py
 
 1. Click **"Sync with YouTube"** in the authentication banner
 2. Your browser opens and you authorize EasyCut
-3. Tokens are stored locally in `config/youtube_token.pickle`
+3. Tokens are stored locally in `config/youtube_token.json`
 4. Cookies are stored locally in `config/yt_cookies.txt`
 5. You can logout anytime using the **Logout** button
 
@@ -260,7 +258,7 @@ python main.py
 ### Credential Management
 
 - **OAuth 2.0**: Authentication handled by Google consent screen
-- **Local tokens**: Stored in `config/youtube_token.pickle`
+- **Local tokens**: Stored in `config/youtube_token.json`
 - **Local cookies**: Stored in `config/yt_cookies.txt` for yt-dlp
 - **No passwords**: EasyCut never sees or stores your Google password
 

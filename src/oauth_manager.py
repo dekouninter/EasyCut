@@ -4,17 +4,17 @@ Handles Google OAuth 2.0 authentication and token management
 """
 
 import json
+import logging
 import os
 from pathlib import Path
-from typing import Optional, Tuple
-import webbrowser
-import http.cookiejar
-import io
+from typing import Optional
 
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 class OAuthError(Exception):
@@ -69,7 +69,7 @@ class OAuthManager:
                     self._refresh_token()
                 return True
             except Exception as e:
-                print(f"Error loading JSON token: {e}")
+                logger.error(f"Error loading JSON token: {e}")
                 return False
 
         # Migrate legacy pickle token if it exists
@@ -81,12 +81,12 @@ class OAuthManager:
                 # Re-save in JSON format and remove legacy file
                 self._save_token()
                 self._legacy_token_file.unlink(missing_ok=True)
-                print("Migrated token from pickle to JSON format.")
+                logger.info("Migrated token from pickle to JSON format.")
                 if self.creds and self.creds.expired and self.creds.refresh_token:
                     self._refresh_token()
                 return True
             except Exception as e:
-                print(f"Error migrating legacy token: {e}")
+                logger.error(f"Error migrating legacy token: {e}")
                 self._legacy_token_file.unlink(missing_ok=True)
                 return False
 
@@ -122,18 +122,18 @@ class OAuthManager:
                             return credentials
                     
                     raise OAuthError(
-                        "Invalid credentials.json format. Please follow OAUTH_SETUP.md"
+                        "Invalid credentials.json format. See credentials_template.json for the required structure."
                     )
             except json.JSONDecodeError:
                 raise OAuthError(
-                    "credentials.json is corrupted. Please recreate it following OAUTH_SETUP.md"
+                    "credentials.json is corrupted. Please recreate it using credentials_template.json as reference."
                 )
         
         # No credentials found
         raise OAuthError(
             f"OAuth credentials not found.\n\n"
             f"For end-users: Download the official release from GitHub.\n"
-            f"For developers: Create {self.credentials_file} following OAUTH_SETUP.md"
+            f"For developers: Copy credentials_template.json to {self.credentials_file} and fill in your OAuth credentials."
         )
     
     def _save_token(self) -> bool:
@@ -151,7 +151,7 @@ class OAuthManager:
                 json.dump(token_data, f, indent=2)
             return True
         except Exception as e:
-            print(f"Error saving token: {e}")
+            logger.error(f"Error saving token: {e}")
             return False
     
     def _refresh_token(self) -> bool:
@@ -164,7 +164,7 @@ class OAuthManager:
             self._save_token()
             return True
         except Exception as e:
-            print(f"Error refreshing token: {e}")
+            logger.error(f"Error refreshing token: {e}")
             return False
     
     def is_authenticated(self) -> bool:
@@ -231,12 +231,13 @@ class OAuthManager:
                 return [self_wsgi._success_message.encode("utf-8")]
             _RedirectWSGIApp.__call__ = _html_call
 
-            self.creds = flow.run_local_server(
-                port=0, open_browser=True, success_message=_success_html
-            )
-
-            # Restore original method
-            _RedirectWSGIApp.__call__ = _orig_call
+            try:
+                self.creds = flow.run_local_server(
+                    port=0, open_browser=True, success_message=_success_html
+                )
+            finally:
+                # Restore original method even if flow fails
+                _RedirectWSGIApp.__call__ = _orig_call
             
             # Save token for future use
             self._save_token()
@@ -260,7 +261,7 @@ class OAuthManager:
                     "3. OAuth consent screen → Add Test Users\n"
                     "4. Add your Google email\n"
                     "5. OR publish the app\n\n"
-                    "📖 See OAUTH_FIX.md for detailed instructions"
+                    "📖 See https://console.cloud.google.com/ → OAuth consent screen"
                 )
             elif 'redirect_uri_mismatch' in error_msg:
                 raise OAuthError(
@@ -297,7 +298,7 @@ class OAuthManager:
             response = session.get('https://www.youtube.com', timeout=10)
             
             if response.status_code != 200:
-                print(f"Failed to access YouTube: {response.status_code}")
+                logger.error(f"Failed to access YouTube: {response.status_code}")
                 return None
             
             # Extract and save cookies in Netscape format
@@ -306,7 +307,7 @@ class OAuthManager:
             return str(self.cookies_file)
         
         except Exception as e:
-            print(f"Error getting YouTube cookies: {e}")
+            logger.error(f"Error getting YouTube cookies: {e}")
             return None
     
     @staticmethod
@@ -337,7 +338,7 @@ class OAuthManager:
                     f.write(f"{domain}\t{flag}\t{path}\t{secure}\t{expires}\t{name}\t{value}\n")
         
         except Exception as e:
-            print(f"Error saving cookies: {e}")
+            logger.error(f"Error saving cookies: {e}")
     
     def logout(self) -> bool:
         """Remove saved token and logout"""
@@ -349,7 +350,7 @@ class OAuthManager:
             self.creds = None
             return True
         except Exception as e:
-            print(f"Error logging out: {e}")
+            logger.error(f"Error logging out: {e}")
             return False
     
     def get_user_email(self) -> Optional[str]:
@@ -377,7 +378,7 @@ class OAuthManager:
                         return data.get('email')
         
         except Exception as e:
-            print(f"Error getting user email: {e}")
+            logger.error(f"Error getting user email: {e}")
         
         return None
     

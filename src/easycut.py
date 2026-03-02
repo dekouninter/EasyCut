@@ -5,7 +5,7 @@ Professional Desktop Application using Tkinter
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
-Version: 1.7.0
+Version: 1.9.0
 License: GPL-3.0
 
 Features:
@@ -22,6 +22,7 @@ Features:
 
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
+import json
 import threading
 import logging
 import re
@@ -36,7 +37,7 @@ import time
 # Import local modules
 sys.path.insert(0, os.path.dirname(__file__))
 from i18n import translator as t, Translator
-from ui_enhanced import ConfigManager, LogWidget, StatusBar, LoginPopup
+from ui_enhanced import ConfigManager, LogWidget, StatusBar
 from oauth_manager import OAuthManager, OAuthError
 from donation_system import DonationButton
 from icon_manager import icon_manager, get_ui_icon, set_icon_theme
@@ -51,6 +52,7 @@ from font_loader import setup_fonts, LOADED_FONT_FAMILY
 from post_processor import PostProcessor
 from channel_monitor import ChannelMonitor
 from video_player import EmbeddedPlayer, is_player_available
+from __version__ import __version__ as APP_VERSION
 
 # SVG icon renderer for high-quality icons
 try:
@@ -181,6 +183,7 @@ class EasyCutApp:
         self._channel_limit_var = None  # Channel video limit spinbox variable
         self._thumbnail_cache = {}  # video_id -> PhotoImage for history
         self._download_queue = []  # List of {url, status, title} for batch queue
+        self.download_quality_var = tk.StringVar(value="best")  # Quality preset for downloads
 
         # Complete remaining initialization (paths, post-processor, UI setup etc.)
         self._finish_init()
@@ -218,31 +221,39 @@ class EasyCutApp:
             return
         # run in background thread to avoid freezing UI
         def worker():
-            # create a simple progress window
-            try:
-                prog = tk.Toplevel(parent_win) if parent_win else tk.Toplevel(self.root)
-                prog.title(tr("js_runtime_installing","Installing runtime"))
-                bar = ttk.Progressbar(prog, mode="indeterminate")
-                bar.pack(fill="x", padx=20, pady=20)
-                bar.start(10)
-            except Exception:
-                prog = None
-                bar = None
+            # create progress window on the main thread
+            prog = None
+            bar = None
+            def _create_progress():
+                nonlocal prog, bar
+                try:
+                    prog = tk.Toplevel(parent_win) if parent_win else tk.Toplevel(self.root)
+                    prog.title(tr("js_runtime_installing","Installing runtime"))
+                    bar = ttk.Progressbar(prog, mode="indeterminate")
+                    bar.pack(fill="x", padx=20, pady=20)
+                    bar.start(10)
+                except Exception:
+                    pass
+            self.root.after(0, _create_progress)
+            import time; time.sleep(0.3)  # allow main thread to create widgets
             try:
                 subprocess.run(["npm", "install", "-g", "ejs"], check=True)
-                if prog:
-                    bar.stop()
-                    prog.destroy()
-                messagebox.showinfo(tr("js_runtime_installing","Installing runtime"),
-                                    tr("js_runtime_installed","Installation complete"))
-                # after successful install, optionally suppress future prompts
-                self.config_manager.set("suppress_js_runtime_prompt", True)
+                def _on_success():
+                    if prog:
+                        try: bar.stop(); prog.destroy()
+                        except Exception: pass
+                    messagebox.showinfo(tr("js_runtime_installing","Installing runtime"),
+                                        tr("js_runtime_installed","Installation complete"))
+                    self.config_manager.set("suppress_js_runtime_prompt", True)
+                self.root.after(0, _on_success)
             except Exception as exc:
-                if prog:
-                    bar.stop()
-                    prog.destroy()
-                messagebox.showerror(tr("js_runtime_installing","Installing runtime"),
-                                     tr("js_runtime_install_failed","Installation failed"))
+                def _on_fail():
+                    if prog:
+                        try: bar.stop(); prog.destroy()
+                        except Exception: pass
+                    messagebox.showerror(tr("js_runtime_installing","Installing runtime"),
+                                         tr("js_runtime_install_failed","Installation failed"))
+                self.root.after(0, _on_fail)
         import threading
         threading.Thread(target=worker, daemon=True).start()
 
@@ -362,7 +373,7 @@ class EasyCutApp:
         self.logger = logging.getLogger(__name__)
         self.logger.info("="*60)
         self.logger.info("EasyCut Application Started")
-        self.logger.info(f"Version: 1.9.0")
+        self.logger.info(f"Version: {APP_VERSION}")
     
     def setup_window(self):
         """Setup main window with optional Windows Mica backdrop"""
@@ -449,7 +460,7 @@ class EasyCutApp:
         
         # --- STATUS BAR ---
         tr = self.translator.get
-        version_label = tr("version", "1.9.0")
+        version_label = tr("version", APP_VERSION)
         status_labels = {
             "status_ready": tr("status_ready", "Ready"),
             "login_not_logged": f"YouTube — {tr('status_not_logged_in', 'not signed in')}",
@@ -657,7 +668,7 @@ class EasyCutApp:
 
         # Version label  
         version_lbl = tk.Label(
-            footer, text=f"v{tr('version', '1.9.0')}", bg=bg,
+            footer, text=f"v{tr('version', APP_VERSION)}", bg=bg,
             fg=fg_ter,
             font=(Typography.FONT_FAMILY, Typography.SIZE_TINY)
         )
@@ -939,7 +950,7 @@ class EasyCutApp:
         
         # Version badge — purple variant for visual variety
         Badge(
-            left, text="v1.7", variant="purple", design=self.design, size="sm"
+            left, text="v1.9", variant="purple", design=self.design, size="sm"
         ).pack(side=tk.LEFT, padx=(Spacing.SM, 0), pady=(Spacing.XS, 0))
         
         # Right: Controls
@@ -3925,7 +3936,7 @@ class EasyCutApp:
     def _download_chapters(self):
         """Download video split by chapters"""
         tr = self.translator.get
-        url = self.download_url_entry.get().strip()
+        url = self.download_url_entry.get_value().strip()
         
         if not url or not self._chapters_info:
             return
@@ -4037,10 +4048,10 @@ class EasyCutApp:
         info_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         info_data = [
-            ("Version", "1.9.0"),
+            ("Version", APP_VERSION),
             ("Author", "Deko Costa"),
             ("License", "GPL-3.0"),
-            ("Release", "2026")
+            ("Release", str(__import__('datetime').datetime.now().year))
         ]
         
         for label, value in info_data:
@@ -4080,7 +4091,7 @@ class EasyCutApp:
         tech_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
         tech_data = [
-            ("Core", "Python 3.13 + Tkinter"),
+            ("Core", f"Python {sys.version_info.major}.{sys.version_info.minor} + Tkinter"),
             ("Downloader", "yt-dlp (Unlicense)"),
             ("Converter", "FFmpeg (GPL-2.0+)"),
             ("Security", "OAuth 2.0"),
@@ -4122,7 +4133,7 @@ class EasyCutApp:
         
         ttk.Label(
             main,
-            text=tr("about_footer", "Made with Python | GPL-3.0 License | 2026 Deko Costa"),
+            text=tr("about_footer", f"Made with Python | GPL-3.0 License | {__import__('datetime').datetime.now().year} Deko Costa"),
             style="Caption.TLabel"
         ).pack(pady=Spacing.MD)
 
@@ -4489,11 +4500,10 @@ class EasyCutApp:
             # Try to read account info from Chrome/Edge Preferences file
             if browser in ["chrome", "edge", "brave"]:
                 try:
-                    import json as json_module
                     prefs_file = Path(profile_path) / "Preferences"
                     if prefs_file.exists():
                         with open(prefs_file, 'r', encoding='utf-8') as f:
-                            prefs = json_module.load(f)
+                            prefs = json.load(f)
                             # Try to get Google account info
                             account_info = prefs.get('account_info', [])
                             if account_info and len(account_info) > 0:
@@ -4654,7 +4664,7 @@ class EasyCutApp:
     def verify_video(self):
         """Verify video URL and fetch full metadata, formats, and thumbnail"""
         tr = self.translator.get
-        url = self.download_url_entry.get().strip()
+        url = self.download_url_entry.get_value().strip()
         
         if not url or not self.is_valid_youtube_url(url):
             messagebox.showerror(tr("msg_error", "Error"), tr("download_invalid_url", "Invalid YouTube URL"))
@@ -5163,9 +5173,7 @@ class EasyCutApp:
         if mode == "range" and end_seconds <= start_seconds:
             raise ValueError(tr("download_time_order", "End time must be greater than start time."))
 
-        start_tc = self._format_timecode(start_seconds)
-        end_tc = self._format_timecode(end_seconds)
-        return f"*{start_tc}-{end_tc}"
+        return {'start': start_seconds, 'end': end_seconds}
 
     def _build_download_options(self, output_template: str, quality: str, mode: str, section: str = None, quiet: bool = False, format_id: str = None):
         """Create yt-dlp options for a download."""
@@ -5190,12 +5198,7 @@ class EasyCutApp:
                 'audio': f'bestaudio{exclude_webm}/best{exclude_webm}'
             }
             format_str = format_map.get(quality, f'bestvideo{exclude_webm}+bestaudio{exclude_webm}/best{exclude_webm}')
-            # if user selected specific format_id containing webm, warn and fallback
-            if format_id and 'webm' in format_id.lower():
-                messagebox.showwarning(tr("msg_warning", "Warning"), tr(
-                    "webm_not_allowed", "WebM formats are disallowed; using mp4 instead."))
-                format_id = None
-                format_str = format_map.get(quality, 'bestvideo[ext!=webm]+bestaudio[ext!=webm]/best[ext!=webm]')
+
 
         base_opts = {
             'format': format_str,
@@ -5214,7 +5217,11 @@ class EasyCutApp:
 
         # Time range / section download
         if section:
-            base_opts['download_ranges'] = lambda info, ydl: [{'start_time': 0, 'end_time': None}]
+            s_start = section.get('start', 0)
+            s_end = section.get('end', None)
+            base_opts['download_ranges'] = lambda info, ydl, _s=s_start, _e=s_end: [
+                {'start_time': _s, 'end_time': _e}
+            ]
             base_opts['force_keyframes_at_cuts'] = True
 
         return base_opts
@@ -5236,8 +5243,7 @@ class EasyCutApp:
             messagebox.showerror(tr("msg_error", "Error"), "yt-dlp not available")
             return
 
-        self.live_log.add_log(f"📝 {tr('download_transcript_btn', 'Downloading transcript...')}")
-        self.root.after(0, lambda: self.live_status_label.config(text=tr('download_transcript_btn', 'Downloading transcript...')))  # reuse status label
+        self.download_log.add_log(f"📝 {tr('download_transcript_btn', 'Downloading transcript...')}")  # reuse status label
 
 
         def _thread():
@@ -5262,18 +5268,14 @@ class EasyCutApp:
                             with open(f, 'r', encoding='utf-8') as vf, open(txt, 'w', encoding='utf-8') as tf:
                                 for line in vf:
                                     tf.write(line)
-                        except Exception:
-                            pass
-                        self.root.after(0, lambda name=txt.name: self.live_log.add_log(f"✅ {tr('download_transcript_btn', 'Transcript saved')}: {name}"))
+                            self.root.after(0, lambda name=txt.name: self.download_log.add_log(f"✅ {tr('download_transcript_btn', 'Transcript saved')}: {name}"))
+                        except Exception as vtt_err:
+                            self.root.after(0, lambda msg=str(vtt_err): self.download_log.add_log(f"⚠️ VTT conversion failed: {msg}", "WARNING"))
                         break
             except Exception as e:
-                self.root.after(0, lambda msg=str(e): self.live_log.add_log(f"❌ {tr('msg_error', 'Error')}: {msg}", "ERROR"))
-            finally:
-                self.root.after(0, lambda: self.live_status_label.config(text=tr('status_ready', 'Ready')))
+                self.root.after(0, lambda msg=str(e): self.download_log.add_log(f"❌ {tr('msg_error', 'Error')}: {msg}", "ERROR"))
 
         threading.Thread(target=_thread, daemon=True).start()
-
-    # TODO: Código morto removido acima. Se necessário, revisar lógica de opções de download e consolidar em métodos ativos.
 
     def _run_ydl_download(self, url: str, ydl_opts: dict):
         """Run yt-dlp download with a concurrency limit.
@@ -5311,7 +5313,16 @@ class EasyCutApp:
         return info
     
     def download_progress_hook(self, d):
-        """Progress hook for yt-dlp — updates download progress label in the UI."""
+        """Progress hook for yt-dlp — updates download progress label in the UI.
+        
+        Also checks the is_downloading flag to support cancellation via stop_download().
+        When is_downloading is False, raises an exception to abort yt-dlp.
+        """
+        # Cancellation check — yt-dlp calls the hook frequently so this
+        # provides a responsive stop mechanism
+        if not self.is_downloading:
+            raise Exception("Download cancelled by user")
+        
         if not hasattr(self, 'download_progress_label'):
             return
         status = d.get('status')
@@ -5353,7 +5364,7 @@ class EasyCutApp:
     def start_download(self):
         """Start downloading video"""
         tr = self.translator.get
-        url = self.download_url_entry.get().strip()
+        url = self.download_url_entry.get_value().strip()
         
         if not url or not self.is_valid_youtube_url(url):
             messagebox.showerror(tr("msg_error", "Error"), tr("download_invalid_url", "Invalid YouTube URL"))
@@ -5494,10 +5505,15 @@ class EasyCutApp:
         thread.start()
     
     def stop_download(self):
-        """Stop current download"""
+        """Stop current download by setting cancellation flag.
+        
+        The progress hook checks is_downloading and raises an exception
+        to abort the yt-dlp download when the flag is cleared.
+        """
         tr = self.translator.get
         self.is_downloading = False
-        self.download_log.add_log(tr("download_stop", "Stop"))
+        self.download_log.add_log(tr("download_stop", "Download cancelled"))
+        self.logger.info("Download cancelled by user")
     
     def _get_friendly_error(self, error_msg: str) -> str:
         """Map common yt-dlp errors to user-friendly translated messages"""
@@ -5587,6 +5603,13 @@ class EasyCutApp:
         try:
             if self.embedded_player:
                 self.embedded_player.cleanup()
+        except Exception:
+            pass
+        
+        # Cleanup post-processing video player
+        try:
+            if self.pp_player:
+                self.pp_player.cleanup()
         except Exception:
             pass
         
@@ -6268,7 +6291,12 @@ class EasyCutApp:
         """Open output folder in system file explorer"""
         tr = self.translator.get
         try:
-            os.startfile(str(self.output_dir))
+            if sys.platform == 'win32':
+                os.startfile(str(self.output_dir))
+            elif sys.platform == 'darwin':
+                sp.Popen(['open', str(self.output_dir)])
+            else:
+                sp.Popen(['xdg-open', str(self.output_dir)])
         except Exception as e:
             messagebox.showerror(tr("msg_error", "Error"), f"{tr('msg_error', 'Error')}: {e}")
     
@@ -6694,7 +6722,11 @@ class EasyCutApp:
                 sp.Popen([mpv_path, url], creationflags=sp.CREATE_NO_WINDOW if hasattr(sp, 'CREATE_NO_WINDOW') else 0)
                 self.live_log.add_log(f"▶️ Opened in mpv")
             else:
-                os.startfile(url)
+                if sys.platform == 'win32':
+                    os.startfile(url)
+                else:
+                    import webbrowser
+                    webbrowser.open(url)
                 self.live_log.add_log(f"▶️ Opened in default browser")
         except Exception as e:
             self.live_log.add_log(f"Error opening player: {e}", "ERROR")

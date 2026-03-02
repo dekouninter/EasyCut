@@ -6,13 +6,17 @@ For packaging: python setup.py sdist bdist_wheel
 
 
 from setuptools import setup, find_packages
+import sys, os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+from __version__ import __version__
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
     name="EasyCut",
-    version="1.9.0",
+    version=__version__,
     author="Deko Costa",
     description="YouTube Video Downloader and Audio Converter with OAuth Authentication",
     long_description=long_description,

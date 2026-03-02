@@ -1,14 +1,7 @@
 # 📚 EasyCut Documentation Index
 
 **Version**: 1.9.0  
-**Last Updated**: February 2026
-
-## ⚠️ v1.7 — resumo das mudanças
-- Live tab: UI rework (verify, preview, record/stop, mark & save clips) — preview can now load the recording file to allow rewind to the start of the live broadcast.
-- Player: melhorias no mpv (IPC robusto, suporte a arquivos em crescimento, comandos de seek percentuais).
-- Clipper: Quick Cut (30/60/120s), download concorrente de clipes e botão de salvar rápido integrado.
-- Correções críticas: bug de progresso de live (NameError), atualizações de thread-safety, placeholder → get_value() fix.
-- Ambiente: deno recomendado para yt-dlp; cookies/ OAuth melhor integrados para streams com verificação de bot.
+**Last Updated**: June 2025
 
 Complete documentation for users and developers.
 
@@ -84,14 +77,7 @@ Complete documentation for users and developers.
 
 ## 📋 Planning Documents (Local Development Only)
 
-These documents are in `.gitignore` as they contain planning information not intended for public repositories:
-
-- **OAUTH_CHECKLIST.md** — Internal verification checklist for OAuth activation
-- **REFACTORING_PLAN.md** — Internal strategic refactoring plan
-- **ROADMAP.md** — Internal product roadmap and planning
-- **DOCUMENTATION_UPDATES.md** — Internal change log for documentation updates
-
-They're useful for team coordination and project management but kept locally to avoid repository clutter.
+Internal planning and refactoring documents are maintained locally and are not included in the public repository to keep it focused on production code.
 
 ---
 

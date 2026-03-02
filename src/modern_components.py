@@ -23,14 +23,13 @@ Repository: https://github.com/dekouninter/EasyCut
 
 import tkinter as tk
 from tkinter import ttk
-from typing import Optional, Callable, Dict, List, Tuple
+from typing import Callable
 
 from design_system import (
     ModernTheme, DesignTokens, Typography, Spacing, Icons,
     Animation, ColorPalette, Elevation
 )
 from icon_manager import get_ui_icon
-from font_loader import LOADED_FONT_FAMILY
 
 # ── Optional: high-quality SVG icon renderer ──────────────────
 try:

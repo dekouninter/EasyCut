@@ -120,7 +120,7 @@ EasyCut uses Google OAuth 2.0 for secure YouTube authentication:
 - **Purpose**: Read-only access to YouTube metadata and authenticated downloads
 - **Files created**:
   - `config/credentials.json` — Your OAuth client credentials (you create this)
-  - `config/youtube_token.pickle` — OAuth token cache (auto-created after login)
+  - `config/youtube_token.json` — OAuth token cache (auto-created after login)
   - `config/yt_cookies.txt` — Cookies for yt-dlp (auto-created after login)
 
 ### Step 1: Create Google Cloud Project
@@ -291,7 +291,7 @@ That's it! 🎉
 
 **Secret Files (NOT Committed):**
 - ⛔ `build_config.json` - **Contains OAuth credentials!**
-- ⛔ `config/youtube_token.pickle` - OAuth token cache
+- ⛔ `config/youtube_token.json` - OAuth token cache
 - ⛔ `config/yt_cookies.txt` - Cookies for yt-dlp
 - ⛔ `build_temp/` - Temporary build files
 - ⛔ `dist/` - Final executable (has embedded credentials)

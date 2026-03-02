@@ -15,7 +15,7 @@ Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
 """
 
-from typing import Dict, Tuple, List, Optional
+from typing import Dict, Tuple
 import math
 
 try:

@@ -11,7 +11,6 @@ workspace health improvements (Feb 2026).
 """
 import importlib
 import shutil
-import sys
 
 REQUIRED_PKGS = [
     'yt_dlp',
@@ -51,7 +50,7 @@ def main():
     else:
         print("All Python packages appear to be installed.")
 
-    tools = ['ffmpeg', 'deno']
+    tools = ['ffmpeg', 'node']
     miss_tools = [t for t in tools if not check_executable(t)]
     if miss_tools:
         print("\nRecommended external software not found:")

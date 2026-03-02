@@ -18,7 +18,7 @@ When you click "Sync with YouTube":
 ### Data Storage
 
 **Locally Stored Data:**
-- OAuth access tokens (stored in `config/youtube_token.pickle`)
+- OAuth access tokens (stored in `config/youtube_token.json`)
 - YouTube cookies (stored in `config/yt_cookies.txt`)
 - Download history (stored in `config/history_downloads.json`)
 - Application settings (stored in `config/config.json`)
@@ -71,7 +71,7 @@ We **cannot** and **do not**:
 
 ## Data Security
 
-- OAuth tokens are stored locally using Python's pickle format
+- OAuth tokens are stored locally using JSON format
 - No passwords are stored (authentication is handled by Google)
 - All communication with YouTube uses HTTPS
 - Your credentials never pass through our servers (because we don't have servers)

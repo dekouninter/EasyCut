@@ -18,7 +18,6 @@ import re
 import math
 from pathlib import Path
 from typing import Dict, Tuple, Optional
-from functools import lru_cache
 
 try:
     from PIL import Image, ImageDraw, ImageTk

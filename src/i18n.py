@@ -2,7 +2,7 @@
 """
 Internationalization (i18n) System for EasyCut
 Professional Application with Full Multi-Language Support
-Supports: English (Default), Portuguese
+Supports: English (Default), Portuguese, Spanish, French, German, Italian, Japanese
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
@@ -4847,8 +4847,15 @@ class Translator:
     """
     
     def __init__(self, language="en"):
+        from __version__ import __version__
+        self._app_version = __version__
         self.language = language if language in TRANSLATIONS else "en"
         self.translations = TRANSLATIONS[self.language]
+        self._inject_version()
+    
+    def _inject_version(self):
+        """Ensure version-related keys always reflect __version__."""
+        self.translations["version"] = self._app_version
     
     def set_language(self, language):
         """Change active language for all UI elements
@@ -4865,6 +4872,7 @@ class Translator:
         if language in TRANSLATIONS:
             self.language = language
             self.translations = TRANSLATIONS[self.language]
+            self._inject_version()
             return True
         return False
     

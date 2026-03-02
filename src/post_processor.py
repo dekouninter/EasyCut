@@ -310,7 +310,6 @@ class PostProcessor:
             "trim": self.trim,
             "change_speed": self.change_speed,
             "convert_for_premiere": self.convert_for_premiere,
-            "is_premiere_compatible": self.is_premiere_compatible,
         }
         func = ops.get(operation)
         if not func:

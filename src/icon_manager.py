@@ -1,7 +1,8 @@
 """
-Icon Manager - Carrega ícones Feather e outros assets
-Versão simplificada usando apenas emojis/unicode como fallback
+Icon Manager - Loads Feather icons and other assets
+Simplified version using emoji/unicode as fallback
 """
+import os
 from pathlib import Path
 from tkinter import PhotoImage
 
@@ -13,7 +14,7 @@ except ImportError:
     Image = ImageTk = ImageDraw = ImageFont = None
 
 class IconManager:
-    """Gerenciador de ícones Feather"""
+    """Feather icon manager"""
     
     def __init__(self):
         self.assets_dir = Path(__file__).parent.parent / "assets"
@@ -23,29 +24,29 @@ class IconManager:
         
     def get_icon(self, name: str, size: int = 16, color: str = None) -> PhotoImage:
         """
-        Carrega um ícone
+        Load an icon
         
         Args:
-            name: Nome do ícone (ex: "download", "settings", "github")
-            size: Tamanho em pixels (padrão: 16)
-            color: Cor em hex (ex: "#5B8CFF") - opcional
+            name: Icon name (e.g. "download", "settings", "github")
+            size: Size in pixels (default: 16)
+            color: Hex color (e.g. "#5B8CFF") - optional
             
         Returns:
-            PhotoImage para usar em Tkinter ou None
+            PhotoImage for use in Tkinter or None
         """
         cache_key = f"{name}_{size}_{color}"
         
         if cache_key in self.cache:
             return self.cache[cache_key]
         
-        # Tentar carregar PNG pré-renderizado primeiro
+        # Try loading pre-rendered PNG first
         icon = self._get_png_icon(name, size, color)
         
         if icon:
             self.cache[cache_key] = icon
             return icon
         
-        # Fallback para emoji/unicode
+        # Fallback to emoji/unicode
         try:
             icon = self._get_emoji_icon(name, size, color)
             
@@ -54,13 +55,15 @@ class IconManager:
             
             return icon
         except Exception as e:
-            # Se falhar completamente, retornar None
-            # (UI deve lidar com isso, talvez mostrando apenas texto)
+            # If everything fails, return None
+            # (UI should handle this, perhaps showing text only)
             return None
     
     def _get_png_icon(self, name: str, size: int, color: str = None) -> PhotoImage:
-        """Carrega PNG pré-renderizado"""
-        # Tentar buscar com cor específica
+        """Load pre-rendered PNG icon"""
+        if not _HAS_PIL:
+            return None
+        # Try to find color-specific variant
         if color:
             theme = "dark" if "E7E9EE" in color or "f85451" in color or "5B8CFF" in color else "light"
             png_path = self.icons_dir / f"{name}_{size}_{theme}.png"
@@ -75,7 +78,7 @@ class IconManager:
                 except Exception as e:
                     pass
         
-        # Tentar PNG genérico (sem cor)
+        # Try generic PNG (no color)
         png_path = self.icons_dir / f"{name}_{size}.png"
         
         if png_path.exists():
@@ -91,7 +94,9 @@ class IconManager:
         return None
     
     def _get_emoji_icon(self, name: str, size: int, color: str = None) -> PhotoImage:
-        """Cria ícone usando emoji/unicode como fallback"""
+        """Create icon using emoji/unicode as fallback"""
+        if not _HAS_PIL:
+            return None
         emoji_map = {
             "download": "⬇",
             "upload": "⬆",
@@ -133,34 +138,34 @@ class IconManager:
         emoji = emoji_map.get(name, "•")
         
         try:
-            # Criar imagem com emoji
+            # Create image with emoji fallback
             img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
             draw = ImageDraw.Draw(img)
             
-            # Usar fonte padrão robusta
+            # Use robust default font
             font_size = int(size * 0.8)
             font = None
             
-            # Tentar várias fontes
+            # Try several fonts
             font_names = [
                 "seguiemj.ttf",    # Segoe UI Emoji (Windows)
                 "segoeui.ttf",     # Segoe UI
                 "arial.ttf",       # Arial
-                "C:\\Windows\\Fonts\\seguiemj.ttf",  # Path completo
+                str(Path(os.environ.get('WINDIR', 'C:\\Windows')) / "Fonts" / "seguiemj.ttf"),
             ]
             
             for font_name in font_names:
                 try:
                     font = ImageFont.truetype(font_name, font_size)
                     break
-                except:
+                except Exception:
                     continue
             
-            # Fallback para fonte padrão
+            # Fallback to default font
             if font is None:
                 font = ImageFont.load_default()
             
-            # Centralizar texto/emoji
+            # Center text/emoji
             try:
                 bbox = draw.textbbox((0, 0), emoji, font=font)
                 text_width = bbox[2] - bbox[0]
@@ -170,17 +175,17 @@ class IconManager:
                     (size - text_width) // 2 - bbox[0],
                     (size - text_height) // 2 - bbox[1]
                 )
-            except:
-                # Fallback se textbbox não funcionar
+            except Exception:
+                # Fallback if textbbox fails
                 position = (size // 4, size // 4)
             
-            # Desenhar com cor do tema (ou padrão)
+            # Draw with theme color (or default)
             if color:
-                # Converter hex para RGBA tuple
+                # Convert hex to RGBA tuple
                 try:
                     c = color.lstrip('#')
                     fill_color = tuple(int(c[i:i+2], 16) for i in (0, 2, 4)) + (255,)
-                except:
+                except Exception:
                     fill_color = (150, 150, 150, 255)
             else:
                 fill_color = (150, 150, 150, 255)
@@ -191,12 +196,12 @@ class IconManager:
             
         except Exception as e:
             print(f"Error creating emoji icon '{name}': {e}")
-            # Retornar imagem simples se falhar completamente
+            # Return simple fallback image if complete failure
             try:
                 img = Image.new('RGBA', (size, size), (100, 100, 100, 255))
                 photo = ImageTk.PhotoImage(img)
                 return photo
-            except:
+            except Exception:
                 return None
     
 
@@ -204,7 +209,7 @@ class IconManager:
 icon_manager = IconManager()
 
 
-# Ícones mapeados para UI do EasyCut
+# Icons mapped for EasyCut UI
 ICON_MAP = {
     # Header
     "theme_dark": "moon",
@@ -253,40 +258,40 @@ ICON_MAP = {
 }
 
 
-# Estado global do tema para ícones
+# Global theme state for icons
 _current_dark_mode = True
 
 def set_icon_theme(dark_mode: bool):
-    """Atualiza o tema global usado para cores de ícones"""
+    """Update global theme used for icon colors"""
     global _current_dark_mode
     _current_dark_mode = dark_mode
-    # Limpar cache para recarregar ícones com novas cores
+    # Clear cache to reload icons with new colors
     icon_manager.cache.clear()
 
 
 def get_ui_icon(icon_key: str, size: int = 16, color: str = None, theme: str = None) -> PhotoImage:
     """
-    Atalho para pegar ícone mapeado da UI com cores inteligentes
+    Shortcut to get mapped UI icon with smart theme colors
     
     Args:
-        icon_key: Chave do ICON_MAP (ex: "download", "theme_dark")
-        size: Tamanho em pixels
-        color: Cor opcional (se None, usa cor padrão do tema)
-        theme: Tema ("dark" ou "light") - se None, usa estado global
+        icon_key: Key from ICON_MAP (e.g. "download", "theme_dark")
+        size: Size in pixels
+        color: Optional color (if None, uses default theme color)
+        theme: Theme ("dark" or "light") - if None, uses global state
     
     Returns:
-        PhotoImage ou None se não encontrado
+        PhotoImage or None if not found
     """
     feather_name = ICON_MAP.get(icon_key, icon_key)
     
-    # Se não teve cor e tema especificado, usar cor padrão do tema atual
+    # If no color specified, use current theme default
     if not color:
         try:
             from design_system import DesignTokens
             is_dark = _current_dark_mode if theme is None else (theme == "dark")
             tokens = DesignTokens(dark_mode=is_dark)
             color = tokens.get_color("icon_primary")
-        except:
+        except Exception:
             pass
     
     return icon_manager.get_icon(feather_name, size, color)
