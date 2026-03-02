@@ -1,6 +1,6 @@
 # 📚 EasyCut Documentation Index
 
-**Version**: 1.9.0  
+**Version**: 1.9.1  
 **Last Updated**: June 2025
 
 Complete documentation for users and developers.

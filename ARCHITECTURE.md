@@ -1,6 +1,6 @@
 # 🏗️ EasyCut - Architecture Documentation
 
-**Version**: 1.9.0  
+**Version**: 1.9.1  
 **Last Updated**: June 2025
 
 High-level architecture overview for developers working on EasyCut.
@@ -32,21 +32,21 @@ All modules are in a flat `src/` directory for simplicity:
 
 | Concern | Module(s) | Lines |
 |---------|-----------|------:|
-| Main orchestrator | `easycut.py` | 6,830 |
-| Translations (7 languages) | `i18n.py` | 4,824 |
-| Design tokens & palette | `design_system.py` | 1,252 |
-| Custom widgets (16 components) | `modern_components.py` | 1,220 |
-| Embedded video player | `video_player.py` | 721 |
-| UI utilities | `ui_enhanced.py` | 445 |
-| SVG icon renderer | `icon_renderer.py` | 427 |
-| OAuth authentication | `oauth_manager.py` | 378 |
-| Channel monitor | `channel_monitor.py` | 302 |
-| Post-processing hub | `post_processor.py` | 286 |
-| Icon management | `icon_manager.py` | 287 |
-| Donation UI | `donation_system.py` | 202 |
-| Font loading | `font_loader.py` | 154 |
-| Version constant | `__version__.py` | 2 |
-| **Total src/** | **14 modules** | **~17,330** |
+| Main orchestrator | `easycut.py` | 6,756 |
+| Translations (7 languages) | `i18n.py` | 4,908 |
+| Design tokens & palette | `design_system.py` | 1,283 |
+| Custom widgets (16 components) | `modern_components.py` | 1,276 |
+| Embedded video player | `video_player.py` | 846 |
+| UI utilities | `ui_enhanced.py` | 465 |
+| SVG icon renderer | `icon_renderer.py` | 451 |
+| OAuth authentication | `oauth_manager.py` | 389 |
+| Channel monitor | `channel_monitor.py` | 362 |
+| Post-processing hub | `post_processor.py` | 327 |
+| Icon management | `icon_manager.py` | 297 |
+| Donation UI | `donation_system.py` | 211 |
+| Font loading | `font_loader.py` | 166 |
+| Version constant | `__version__.py` | 3 |
+| **Total src/** | **14 modules** | **~17,740** |
 
 ### Key Principles
 
@@ -82,7 +82,7 @@ EasyCut supports two authentication methods:
 2. **Browser Cookie Extraction** (Optional, Disabled by Default)
    - Extract cookies from installed browsers (Chrome, Firefox, Edge, etc.)
    - Extract accounts automatically or import cookies.txt manually
-   - Method: `create_browser_auth_banner()` in easycut.py
+   - Method: `create_login_banner()` in easycut.py (browser auth section)
    - Activation: Edit `config/config.json` and set `"enable_browser_auth": true`
    - Status: ✅ Production-ready
 
@@ -92,7 +92,7 @@ EasyCut supports two authentication methods:
 
 ## 🗂️ Project Structure
 
-### Current Structure (v1.9.0)
+### Current Structure (v1.9.1)
 
 ```
 EasyCut/

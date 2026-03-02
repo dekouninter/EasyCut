@@ -175,7 +175,6 @@ class EasyCutApp:
         # State
         self.is_downloading = False
         self.is_recording = False   # Separate flag for live recording (Issues #46/#53)
-        self.browser_var = None  # Browser selection variable
         self.download_semaphore = threading.BoundedSemaphore(value=3)
         self._video_formats = []  # Fetched format list from yt-dlp
         self._video_info_cache = {}  # Cached metadata from last verify
@@ -325,7 +324,6 @@ class EasyCutApp:
         self.setup_window()
         self.apply_theme()  # CRITICAL: Apply theme BEFORE creating UI
         self.setup_ui()
-        self.check_saved_credentials()
         self.log_app("✓ EasyCut started successfully")
         # Issue #63: verify followed channels shortly after startup
         self.root.after(5000, self._following_startup_check)
@@ -1096,292 +1094,6 @@ class EasyCutApp:
         else:
             tk.Frame(parent, bg=self.design.get_color("header_border"), height=1).pack(fill=tk.X)
     
-    def create_browser_auth_banner(self, parent):
-        """Create browser authentication banner (reserved for future use)"""
-        tr = self.translator.get
-        bg = self.design.get_color("bg_secondary")
-        fg = self.design.get_color("fg_primary")
-        fg_sec = self.design.get_color("fg_secondary")
-        
-        banner = tk.Frame(parent, bg=bg)
-        banner.pack(fill=tk.X, padx=Spacing.LG, pady=Spacing.SM)
-        
-        # Title
-        tk.Label(
-            banner, 
-            text=tr("browser_cookies_title", "Browser Authentication"),
-            bg=bg, fg=fg,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_H3, "bold")
-        ).pack(anchor="w", pady=(0, Spacing.XS))
-        
-        # Info text
-        tk.Label(
-            banner,
-            text=tr("browser_cookies_info", "EasyCut uses cookies from your browser"),
-            bg=bg, fg=fg_sec,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION),
-            justify=tk.LEFT
-        ).pack(anchor="w", pady=(0, Spacing.SM))
-        
-        # Browser selector
-        selector_frame = tk.Frame(banner, bg=bg)
-        selector_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
-        
-        tk.Label(
-            selector_frame,
-            text=tr("browser_select_label", "Select Browser:"),
-            bg=bg, fg=fg,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_BODY)
-        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        
-        # Browser dropdown
-        browsers = [
-            ("chrome", tr("browser_chrome", "Chrome")),
-            ("firefox", tr("browser_firefox", "Firefox")),
-            ("edge", tr("browser_edge", "Edge")),
-            ("opera", tr("browser_opera", "Opera")),
-            ("brave", tr("browser_brave", "Brave")),
-            ("safari", tr("browser_safari", "Safari")),
-            ("file", tr("browser_cookies_file", "Cookies File")),
-            ("none", tr("browser_none", "None"))
-        ]
-        
-        current_browser = self.config_manager.get("browser_cookies", "chrome")
-        self.browser_var = tk.StringVar(value=current_browser)
-        
-        browser_combo = ttk.Combobox(
-            selector_frame,
-            textvariable=self.browser_var,
-            values=[b[1] for b in browsers],
-            state="readonly",
-            width=25,
-            font=(LOADED_FONT_FAMILY, Typography.SIZE_BODY)
-        )
-        browser_combo.pack(side=tk.LEFT)
-        
-        # Set current value
-        for i, (code, name) in enumerate(browsers):
-            if code == current_browser:
-                browser_combo.current(i)
-                break
-        
-        # Save on change
-        def on_browser_change(event):
-            selected_index = browser_combo.current()
-            browser_code = browsers[selected_index][0]
-            self.config_manager.set("browser_cookies", browser_code)
-            if hasattr(self, 'download_log') and self.download_log:
-                self.download_log.add_log(f"Browser changed to: {browsers[selected_index][1]}")
-            
-            # Show/hide profile selector or file selector
-            if browser_code == "file":
-                profile_frame.pack_forget()
-                cookies_file_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
-                cookies_help_frame.pack(fill=tk.X, pady=(Spacing.SM, 0))
-            elif browser_code == "none":
-                profile_frame.pack_forget()
-                cookies_file_frame.pack_forget()
-                cookies_help_frame.pack_forget()
-            else:
-                cookies_file_frame.pack_forget()
-                cookies_help_frame.pack_forget()
-                profile_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
-                # Refresh profiles when browser changes
-                self.refresh_browser_profiles()
-        
-        browser_combo.bind("<<ComboboxSelected>>", on_browser_change)
-
-        # Permanent setup-help button (Issue #39)
-        def _show_cookie_help():
-            import webbrowser as _wb
-            _b4 = tr("cookie_help_b4", "Select Cookies File in the dropdown above")
-            msg = (
-                f"{tr('cookie_help_title', 'How to set up cookies for EasyCut')}\n\n"
-                "Option A — Browser cookies (easiest):\n"
-                f"  1. {tr('cookie_help_a1', 'Select your browser in the dropdown above')}\n"
-                f"  2. {tr('cookie_help_a2', 'Make sure you are logged into YouTube in that browser')}\n"
-                f"  3. {tr('cookie_help_a3', 'EasyCut will read cookies automatically')}\n\n"
-                "Option B — Export cookies.txt file:\n"
-                f"  1. {tr('cookie_help_b1', 'Install browser extension: Get cookies.txt LOCALLY')}\n"
-                f"  2. {tr('cookie_help_b2', 'Open youtube.com, click the extension icon')}\n"
-                f"  3. {tr('cookie_help_b3', 'Click Export and save as cookies.txt')}\n"
-                f"  4. {_b4}\n"
-                f"  5. {tr('cookie_help_b5', 'Click the file selector to load your cookies.txt')}\n\n"
-                f"{tr('cookie_help_why', 'Why? Some videos require authentication (age-restricted, private, members-only etc.)')}"
-            )
-            answer = messagebox.askyesno(
-                tr("cookie_help_title", "Cookie Setup Help"),
-                msg + f"\n\n{tr('cookie_help_open_ext', 'Open extension page in browser?')}"
-            )
-            if answer:
-                _wb.open("https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc")
-
-        help_hint_frame = tk.Frame(banner, bg=bg)
-        help_hint_frame.pack(fill=tk.X, pady=(0, Spacing.XS))
-        tk.Label(
-            help_hint_frame,
-            text=f"\u2139\ufe0f {tr('cookie_help_hint', 'Not sure how to configure cookies?')}",
-            bg=bg, fg=fg_sec,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION)
-        ).pack(side=tk.LEFT)
-        ModernButton(
-            help_hint_frame,
-            text=tr("cookie_help_btn", "Setup Guide"),
-            icon_name="help-circle",
-            command=_show_cookie_help,
-            variant="ghost",
-            size="sm",
-            width=12
-        ).pack(side=tk.LEFT, padx=(Spacing.SM, 0))
-
-        # Cookies file selector (hidden by default)
-        cookies_file_frame = tk.Frame(banner, bg=bg)
-        
-        tk.Label(
-            cookies_file_frame,
-            text=tr("browser_cookies_file_label", "Cookies File:"),
-            bg=bg, fg=fg,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_BODY)
-        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        
-        self.cookies_file_var = tk.StringVar(value=self.config_manager.get("cookies_file", ""))
-        
-        cookies_file_label = tk.Label(
-            cookies_file_frame,
-            textvariable=self.cookies_file_var,
-            bg=bg, fg=fg_sec,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION),
-            width=30,
-            anchor="w"
-        )
-        cookies_file_label.pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        
-        def select_cookies_file():
-            from tkinter import filedialog
-            filepath = filedialog.askopenfilename(
-                title=tr("browser_cookies_file_button", "Select Cookies File"),
-                filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
-            )
-            if filepath:
-                self.cookies_file_var.set(filepath)
-                self.config_manager.set("cookies_file", filepath)
-                if hasattr(self, 'download_log') and self.download_log:
-                    self.download_log.add_log(f"Cookies file: {Path(filepath).name}")
-        
-        ModernButton(
-            cookies_file_frame,
-            text=tr("browser_cookies_file_button", "Select File"),
-            icon_name="file",
-            command=select_cookies_file,
-            variant="outline",
-            size="sm",
-            width=12
-        ).pack(side=tk.LEFT)
-        
-        # Help text for exporting cookies (shown when file mode is selected)
-        cookies_help_frame = tk.Frame(banner, bg=bg)
-        help_text = f"{tr('browser_cookies_export_help', 'How to export cookies:')}\n" \
-                   f"{tr('browser_cookies_export_step1', '1. Install browser extension Get cookies.txt LOCALLY')}\n" \
-                   f"{tr('browser_cookies_export_step2', '2. Go to youtube.com and click the extension')}\n" \
-                   f"{tr('browser_cookies_export_step3', '3. Click Export and save the cookies.txt file')}\n" \
-                   f"{tr('browser_cookies_export_step4', '4. Select the saved file here')}"
-        
-        tk.Label(
-            cookies_help_frame,
-            text=help_text,
-            bg=bg, fg=fg_sec,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION),
-            justify=tk.LEFT
-        ).pack(anchor="w", padx=(0, 0))
-        
-        # Profile/Account selector with auto-detection
-        profile_frame = tk.Frame(banner, bg=bg)
-        profile_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
-        
-        tk.Label(
-            profile_frame,
-            text=tr("browser_profile_auto_label", "YouTube Account:"),
-            bg=bg, fg=fg,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_BODY)
-        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        
-        # Profile dropdown (will be populated by detect function)
-        self.detected_accounts = []
-        self.profile_var = tk.StringVar()
-        
-        self.profile_combo = ttk.Combobox(
-            profile_frame,
-            textvariable=self.profile_var,
-            values=[tr("browser_profile_select", "Select account...")],
-            state="readonly",
-            width=25,
-            font=(LOADED_FONT_FAMILY, Typography.SIZE_BODY)
-        )
-        self.profile_combo.pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        self.profile_combo.current(0)
-        
-        # Save on change
-        def on_profile_change(event):
-            selected_index = self.profile_combo.current()
-            if selected_index >= 0 and selected_index < len(self.detected_accounts):
-                display_name, browser_name, profile_name = self.detected_accounts[selected_index]
-                self.config_manager.set("browser_profile", profile_name)
-                if hasattr(self, 'download_log') and self.download_log:
-                    self.download_log.add_log(f"Account set to: {display_name}")
-        
-        self.profile_combo.bind("<<ComboboxSelected>>", on_profile_change)
-        
-        # Refresh button
-        ModernButton(
-            profile_frame,
-            text=tr("browser_profile_refresh", "Refresh"),
-            icon_name="refresh-cw",
-            command=self.refresh_browser_profiles,
-            variant="ghost",
-            size="sm",
-            width=10
-        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        
-        # Test Connection Button
-        ModernButton(
-            profile_frame,
-            text=tr("browser_test_button", "Test Connection"),
-            icon_name="check-circle",
-            command=self.test_browser_connection,
-            variant="outline",
-            size="sm",
-            width=15
-        ).pack(side=tk.LEFT)
-        
-        # Show appropriate frame based on browser selection
-        if current_browser == "file":
-            cookies_file_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
-            cookies_help_frame.pack(fill=tk.X, pady=(Spacing.SM, 0))
-        elif current_browser != "none":
-            profile_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
-        
-        # Account Status
-        status_frame = tk.Frame(banner, bg=bg)
-        status_frame.pack(fill=tk.X, pady=(Spacing.SM, 0))
-        
-        tk.Label(
-            status_frame,
-            text=tr("browser_account_status", "Account Status:"),
-            bg=bg, fg=fg_sec,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION, "bold")
-        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        
-        self.account_status_label = tk.Label(
-            status_frame,
-            text=tr("browser_account_none", "No account detected"),
-            bg=bg, fg=fg_sec,
-            font=(Typography.FONT_FAMILY, Typography.SIZE_CAPTION)
-        )
-        self.account_status_label.pack(side=tk.LEFT)
-        
-        # Bottom border
-        tk.Frame(parent, bg=self.design.get_color("border"), height=1).pack(fill=tk.X)
-    
     def create_login_banner(self, parent):
         """Create OAuth authentication banner"""
         tr = self.translator.get
@@ -1730,7 +1442,23 @@ class EasyCutApp:
         # keep reference for later hiding/showing quality block
         self.format_card = format_card
 
-        # quality presets removed; default to best
+        # --- Quality presets row ---
+        quality_frame = ttk.Frame(format_card.body)
+        quality_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
+        ttk.Label(quality_frame, text=f"{tr('quality_label', 'Quality')}:", style="Caption.TLabel").pack(
+            side=tk.LEFT, padx=(0, Spacing.SM)
+        )
+        self._quality_radios = []
+        for qval, qlabel in [
+            ("best", tr("quality_best", "Best")),
+            ("1080", "1080p"),
+            ("720", "720p"),
+            ("mp4", "MP4"),
+            ("audio", tr("quality_audio", "Audio")),
+        ]:
+            rb = ttk.Radiobutton(quality_frame, text=qlabel, variable=self.download_quality_var, value=qval)
+            rb.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+            self._quality_radios.append(rb)
 
         # --- Specific format (populated after Verify — advanced override) ---
         Separator(format_card.body, design=self.design).pack(fill=tk.X, pady=(Spacing.SM, Spacing.SM))
@@ -1753,7 +1481,7 @@ class EasyCutApp:
         self.format_combo.current(0)
         self.format_combo.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, Spacing.SM))
         # wire up interactions so choosing a specific format disables the
-        # quality presets and vice‑versa (presets are hidden altogether)
+        # quality presets and vice-versa
         self.format_combo.bind('<<ComboboxSelected>>', self._on_format_selected)
         # still trace quality changes for config persistence
         self.download_quality_var.trace_add('write', lambda *args: self._on_quality_change())
@@ -2145,6 +1873,14 @@ class EasyCutApp:
         # URL count label
         self._batch_url_count = ttk.Label(text_actions, text="0 URLs", style="Caption.TLabel")
         self._batch_url_count.pack(side=tk.RIGHT)
+
+        # Keep URL count label in sync with the text area
+        def _update_batch_url_count(*_args):
+            text = self.batch_text.get("1.0", tk.END).strip()
+            count = len([u for u in text.split("\n") if u.strip()]) if text else 0
+            self._batch_url_count.config(text=f"{count} URLs")
+        self.batch_text.bind("<KeyRelease>", _update_batch_url_count)
+        self.batch_text.bind("<<Paste>>", lambda e: self.root.after(50, _update_batch_url_count))
 
         # === ACTION BUTTONS (above queue for quicker access — Issue #44) ===
         action_frame = ttk.Frame(main)
@@ -2699,12 +2435,6 @@ class EasyCutApp:
     # ──────────────────────────────────────────
     # FOLLOWING TAB METHODS
     # ──────────────────────────────────────────
-
-    def _following_clear_placeholder(self, event):
-        """Clear placeholder text on focus"""
-        current = self.following_url_entry.get()
-        if current.startswith("https://youtube.com/@"):
-            self.following_url_entry.delete(0, tk.END)
 
     def _follow_channel_from_download(self):
         """Follow the channel from the currently verified video (Issue #19)"""
@@ -3965,12 +3695,12 @@ class EasyCutApp:
                         tr("chapters_progress", "Downloading chapter {}/{}: {}").format(n, len(chapters), t)
                     ))
                     
-                    # Use download_sections for chapter time range
-                    section_str = f"*{start_time}-{end_time}"
+                    # Build section dict for chapter time range
+                    section_dict = {'start': start_time, 'end': end_time}
                     output_template = str(self.output_dir / f"%(title)s - {ch_title}.%(ext)s")
                     
                     try:
-                        base_opts = self._build_download_options(output_template, quality, mode, section=section_str, quiet=True)
+                        base_opts = self._build_download_options(output_template, quality, mode, section=section_dict, quiet=True)
                         ydl_opts = self.get_ydl_opts_with_cookies(base_opts)
                         info = self._run_ydl_download(url, ydl_opts)
                         success += 1
@@ -4371,18 +4101,6 @@ class EasyCutApp:
             self.setup_ui()
             self.log_app(f"✓ Language changed to {lang.upper()}")
     
-    def open_login_popup(self):
-        """Deprecated: Login popup replaced by browser authentication"""
-        tr = self.translator.get
-        messagebox.showinfo(
-            tr("browser_cookies_title", "Browser Authentication"),
-            tr("browser_cookies_info", "EasyCut now uses cookies from your browser.\nSelect your browser in the settings above.")
-        )
-    
-    def check_saved_credentials(self):
-        """Deprecated: Credential saving replaced by browser cookies"""
-        pass
-    
     def update_login_status(self):
         """Update banner auth label and logout button visibility.
         
@@ -4570,22 +4288,46 @@ class EasyCutApp:
         thread.start()
     
     def get_ydl_opts_with_cookies(self, base_opts=None):
-        """Get yt-dlp options with OAuth cookies configured
-        
+        """Get yt-dlp options with all network settings applied.
+
+        Reads cookie file, proxy, rate-limit and retry settings from the
+        user configuration and merges them into *base_opts*.
+
         Args:
-            base_opts (dict): Base options to extend
-            
+            base_opts (dict): Base options to extend.
+
         Returns:
-            dict: yt-dlp options with OAuth cookies file configured
+            dict: yt-dlp options with network settings configured.
         """
         opts = base_opts.copy() if base_opts else {}
-        
-        # Get OAuth cookies file
-        cookies_file = Path("config") / "yt_cookies.txt"
-        
-        if cookies_file.exists():
-            opts['cookiefile'] = str(cookies_file)
-        
+
+        # --- Cookie file ---
+        # Prefer the user-configured path; fall back to the default location.
+        custom_cookie = self.config_manager.get("cookies_file", "")
+        if custom_cookie and Path(custom_cookie).exists():
+            opts['cookiefile'] = str(Path(custom_cookie))
+        else:
+            default_cookie = Path("config") / "yt_cookies.txt"
+            if default_cookie.exists():
+                opts['cookiefile'] = str(default_cookie)
+
+        # --- Proxy ---
+        proxy = self.config_manager.get("proxy", "")
+        if proxy:
+            opts['proxy'] = proxy
+
+        # --- Rate limit ---
+        rate_limit = self.config_manager.get("rate_limit", "")
+        if rate_limit:
+            rate_bytes = self._parse_rate_limit(rate_limit)
+            if rate_bytes:
+                opts['ratelimit'] = rate_bytes
+
+        # --- Retries ---
+        retries = self.config_manager.get("max_retries", 3)
+        if retries and retries > 0:
+            opts['retries'] = retries
+
         return opts
     
     def test_browser_connection(self):
@@ -4686,7 +4428,11 @@ class EasyCutApp:
                 return
             
             try:
-                with yt_dlp.YoutubeDL({'quiet': True, 'no_warnings': True}) as ydl:
+                verify_opts = self.get_ydl_opts_with_cookies({
+                    'quiet': True,
+                    'no_warnings': True,
+                })
+                with yt_dlp.YoutubeDL(verify_opts) as ydl:
                     info = ydl.extract_info(url, download=False)
                 
                 # Cache the full info
@@ -4902,7 +4648,7 @@ class EasyCutApp:
         tr = self.translator.get
         
         format_options = [tr("format_auto", "Auto (Best)")]
-        self._format_id_map = {"auto": None}  # Maps display index to format_id
+        self._format_id_map = {0: None}  # Maps display index to format_id
         
         # Categorize and sort formats
         video_audio = []
@@ -5006,27 +4752,18 @@ class EasyCutApp:
             else:
                 self.format_combo.current(0)
             self.format_status_label.config(text=status)
-            # hide quality presets once formats are known
-            if hasattr(self, 'quality_grid'):
-                self.quality_grid.grid_remove()
-            # provide a button to bring them back
-            if hasattr(self, 'format_card') and not hasattr(self, '_show_preset_btn'):
-                self._show_preset_btn = tk.Button(
-                    self.format_card.body,
-                    text=tr('show_presets', 'Use quality presets'),
-                    command=self._show_quality_presets,
-                    relief='flat',
-                    fg=self.design.get_color('accent_primary'),
-                    bg=self.design.get_color('bg_primary')
-                )
-                self._show_preset_btn.pack(anchor=tk.E, pady=(0, Spacing.XS))
-            # ensure quality radios are enabled/disabled appropriately
+            # When a specific format is chosen, dim quality radios to hint
+            # they won't take effect; when Auto is chosen, re-enable them.
             self._on_format_selected()
         
         self.root.after(0, update_ui)
     
     def _get_selected_format_id(self):
-        """Get the yt-dlp format ID from the combobox selection, or None for auto"""
+        """Get the yt-dlp format ID from the combobox selection, or None for auto.
+
+        Returns ``None`` when the current selection is Auto or a category
+        separator, meaning the quality preset should be used instead.
+        """
         if not hasattr(self, '_format_id_map'):
             return None
         idx = self.format_combo.current()
@@ -5036,32 +4773,30 @@ class EasyCutApp:
     # --- helpers for UI interactions ------------------------------------------------
     def _on_format_selected(self, event=None):
         """Callback when user picks an item from the format combobox.
-        The quality presets are not shown in the main UI anymore; this
-        callback simply keeps the variable in sync and hides the optional
-        'show presets' button if present.
+
+        When a specific format is selected (not Auto and not a separator),
+        dim the quality preset radios to signal they won't take effect.
+        When Auto is re-selected, restore the quality radios.
         """
         if not hasattr(self, 'format_combo'):
             return
-        sel = self.format_combo.current()
-        if sel != 0:
-            self.download_quality_var.set('auto')
-            if hasattr(self, '_show_preset_btn'):
-                self._show_preset_btn.pack_forget()
+        fmt_id = self._get_selected_format_id()
+        if fmt_id is not None:
+            # A real format was selected — disable quality presets
+            self._set_quality_radios_state('disabled')
         else:
-            if hasattr(self, '_show_preset_btn'):
-                self._show_preset_btn.pack(anchor=tk.E, pady=(0, Spacing.XS))
+            # Auto or separator — quality presets are in charge
+            self._set_quality_radios_state('normal')
 
     def _on_quality_change(self):
         """Called when the quality radio variable changes.
-        If the user switches quality manually, revert any specific-format
-        selection back to Auto (so presets actually apply).
-        Also show presets button if hidden.
+
+        If the user switches quality manually, revert the format combo
+        back to Auto (index 0) so the quality preset takes effect.
         """
         if hasattr(self, 'format_combo') and self.download_quality_var.get() != 'auto':
             self.format_combo.current(0)
             self._set_quality_radios_state('normal')
-            if hasattr(self, '_show_preset_btn'):
-                self._show_preset_btn.pack(anchor=tk.E, pady=(0, Spacing.XS))
 
     def _set_quality_radios_state(self, state: str):
         """Enable/disable quality radio widgets."""
@@ -5070,13 +4805,6 @@ class EasyCutApp:
                 rb.config(state=state)
             except Exception:
                 pass
-
-    def _show_quality_presets(self):
-        """User-requested display of the quality presets frame."""
-        if hasattr(self, 'quality_grid'):
-            self.quality_grid.grid()
-        if hasattr(self, '_show_preset_btn'):
-            self._show_preset_btn.pack_forget()
 
     def _make_progress_label(self, parent, attr: str = 'download_progress_label'):
         """Utility to create a styled progress label attached to a parent frame.
@@ -5175,7 +4903,7 @@ class EasyCutApp:
 
         return {'start': start_seconds, 'end': end_seconds}
 
-    def _build_download_options(self, output_template: str, quality: str, mode: str, section: str = None, quiet: bool = False, format_id: str = None):
+    def _build_download_options(self, output_template: str, quality: str, mode: str, section: dict = None, quiet: bool = False, format_id: str = None):
         """Create yt-dlp options for a download."""
         # If a specific format_id was selected from the format combo, use it directly
         if format_id:
@@ -5208,12 +4936,52 @@ class EasyCutApp:
             'logger': _YTLogger(),        # custom logger filters non-critical warnings (Issue #23)
             'progress_hooks': [self.download_progress_hook],
         }
-        
-        # Playlist handling
-        if mode == 'playlist':
+
+        # Audio mode: add FFmpeg postprocessor so the user's format/bitrate
+        # selection (mp3, wav, m4a, opus) is actually honoured.
+        if mode == 'audio':
+            audio_fmt = self.audio_format_var.get()   # mp3 / wav / m4a / opus
+            audio_br = self.audio_bitrate_var.get()   # 128 / 192 / 256 / 320
+            base_opts['postprocessors'] = [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': audio_fmt,
+                'preferredquality': audio_br,
+            }]
+
+        # Playlist / channel handling
+        if mode in ('playlist', 'channel'):
             base_opts['noplaylist'] = False
+            # For channel mode, limit to the N latest videos the user chose
+            if mode == 'channel' and hasattr(self, '_channel_limit_var') and self._channel_limit_var is not None:
+                try:
+                    limit = int(self._channel_limit_var.get())
+                    if 1 <= limit <= 500:
+                        base_opts['playlistend'] = limit
+                except (ValueError, TypeError):
+                    pass
         else:
             base_opts['noplaylist'] = True
+
+        # Subtitle options — honour the UI checkboxes
+        if self.sub_enable_var.get():
+            sub_type = self.sub_type_var.get()       # auto / manual / both
+            sub_fmt  = self.sub_format_var.get()     # srt / vtt / ass / json3
+            sub_lang = self.sub_lang_entry.get().strip() or 'en'
+            sub_langs = [s.strip() for s in sub_lang.split(',') if s.strip()]
+
+            if sub_type in ('manual', 'both'):
+                base_opts['writesubtitles'] = True
+            if sub_type in ('auto', 'both'):
+                base_opts['writeautomaticsub'] = True
+            base_opts['subtitlesformat'] = sub_fmt
+            base_opts['subtitleslangs'] = sub_langs
+
+            # Embed subtitles into the video file if requested
+            if self.sub_embed_var.get():
+                base_opts.setdefault('postprocessors', []).append({
+                    'key': 'FFmpegEmbedSubtitle',
+                    'already_have_subtitle': False,
+                })
 
         # Time range / section download
         if section:
@@ -5288,10 +5056,19 @@ class EasyCutApp:
         with self.download_semaphore:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
-
-        # the downloaded filename is available in the returned info or can be
-        # reconstructed via ydl.prepare_filename; convert if needed
-        path = info.get('_filename')
+                # Resolve the downloaded file path while ydl is still in scope
+                path = info.get('_filename') or None
+                if not path:
+                    # Fall back to requested_downloads list (reliable in modern yt-dlp)
+                    rd = info.get('requested_downloads')
+                    if rd and isinstance(rd, list) and rd[0].get('filepath'):
+                        path = rd[0]['filepath']
+                    else:
+                        try:
+                            path = ydl.prepare_filename(info)
+                        except Exception:
+                            path = None
+                info['_filename'] = path  # cache for callers
         if self.config_manager.get("premiere_compat", False):
             if path and Path(path).exists():
                 if not self.post_processor.is_premiere_compatible(path):
@@ -5481,22 +5258,27 @@ class EasyCutApp:
             
             except Exception as e:
                 error_msg = str(e)
-                # Structured logging
-                self.logger.error(f"Download failed: {url}")
-                self.logger.error(f"  Error: {error_msg}")
-                
-                # User-friendly error message
-                friendly = self._get_friendly_error(error_msg)
-                self.download_log.add_log(f"{tr('msg_error', 'Error')}: {friendly}", "ERROR")
-                
-                # Add failed entry to history
-                entry = {
-                    "date": datetime.now().isoformat(),
-                    "filename": url[:50],
-                    "status": "error",
-                    "url": url
-                }
-                self.config_manager.add_to_history(entry)
+                # Detect user-initiated cancellation — don't treat as error
+                if not self.is_downloading or 'cancelled by user' in error_msg.lower():
+                    self.logger.info(f"Download cancelled: {url}")
+                    self.download_log.add_log(tr("download_stop", "Download cancelled"))
+                else:
+                    # Structured logging
+                    self.logger.error(f"Download failed: {url}")
+                    self.logger.error(f"  Error: {error_msg}")
+                    
+                    # User-friendly error message
+                    friendly = self._get_friendly_error(error_msg)
+                    self.download_log.add_log(f"{tr('msg_error', 'Error')}: {friendly}", "ERROR")
+                    
+                    # Add failed entry to history only for real errors
+                    entry = {
+                        "date": datetime.now().isoformat(),
+                        "filename": url[:50],
+                        "status": "error",
+                        "url": url
+                    }
+                    self.config_manager.add_to_history(entry)
             
             finally:
                 self.is_downloading = False
@@ -5558,12 +5340,11 @@ class EasyCutApp:
             if not response:  # User clicked No or Cancel
                 return
         
-        # Stop active live recording
+        # Stop active live recording via the existing cancellation flag
         if getattr(self, 'is_recording', False):
             try:
                 self._live_user_cancelled = True
-                if hasattr(self, 'live_process') and self.live_process:
-                    self.live_process.kill()
+                self.is_recording = False
             except Exception:
                 pass
         
@@ -5632,8 +5413,9 @@ class EasyCutApp:
             for i, url in enumerate(urls, 1):
                 prefix = f"[{i}/{len(urls)}]"
                 try:
-                    opts = {'quiet': True, 'no_warnings': True, 'skip_download': True,
+                    base_opts = {'quiet': True, 'no_warnings': True, 'skip_download': True,
                             'logger': _YTLogger()}
+                    opts = self.get_ydl_opts_with_cookies(base_opts)
                     with _ydl_mod.YoutubeDL(opts) as ydl:
                         info = ydl.extract_info(url, download=False)
                     title = info.get('title', url)[:50]
@@ -6294,9 +6076,9 @@ class EasyCutApp:
             if sys.platform == 'win32':
                 os.startfile(str(self.output_dir))
             elif sys.platform == 'darwin':
-                sp.Popen(['open', str(self.output_dir)])
+                subprocess.Popen(['open', str(self.output_dir)])
             else:
-                sp.Popen(['xdg-open', str(self.output_dir)])
+                subprocess.Popen(['xdg-open', str(self.output_dir)])
         except Exception as e:
             messagebox.showerror(tr("msg_error", "Error"), f"{tr('msg_error', 'Error')}: {e}")
     
@@ -6972,48 +6754,3 @@ class EasyCutApp:
         for i, c in enumerate(self._clip_markers, 1):
             c["index"] = i
         self._refresh_clip_list()
-
-    def _clipper_save_all(self):
-        """Save all marked clips by extracting segments from the recorded file"""
-        tr = self.translator.get
-        if not self._clip_markers:
-            messagebox.showinfo(tr("msg_info", "Information"), tr("clipper_no_clips", "No clips marked"))
-            return
-        
-        if not self.post_processor.ffmpeg_available:
-            messagebox.showerror(tr("msg_error", "Error"), tr("log_ffmpeg_not_found", "FFmpeg not found"))
-            return
-        
-        # Find the most recent recording file
-        recent_files = sorted(self.output_dir.glob("*"), key=lambda f: f.stat().st_mtime, reverse=True)
-        video_files = [f for f in recent_files if f.suffix.lower() in ('.mp4', '.mkv', '.webm', '.ts', '.flv')]
-        
-        if not video_files:
-            messagebox.showwarning(tr("msg_warning", "Warning"), tr("pp_no_file", "No recorded file found"))
-            return
-        
-        source_file = str(video_files[0])
-        self.live_log.add_log(f"💾 {tr('clipper_save_all', 'Saving clips from')}: {video_files[0].name}")
-        
-        def save_clips():
-            for clip in self._clip_markers:
-                sh, srem = divmod(clip["start"], 3600)
-                sm, ss = divmod(srem, 60)
-                eh, erem = divmod(clip["end"], 3600)
-                em, es = divmod(erem, 60)
-                start_str = f"{sh:02d}:{sm:02d}:{ss:02d}"
-                end_str = f"{eh:02d}:{em:02d}:{es:02d}"
-                
-                result = self.post_processor.trim(source_file, start_str, end_str)
-                if result:
-                    self.root.after(0, lambda r=result, i=clip["index"]: 
-                        self.live_log.add_log(f"✅ {tr('clipper_saved', 'Clip saved')}: Clip #{i}")
-                    )
-                else:
-                    self.root.after(0, lambda i=clip["index"]:
-                        self.live_log.add_log(f"❌ Clip #{i} failed", "ERROR")
-                    )
-            
-            self.root.after(0, lambda: self.live_log.add_log(f"✅ All clips processed"))
-        
-        threading.Thread(target=save_clips, daemon=True).start()
