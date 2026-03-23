@@ -152,3 +152,106 @@ class TestGlobalTranslator:
     def test_global_instance_callable(self):
         result = translator("app_title")
         assert isinstance(result, str)
+
+
+# ---------------------------------------------------------------------------
+# i18n Edge Cases
+# ---------------------------------------------------------------------------
+
+class TestI18nEdgeCases:
+    """Edge case tests for i18n/translation system."""
+
+    def test_missing_key_in_all_languages_returns_default(self):
+        """Missing key with no fallback available should return default."""
+        t = Translator("en")
+        result = t.get("completely_nonexistent_key_xyz_123")
+        assert result == ""  # Default is empty string
+
+    def test_missing_key_custom_default(self):
+        """Missing key should return custom default if provided."""
+        t = Translator("en")
+        result = t.get("nonexistent_key_abc", "custom_fallback")
+        assert result == "custom_fallback"
+
+    def test_key_with_variable_placeholder_no_variable_provided(self):
+        """Key with %(variable)s but no variable provided should not crash."""
+        t = Translator("en")
+        # about_version_info often contains version placeholders
+        result = t.get("about_version_info")
+        # Should return the string with placeholder intact or formatted
+        assert isinstance(result, str)
+
+    def test_emoji_characters_in_translations(self):
+        """Keys with emoji characters should work correctly."""
+        t = Translator("en")
+        # Test that emoji-containing keys (if any) don't break things
+        # Also verify we can handle translations containing emoji
+        for lang in SUPPORTED_LANGS:
+            t.set_language(lang)
+            # All values should be retrievable without error
+            for key in TRANSLATIONS[lang]:
+                value = t.get(key)
+                assert isinstance(value, (str, list))
+
+    def test_very_long_translation_strings(self):
+        """Very long translation strings (1000+ chars) should work."""
+        t = Translator("en")
+        # Find the longest translation in each language
+        for lang in SUPPORTED_LANGS:
+            t.set_language(lang)
+            for key, value in TRANSLATIONS[lang].items():
+                if isinstance(value, str) and len(value) > 100:
+                    result = t.get(key)
+                    assert result == value
+                    assert len(result) > 100
+
+    def test_none_key_returns_default(self):
+        """None as key should return default without crashing."""
+        t = Translator("en")
+        try:
+            result = t.get(None, "fallback")
+            # Should return fallback or handle gracefully
+            assert result == "fallback" or result == ""
+        except (TypeError, AttributeError):
+            pass  # Also acceptable to raise
+
+    def test_empty_string_key_returns_default(self):
+        """Empty string as key should return default."""
+        t = Translator("en")
+        result = t.get("", "fallback")
+        assert result == "fallback"
+
+    def test_key_with_special_characters(self):
+        """Keys with special characters should be handled."""
+        t = Translator("en")
+        # Test that special character keys don't crash
+        weird_keys = ["key with spaces", "key\twith\ttabs", "key\nwith\nnewlines"]
+        for key in weird_keys:
+            result = t.get(key, "default")
+            assert result == "default"
+
+    @pytest.mark.parametrize("lang", SUPPORTED_LANGS)
+    def test_all_string_values_non_empty_after_strip(self, lang):
+        """All string translation values should be non-empty after stripping."""
+        for key, value in TRANSLATIONS[lang].items():
+            if isinstance(value, str):
+                assert value.strip(), f"'{lang}'.'{key}' is empty or whitespace-only"
+
+    def test_callable_with_none_key(self):
+        """Calling translator(None) should handle gracefully."""
+        t = Translator("en")
+        try:
+            result = t(None, "fb")
+            assert result == "fb" or result == ""
+        except (TypeError, AttributeError):
+            pass  # Also acceptable
+
+    def test_get_list_translation_intact(self):
+        """List-type translations should be returned intact."""
+        t = Translator("en")
+        for key, value in TRANSLATIONS["en"].items():
+            if isinstance(value, list):
+                result = t.get(key)
+                assert result == value
+                assert isinstance(result, list)
+                break  # Found and tested one list

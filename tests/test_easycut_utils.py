@@ -109,6 +109,82 @@ class TestParseRateLimit:
         assert EasyCutApp._parse_rate_limit(123) is None
 
 
+class TestParseTimecodeEdgeCases:
+    """Edge case tests for EasyCutApp._parse_timecode."""
+
+    @pytest.mark.parametrize("timecode,expected", [
+        ("25:30:45", 91845),  # 25 hours - should handle large durations
+        ("99:59:59", 359999),  # Near 100 hours
+        ("100:00:00", 360000),  # Exactly 100 hours
+    ])
+    def test_very_large_durations(self, timecode, expected):
+        """Very large durations (24+ hours) should be handled correctly."""
+        result = EasyCutApp._parse_timecode(timecode)
+        assert result == expected
+
+    @pytest.mark.parametrize("timecode", [
+        "1:30:45.500",  # Milliseconds format
+        "1:30.5",  # Fractional seconds in mm:ss
+        "1.5",  # Fractional bare seconds
+    ])
+    def test_milliseconds_not_supported(self, timecode):
+        """Current implementation uses isdigit() so decimals return None."""
+        # The implementation doesn't support milliseconds (uses isdigit)
+        result = EasyCutApp._parse_timecode(timecode)
+        assert result is None
+
+    @pytest.mark.parametrize("timecode", [
+        "1:2:3:4:5",  # Way too many parts
+        "abc:def:ghi",  # All letters
+        "12:ab:34",  # Mixed letters and numbers
+        ":::",  # Only colons
+        "1::2",  # Empty middle part
+        ":30",  # Empty first part
+        "30:",  # Empty last part
+    ])
+    def test_malformed_input_returns_none(self, timecode):
+        """Malformed input should return None."""
+        result = EasyCutApp._parse_timecode(timecode)
+        assert result is None
+
+    def test_empty_string_returns_none(self):
+        """Empty string should return None."""
+        assert EasyCutApp._parse_timecode("") is None
+
+    def test_whitespace_only_returns_none(self):
+        """Whitespace-only string should return None."""
+        assert EasyCutApp._parse_timecode("   ") is None
+        assert EasyCutApp._parse_timecode("\t\n") is None
+
+    @pytest.mark.parametrize("timecode", [
+        "-1:00",  # Negative mm:ss
+        "-1:00:00",  # Negative hh:mm:ss
+        "-30",  # Negative seconds
+    ])
+    def test_negative_times_rejected(self, timecode):
+        """Negative times should be rejected."""
+        result = EasyCutApp._parse_timecode(timecode)
+        assert result is None
+
+    def test_leading_trailing_whitespace_handled(self):
+        """Timecodes with leading/trailing whitespace should work."""
+        assert EasyCutApp._parse_timecode("  1:30  ") == 90
+        assert EasyCutApp._parse_timecode("\t1:00:00\n") == 3600
+
+
+class TestFormatTimecodeEdgeCases:
+    """Edge case tests for EasyCutApp._format_timecode."""
+
+    def test_very_large_duration(self):
+        """Very large durations (24+ hours) should format correctly."""
+        # 25 hours, 30 minutes, 45 seconds = 91845 seconds
+        assert EasyCutApp._format_timecode(91845) == "25:30:45"
+
+    def test_100_hours(self):
+        """100 hours should work."""
+        assert EasyCutApp._format_timecode(360000) == "100:00:00"
+
+
 class TestIsValidYoutubeUrl:
     """Tests for EasyCutApp.is_valid_youtube_url(url) -> bool."""
 
