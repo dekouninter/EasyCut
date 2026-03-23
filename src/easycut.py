@@ -1374,8 +1374,8 @@ class EasyCutApp:
                 _cm.grab_release()
         self.download_url_entry.bind("<Button-3>", _show_url_context_menu)
 
-        # Verify button
-        verify_btn = ModernButton(
+        # Verify button (store reference for loading state)
+        self._verify_btn = ModernButton(
             url_container,
             text=tr("download_verify", "Verify"),
             icon_name="verify",
@@ -1384,8 +1384,8 @@ class EasyCutApp:
             size="sm",
             width=10
         )
-        verify_btn.pack(side=tk.LEFT)
-        Tooltip(verify_btn, text=tr("tooltip_verify", "Verify URL and fetch video metadata"), design=self.design)
+        self._verify_btn.pack(side=tk.LEFT)
+        Tooltip(self._verify_btn, text=tr("tooltip_verify", "Verify URL and fetch video metadata"), design=self.design)
 
         # Paste & Fetch — paste clipboard content and immediately verify
         paste_verify_btn = ModernButton(
@@ -1479,9 +1479,10 @@ class EasyCutApp:
         right_col = ttk.Frame(info_row)
         right_col.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        # Title
+        # Title (P1: Show placeholder text instead of "-")
+        self._placeholder_text = tr("info_placeholder", "Click Verify to load")
         self.download_title_label = ttk.Label(
-            right_col, text="-", style="Body.TLabel", wraplength=300,
+            right_col, text=self._placeholder_text, style="Body.TLabel", wraplength=300,
         )
         self.download_title_label.pack(anchor=tk.W, pady=(0, Spacing.XS))
 
@@ -1489,7 +1490,7 @@ class EasyCutApp:
         uploader_row = ttk.Frame(right_col)
         uploader_row.pack(anchor=tk.W, fill=tk.X, pady=(0, Spacing.XS))
         ttk.Label(uploader_row, text="📺 ", style="Caption.TLabel").pack(side=tk.LEFT)
-        self.download_uploader_label = ttk.Label(uploader_row, text="-", style="Caption.TLabel")
+        self.download_uploader_label = ttk.Label(uploader_row, text=self._placeholder_text, style="Caption.TLabel")
         self.download_uploader_label.pack(side=tk.LEFT)
         # Follow Channel button — hidden until verify_thread provides uploader_url (Issue #19)
         self._follow_channel_btn = ModernButton(
@@ -1509,21 +1510,21 @@ class EasyCutApp:
         views_row = ttk.Frame(right_col)
         views_row.pack(anchor=tk.W, fill=tk.X, pady=(0, Spacing.XS))
         ttk.Label(views_row, text="👁 ", style="Caption.TLabel").pack(side=tk.LEFT)
-        self.download_views_label = ttk.Label(views_row, text="-", style="Caption.TLabel")
+        self.download_views_label = ttk.Label(views_row, text=self._placeholder_text, style="Caption.TLabel")
         self.download_views_label.pack(side=tk.LEFT)
 
         # Upload date row
         date_row = ttk.Frame(right_col)
         date_row.pack(anchor=tk.W, fill=tk.X, pady=(0, Spacing.XS))
         ttk.Label(date_row, text="📅 ", style="Caption.TLabel").pack(side=tk.LEFT)
-        self.download_date_label = ttk.Label(date_row, text="-", style="Caption.TLabel")
+        self.download_date_label = ttk.Label(date_row, text=self._placeholder_text, style="Caption.TLabel")
         self.download_date_label.pack(side=tk.LEFT)
 
         # Duration row
         dur_row = ttk.Frame(right_col)
         dur_row.pack(anchor=tk.W, fill=tk.X, pady=(0, Spacing.XS))
         ttk.Label(dur_row, text="⏱ ", style="Caption.TLabel").pack(side=tk.LEFT)
-        self.download_duration_label = ttk.Label(dur_row, text="-", style="Caption.TLabel")
+        self.download_duration_label = ttk.Label(dur_row, text=self._placeholder_text, style="Caption.TLabel")
         self.download_duration_label.pack(side=tk.LEFT)
 
         # Open in browser button — hidden until video_id is known
@@ -1568,6 +1569,8 @@ class EasyCutApp:
         self.format_combo['values'] = [tr("format_preset", "Preset")]
         self.format_combo.current(0)
         self.format_combo.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, Spacing.SM))
+        # P1: Add tooltip explaining what "Preset" means
+        Tooltip(self.format_combo, text=tr("tooltip_format_preset", "Uses quality setting from Settings tab"), design=self.design)
         # wire up interactions so choosing a specific format disables the
         # quality presets and vice-versa
         self.format_combo.bind('<<ComboboxSelected>>', self._on_format_selected)
@@ -2034,11 +2037,12 @@ class EasyCutApp:
             width=22
         ).pack(anchor=tk.W)
         
-        # === DOWNLOAD PROGRESS CARD (shown only while downloading) ===
+        # === DOWNLOAD PROGRESS CARD (P0: Show "Ready to download" before download starts) ===
         self._progress_card = ModernCard(
             main, title=tr("progress_card_title", "Download Progress"), design=self.design
         )
-        # NOT packed yet — appears automatically when a download starts
+        # Pack immediately with "Ready to download" status (P0 #2)
+        self._progress_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         prog_bar_row = ttk.Frame(self._progress_card.body)
         prog_bar_row.pack(fill=tk.X)
         self._download_progress_bar = ttk.Progressbar(
@@ -2048,7 +2052,7 @@ class EasyCutApp:
         self._download_pct_label = ttk.Label(prog_bar_row, text="", style="Caption.TLabel", width=7)
         self._download_pct_label.pack(side=tk.LEFT)
         self._download_detail_label = ttk.Label(
-            self._progress_card.body, text="", style="Caption.TLabel"
+            self._progress_card.body, text=tr("progress_ready", "Ready to download"), style="Caption.TLabel"
         )
         self._download_detail_label.pack(anchor=tk.W, pady=(Spacing.XS, 0))
 
@@ -2692,20 +2696,21 @@ class EasyCutApp:
             row=2, column=0, sticky=tk.W, pady=(Spacing.SM, Spacing.XS)
         )
         
-        self.following_interval_var = tk.StringVar(value=str(self.channel_monitor.get_interval()))
+        # P1 Fix #6: Human-readable interval labels
+        self._interval_map = {"15 min": "15", "30 min": "30", "1 hour": "60", "6 hours": "360", "24 hours": "1440"}
+        self._interval_reverse = {v: k for k, v in self._interval_map.items()}
+        current_interval = str(self.channel_monitor.get_interval())
+        display_interval = self._interval_reverse.get(current_interval, "30 min")
+        self.following_interval_var = tk.StringVar(value=display_interval)
         interval_combo = ttk.Combobox(
             settings_grid,
             textvariable=self.following_interval_var,
-            values=["15", "30", "60", "360", "1440"],
+            values=["15 min", "30 min", "1 hour", "6 hours", "24 hours"],
             state="readonly",
-            width=8
+            width=10
         )
         interval_combo.grid(row=2, column=1, sticky=tk.W, pady=(Spacing.SM, Spacing.XS), padx=(Spacing.SM, 0))
         interval_combo.bind("<<ComboboxSelected>>", lambda e: self._following_save_settings())
-        
-        ttk.Label(settings_grid, text=f"({tr('following_interval_help', 'minutes')})", style="Caption.TLabel").grid(
-            row=2, column=2, sticky=tk.W, padx=(Spacing.XS, 0), pady=(Spacing.SM, Spacing.XS)
-        )
         
         # Issue #61: Following quality moved to Settings tab — initialize from channel_monitor
         self.following_quality_var = tk.StringVar(value=self.channel_monitor.get_auto_quality())
@@ -2714,7 +2719,8 @@ class EasyCutApp:
         action_frame = ttk.Frame(settings_card.body)
         action_frame.pack(fill=tk.X, pady=(Spacing.SM, 0))
         
-        check_now_btn = ModernButton(
+        # P0 Fix #2: Store reference to Check Now button for loading state
+        self.following_check_now_btn = ModernButton(
             action_frame,
             text=f"🔍 {tr('following_check_now', 'Check Now')}",
             command=self._following_check_now,
@@ -2722,20 +2728,20 @@ class EasyCutApp:
             size="sm",
             width=14
         )
-        check_now_btn.pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        Tooltip(check_now_btn, text=tr("tooltip_check_now", "Check all channels for new uploads now"), design=self.design)
+        self.following_check_now_btn.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        Tooltip(self.following_check_now_btn, text=tr("tooltip_check_now", "Check all channels for new uploads now"), design=self.design)
         
-        self.following_monitor_btn_text = tk.StringVar(value=f"▶️ {tr('following_enabled', 'Start Monitoring')}")
-        monitor_btn = ModernButton(
+        # P0 Fix #1: Store reference to monitor button for text updates
+        self.following_monitor_btn = ModernButton(
             action_frame,
-            text=f"▶️ {tr('following_enabled', 'Start Monitoring')}",
+            text=f"▶️ {tr('following_start_monitoring', 'Start Monitoring')}",
             command=self._following_toggle_monitor,
             variant="outline",
             size="sm",
             width=18
         )
-        monitor_btn.pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        Tooltip(monitor_btn, text=tr("tooltip_toggle_monitor", "Start/stop automatic channel monitoring"), design=self.design)
+        self.following_monitor_btn.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        Tooltip(self.following_monitor_btn, text=tr("tooltip_toggle_monitor", "Start/stop automatic channel monitoring"), design=self.design)
         
         # Last check timestamp
         last_check = self.channel_monitor.get_last_check()
@@ -2863,12 +2869,25 @@ class EasyCutApp:
         
         channels = self.channel_monitor.get_channels()
         
+        # P1 Fix #5: Empty state with icon for visual appeal
         if not channels:
+            empty_frame = ttk.Frame(self.following_channels_frame)
+            empty_frame.pack(pady=Spacing.XL)
             ttk.Label(
-                self.following_channels_frame,
+                empty_frame,
+                text="📺",
+                font=("Segoe UI Emoji", 32)
+            ).pack()
+            ttk.Label(
+                empty_frame,
                 text=tr("following_no_channels", "No channels followed yet"),
                 style="Caption.TLabel"
-            ).pack(pady=Spacing.LG)
+            ).pack(pady=(Spacing.SM, 0))
+            ttk.Label(
+                empty_frame,
+                text=tr("following_empty_hint", "Add a channel URL above to start tracking uploads"),
+                style="Caption.TLabel"
+            ).pack()
             return
         
         card_bg = self.design.get_color("bg_tertiary")
@@ -3000,6 +3019,12 @@ class EasyCutApp:
     def _following_remove_channel(self, url: str):
         """Remove a followed channel"""
         tr = self.translator.get
+        # P1 Fix #4: Confirmation dialog before removing channel
+        if not messagebox.askyesno(
+            tr("following_remove_title", "Remove Channel"),
+            tr("following_remove_confirm", "Remove this channel from following?")
+        ):
+            return
         if self.channel_monitor.remove_channel(url):
             self.following_log.add_log(f"🗑️ {tr('following_removed', 'Channel removed')}")
             self._refresh_following_channels()
@@ -3008,8 +3033,11 @@ class EasyCutApp:
         """Save following tab settings"""
         self.channel_monitor.set_auto_download(self.following_auto_var.get())
         self.channel_monitor.set_notifications(self.following_notify_var.get())
+        # P1 Fix #6: Convert human-readable interval back to minutes
         try:
-            self.channel_monitor.set_interval(int(self.following_interval_var.get()))
+            interval_display = self.following_interval_var.get()
+            interval_minutes = self._interval_map.get(interval_display, interval_display)
+            self.channel_monitor.set_interval(int(interval_minutes))
         except ValueError:
             pass
         self.channel_monitor.set_auto_quality(self.following_quality_var.get())
@@ -3045,6 +3073,12 @@ class EasyCutApp:
     def _following_check_now(self):
         """Manually check all followed channels for new videos"""
         tr = self.translator.get
+        
+        # P0 Fix #2: Disable button and show loading state
+        if hasattr(self, 'following_check_now_btn'):
+            self.following_check_now_btn.config(state='disabled')
+            self.following_check_now_btn.config(text=f"⏳ {tr('following_checking_btn', 'Checking...')}")
+        
         self.following_log.add_log(f"🔍 {tr('following_checking', 'Checking for new videos...')}")
         
         def check_thread():
@@ -3062,15 +3096,17 @@ class EasyCutApp:
                     f"ℹ️ {tr('following_no_new', 'No new videos found')}"
                 ))
             
-            # Update last check label
-            last = self.channel_monitor.get_last_check()
-            if last:
-                try:
-                    dt = datetime.fromisoformat(last)
-                    txt = tr("following_last_check", "Last check: {}").format(dt.strftime("%d/%m/%Y %H:%M"))
-                    self.root.after(0, lambda: self.following_last_check_label.config(text=txt))
-                except Exception:
-                    pass
+            # P0 Fix #3: Update last check label with current time
+            now_str = datetime.now().strftime("%I:%M %p")
+            txt = tr("following_last_check", "Last check: {}").format(now_str)
+            self.root.after(0, lambda: self.following_last_check_label.config(text=txt))
+            
+            # P0 Fix #2: Re-enable button after check completes
+            def _restore_btn():
+                if hasattr(self, 'following_check_now_btn'):
+                    self.following_check_now_btn.config(state='normal')
+                    self.following_check_now_btn.config(text=f"🔍 {tr('following_check_now', 'Check Now')}")
+            self.root.after(0, _restore_btn)
         
         threading.Thread(target=check_thread, daemon=True).start()
 
@@ -3080,9 +3116,15 @@ class EasyCutApp:
         if self.channel_monitor.is_running:
             self.channel_monitor.stop_monitoring()
             self.following_log.add_log(f"⏹️ {tr('following_disabled', 'Monitoring disabled')}")
+            # P0 Fix #1: Update button text when monitoring stops
+            if hasattr(self, 'following_monitor_btn'):
+                self.following_monitor_btn.config(text=f"▶️ {tr('following_start_monitoring', 'Start Monitoring')}")
         else:
             self.channel_monitor.start_monitoring()
             self.following_log.add_log(f"▶️ {tr('following_enabled', 'Monitoring enabled')}")
+            # P0 Fix #1: Update button text when monitoring starts
+            if hasattr(self, 'following_monitor_btn'):
+                self.following_monitor_btn.config(text=f"⏸ {tr('following_stop_monitoring', 'Stop Monitoring')}")
 
     def _following_on_new_videos(self, videos: list):
         """Callback when new videos are detected by the monitor"""
@@ -3216,7 +3258,13 @@ class EasyCutApp:
             design=self.design, width=28
         )
         self.history_search_entry.pack(side=tk.LEFT)
-        self.history_search_entry.bind("<KeyRelease>", lambda _e: self.refresh_history())
+        # Issue: Add search debounce to avoid excessive refreshes on every keystroke
+        self._history_search_timer = None
+        def _debounced_search(_e=None):
+            if self._history_search_timer:
+                self.root.after_cancel(self._history_search_timer)
+            self._history_search_timer = self.root.after(300, self.refresh_history)
+        self.history_search_entry.bind("<KeyRelease>", _debounced_search)
 
         # === POST-PROCESSING TOOLS CARD ===
         pp_card = ModernCard(main, title=f"🛠️ {tr('live_postprocess', 'Post-Processing')}", design=self.design, accent_top=True, hoverable=True)
@@ -3234,6 +3282,8 @@ class EasyCutApp:
         pp_file_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
 
         self.pp_file_var = tk.StringVar(value="")
+        # List to track all PP operation buttons for enable/disable toggling
+        self._pp_operation_buttons = []
         pp_file_entry = ttk.Entry(pp_file_frame, textvariable=self.pp_file_var, state="readonly", font=(LOADED_FONT_FAMILY, Typography.SIZE_SM))
         pp_file_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, Spacing.SM))
 
@@ -3279,10 +3329,12 @@ class EasyCutApp:
                 command=lambda o=op: self._run_post_process(o),
                 variant="outline",
                 size="sm",
+                state="disabled",
             )
             _pp_btn.pack(side=tk.LEFT, padx=(0, Spacing.XS))
             _tip_key, _tip_default = _pp_op_tooltip_keys[op]
             Tooltip(_pp_btn, text=tr(_tip_key, _tip_default), design=self.design)
+            self._pp_operation_buttons.append(_pp_btn)
 
         # Enhancement buttons row 2
         pp_buttons2 = ttk.Frame(pp_card.body)
@@ -3294,9 +3346,11 @@ class EasyCutApp:
             command=lambda: self._run_post_process("extract_audio"),
             variant="outline",
             size="sm",
+            state="disabled",
         )
         _pp_extract_btn.pack(side=tk.LEFT, padx=(0, Spacing.XS))
         Tooltip(_pp_extract_btn, text=tr("tooltip_pp_extract_audio", "Extract audio track and save as MP3"), design=self.design)
+        self._pp_operation_buttons.append(_pp_extract_btn)
 
         _pp_upscale_btn = ModernButton(
             pp_buttons2,
@@ -3304,9 +3358,11 @@ class EasyCutApp:
             command=lambda: self._run_post_process("upscale", target_height=1080),
             variant="outline",
             size="sm",
+            state="disabled",
         )
         _pp_upscale_btn.pack(side=tk.LEFT, padx=(0, Spacing.XS))
         Tooltip(_pp_upscale_btn, text=tr("tooltip_pp_upscale_1080", "Upscale video resolution to 1080p"), design=self.design)
+        self._pp_operation_buttons.append(_pp_upscale_btn)
 
         _pp_speed_btn = ModernButton(
             pp_buttons2,
@@ -3314,9 +3370,11 @@ class EasyCutApp:
             command=self._pp_change_speed_dialog,
             variant="outline",
             size="sm",
+            state="disabled",
         )
         _pp_speed_btn.pack(side=tk.LEFT, padx=(0, Spacing.XS))
         Tooltip(_pp_speed_btn, text=tr("tooltip_pp_speed_change", "Change playback speed of the selected file"), design=self.design)
+        self._pp_operation_buttons.append(_pp_speed_btn)
 
         # Scale/Resize row
         pp_scale_frame = ttk.Frame(pp_card.body)
@@ -3325,14 +3383,17 @@ class EasyCutApp:
         ttk.Label(pp_scale_frame, text=f"📏 {tr('pp_scale', 'Scale / Resize')}:", style="Subtitle.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
 
         for res, h in [("1080p", 1080), ("720p", 720), ("480p", 480)]:
-            ModernButton(
+            _scale_btn = ModernButton(
                 pp_scale_frame,
                 text=res,
                 command=lambda height=h: self._run_post_process("upscale", target_height=height),
                 variant="ghost",
                 size="sm",
-                width=8
-            ).pack(side=tk.LEFT, padx=(0, Spacing.XS))
+                width=8,
+                state="disabled",
+            )
+            _scale_btn.pack(side=tk.LEFT, padx=(0, Spacing.XS))
+            self._pp_operation_buttons.append(_scale_btn)
 
         # Trim row
         pp_trim_frame = ttk.Frame(pp_card.body)
@@ -3391,10 +3452,27 @@ class EasyCutApp:
             command=lambda: self._run_post_process("trim", start_time=self.pp_trim_start_var.get(), end_time=self.pp_trim_end_var.get()),
             variant="primary",
             size="sm",
-            width=10
+            width=10,
+            state="disabled",
         )
         _pp_trim_btn.pack(side=tk.LEFT)
         Tooltip(_pp_trim_btn, text=tr("tooltip_pp_trim", "Trim to time range (HH:MM:SS format)"), design=self.design)
+        self._pp_operation_buttons.append(_pp_trim_btn)
+
+        # Also track the set start/end buttons as they need a file loaded
+        self._pp_operation_buttons.append(_pp_set_start_btn)
+        self._pp_operation_buttons.append(_pp_set_end_btn)
+
+        # Add trace callback to enable/disable PP buttons based on file selection
+        def _on_pp_file_change(*args):
+            filepath = self.pp_file_var.get()
+            new_state = "normal" if filepath and Path(filepath).exists() else "disabled"
+            for btn in self._pp_operation_buttons:
+                try:
+                    btn.configure(state=new_state)
+                except Exception:
+                    pass
+        self.pp_file_var.trace_add("write", _on_pp_file_change)
 
         # PP Status
         self.pp_status_label = tk.Label(
@@ -3679,6 +3757,7 @@ class EasyCutApp:
         self._profile_name_entry.pack(side=tk.LEFT, padx=(0, Spacing.SM))
         self._profile_name_entry.insert(0, tr("profile_name", "Profile Name"))
         self._profile_name_entry.bind("<FocusIn>", lambda e: self._profile_name_entry.delete(0, tk.END) if self._profile_name_entry.get() == tr("profile_name", "Profile Name") else None)
+        self._profile_name_entry.bind("<FocusOut>", lambda e: self._profile_name_entry.insert(0, tr("profile_name", "Profile Name")) if not self._profile_name_entry.get().strip() else None)
         
         _profile_save_btn = ModernButton(save_profile_row, text=tr("profile_save", "Save Current"), command=self._save_profile, variant="primary", size="sm", width=14)
         _profile_save_btn.pack(side=tk.LEFT)
@@ -3742,6 +3821,10 @@ class EasyCutApp:
         )
         save_btn.pack(side=tk.LEFT)
         Tooltip(save_btn, text=tr("tooltip_save_settings", "Save all configuration changes"), design=self.design)
+        
+        # Save feedback label (hidden initially)
+        self._settings_save_feedback = ttk.Label(save_frame, text="", style="Caption.TLabel")
+        self._settings_save_feedback.pack(side=tk.LEFT, padx=(Spacing.SM, 0))
 
         # Reset to defaults button (Issue #37) — shows detail about what will be reset
         def _confirm_reset():
@@ -3777,14 +3860,33 @@ class EasyCutApp:
     
     def _save_settings(self):
         tr = self.translator.get
+        
+        # Validate proxy URL format
+        proxy = self._settings_proxy_entry.get().strip()
+        if proxy and not re.match(r'^(https?://|socks5://)', proxy, re.IGNORECASE):
+            messagebox.showwarning(
+                tr("msg_warning", "Warning"),
+                tr("settings_proxy_invalid", "Proxy URL must start with http://, https://, or socks5://")
+            )
+            return
+        
+        # Validate rate limit format
+        rate_limit = self._settings_rate_entry.get().strip()
+        if rate_limit and not re.match(r'^\d+[KMG]?$', rate_limit, re.IGNORECASE):
+            messagebox.showwarning(
+                tr("msg_warning", "Warning"),
+                tr("settings_rate_invalid", "Rate limit must be a number optionally followed by K, M, or G (e.g., 5M, 500K)")
+            )
+            return
+        
         # Issue #36: save download folder from general card
         new_folder = self._settings_folder_entry.get().strip()
         if new_folder and new_folder != str(self.output_dir):
             self.output_dir = Path(new_folder)
             self.output_dir.mkdir(parents=True, exist_ok=True)
             self.config_manager.set("output_dir", str(self.output_dir))
-        self.config_manager.set("proxy", self._settings_proxy_entry.get().strip())
-        self.config_manager.set("rate_limit", self._settings_rate_entry.get().strip())
+        self.config_manager.set("proxy", proxy)
+        self.config_manager.set("rate_limit", rate_limit)
         self.config_manager.set("max_retries", self._settings_retries_var.get())
         self.config_manager.set("cookies_file", self._settings_cookie_entry.get().strip())
         self.config_manager.set("archive_enabled", self._settings_archive_var.get())
@@ -3800,6 +3902,10 @@ class EasyCutApp:
         # Premiere compatibility toggle
         self.config_manager.set("premiere_compat", self._settings_premiere_var.get())
         self.download_log.add_log(tr("settings_saved", "Settings saved successfully!"))
+        
+        # Show visual feedback
+        self._settings_save_feedback.config(text=tr("settings_saved_feedback", "✓ Settings saved"))
+        self.root.after(2000, lambda: self._settings_save_feedback.config(text=""))
     
     def _browse_cookie_file(self):
         """Browse for cookie file"""
@@ -4803,6 +4909,13 @@ class EasyCutApp:
             messagebox.showerror(tr("msg_error", "Error"), tr("download_invalid_url", "Invalid YouTube URL"))
             return
         
+        # P0 #1: Show loading state on Verify button
+        if hasattr(self, '_verify_btn'):
+            try:
+                self._verify_btn.config(text=tr("verify_loading", "Verifying..."), state="disabled")
+            except tk.TclError:
+                pass
+        
         self.download_log.add_log(tr("meta_fetching", "Fetching video info..."))
         self.format_status_label.config(text=tr("format_fetching", "Fetching available formats..."))
         
@@ -4818,6 +4931,14 @@ class EasyCutApp:
         self._open_video_btn.pack_forget()
         self._update_info_badges(False, False, 0)
         self._show_info_skeleton()
+
+        def _reset_verify_btn():
+            """Re-enable Verify button after completion (P0 #1)"""
+            if hasattr(self, '_verify_btn'):
+                try:
+                    self._verify_btn.config(text=tr("download_verify", "Verify"), state="normal")
+                except tk.TclError:
+                    pass
 
         def verify_thread():
             if not YT_DLP_AVAILABLE:
@@ -5064,12 +5185,16 @@ class EasyCutApp:
                 self.root.after(0, lambda: self.download_log.add_log(
                     tr("log_video_info", "Video info retrieved successfully")
                 ))
+                # P0 #1: Re-enable Verify button after success
+                self.root.after(0, _reset_verify_btn)
                 
             except Exception as e:
                 self.root.after(0, lambda: self.download_log.add_log(
                     f"{tr('msg_error', 'Error')}: {str(e)}", "ERROR"
                 ))
                 self.root.after(0, lambda: self.format_status_label.config(text=""))
+                # P0 #1: Re-enable Verify button after error
+                self.root.after(0, _reset_verify_btn)
         
         thread = threading.Thread(target=verify_thread, daemon=True)
         thread.start()
@@ -5263,6 +5388,43 @@ class EasyCutApp:
         idx = self.format_combo.current()
         fmt_id = self._format_id_map.get(idx)
         return fmt_id
+
+    def _estimate_download_size_mb(self):
+        """Estimate the download file size in MB based on selected format or best available.
+        
+        Returns the estimated size in MB, or None if unable to estimate.
+        Used for P0 #3 large file confirmation.
+        """
+        if not hasattr(self, '_video_formats') or not self._video_formats:
+            return None
+        
+        selected_id = self._get_selected_format_id()
+        
+        if selected_id:
+            # User selected a specific format
+            for f in self._video_formats:
+                if f.get('format_id') == selected_id:
+                    filesize = f.get('filesize') or f.get('filesize_approx')
+                    if filesize:
+                        return filesize / (1024 * 1024)
+            return None
+        
+        # Using preset/auto - estimate based on best format with video+audio
+        best_size = None
+        for f in self._video_formats:
+            vcodec = f.get('vcodec', 'none')
+            acodec = f.get('acodec', 'none')
+            has_video = vcodec and vcodec != 'none'
+            has_audio = acodec and acodec != 'none'
+            
+            if has_video and has_audio:
+                filesize = f.get('filesize') or f.get('filesize_approx')
+                if filesize:
+                    size_mb = filesize / (1024 * 1024)
+                    if best_size is None or size_mb > best_size:
+                        best_size = size_mb
+        
+        return best_size
 
     # --- helpers for UI interactions ------------------------------------------------
     def _on_format_selected(self, event=None):
@@ -6085,6 +6247,22 @@ class EasyCutApp:
                             return
                         break
         
+        # P0 #3: Large file confirmation (>100MB)
+        estimated_size_mb = self._estimate_download_size_mb()
+        if estimated_size_mb and estimated_size_mb > 100:
+            size_str = f"{estimated_size_mb:.0f}" if estimated_size_mb < 1024 else f"{estimated_size_mb/1024:.1f}GB".replace("GB", " GB")
+            if estimated_size_mb < 1024:
+                size_str = f"{estimated_size_mb:.0f} MB"
+            else:
+                size_str = f"{estimated_size_mb/1024:.1f} GB"
+            answer = messagebox.askyesno(
+                tr('large_file_title', 'Large File'),
+                tr('large_file_confirm', 'Download file (~{size})?').format(size=size_str)
+            )
+            if not answer:
+                self.download_log.add_log(tr('large_file_skipped', 'Download cancelled (large file)'))
+                return
+        
         # reload output directory in case user changed it without saving
         self.output_dir = Path(self.config_manager.get("output_dir", str(self.output_dir)))
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -6101,11 +6279,11 @@ class EasyCutApp:
             self.download_progress_label.config(text="")
         if hasattr(self, 'batch_progress_label'):
             self.batch_progress_label.config(text="")
-        # Show and reset the progress card
+        # Show and reset the progress card (P0 #2: Update to "Downloading...")
         if hasattr(self, '_progress_card') and hasattr(self, '_download_progress_bar'):
             self._download_progress_bar['value'] = 0
             self._download_pct_label.config(text="0%")
-            self._download_detail_label.config(text="")
+            self._download_detail_label.config(text=tr("progress_downloading", "Downloading..."))
             self._progress_card.pack(fill=tk.X, pady=(0, Spacing.MD),
                                      before=self._action_separator)
         self.download_log.add_log(f"{tr('log_downloading', 'Downloading video from')} {url}")
@@ -6219,10 +6397,17 @@ class EasyCutApp:
         self.root.after(1500, self._hide_progress_card)
 
     def _hide_progress_card(self):
-        """Hide the inline progress bar card (called after download finishes/fails/cancels)."""
+        """Reset the progress card to 'Ready to download' state (P0 #2: Keep visible instead of hiding)."""
+        tr = self.translator.get
         if hasattr(self, '_progress_card'):
             try:
-                self._progress_card.pack_forget()
+                # Reset progress bar and labels to ready state instead of hiding
+                if hasattr(self, '_download_progress_bar'):
+                    self._download_progress_bar['value'] = 0
+                if hasattr(self, '_download_pct_label'):
+                    self._download_pct_label.config(text="")
+                if hasattr(self, '_download_detail_label'):
+                    self._download_detail_label.config(text=tr("progress_ready", "Ready to download"))
             except Exception:
                 pass
         # reset toggle button when download ends — always from main thread
@@ -6974,16 +7159,31 @@ class EasyCutApp:
     def _pp_select_file(self):
         """Open file dialog to select a file for post-processing"""
         tr = self.translator.get
+        
+        # Valid media file extensions
+        VALID_VIDEO_EXTS = {'.mp4', '.mkv', '.avi', '.mov', '.flv', '.webm', '.wmv', '.m4v', '.mpeg', '.mpg', '.3gp'}
+        VALID_AUDIO_EXTS = {'.mp3', '.wav', '.m4a', '.opus', '.ogg', '.flac', '.aac', '.wma'}
+        VALID_MEDIA_EXTS = VALID_VIDEO_EXTS | VALID_AUDIO_EXTS
+        
         filepath = filedialog.askopenfilename(
             title=tr("pp_select_file", "Select a file to process"),
             initialdir=str(self.output_dir),
             filetypes=[
-                ("Video files", "*.mp4 *.mkv *.avi *.mov *.flv"),
-                ("Audio files", "*.mp3 *.wav *.m4a *.opus *.ogg *.flac"),
+                ("Video files", "*.mp4 *.mkv *.avi *.mov *.flv *.webm *.wmv *.m4v"),
+                ("Audio files", "*.mp3 *.wav *.m4a *.opus *.ogg *.flac *.aac"),
                 ("All files", "*.*")
             ]
         )
         if filepath:
+            # Validate file type
+            file_ext = Path(filepath).suffix.lower()
+            if file_ext not in VALID_MEDIA_EXTS:
+                messagebox.showerror(
+                    tr("msg_error", "Error"),
+                    tr("pp_invalid_file", f"Invalid file type: {file_ext}\nPlease select a valid video or audio file.")
+                )
+                return
+            
             self.pp_file_var.set(filepath)
             # Issue #29: Load the selected file in the embedded PP player
             if self.pp_player:
@@ -7111,12 +7311,32 @@ class EasyCutApp:
             history = filtered
 
         if not history:
-            empty_label = ttk.Label(
-                self.history_records_frame,
-                text=tr("history_no_results", "No downloads match your search") if query else tr("history_empty", "No downloads yet"),
-                style="Caption.TLabel"
+            # Create a visually distinct empty state with icon
+            empty_frame = ttk.Frame(self.history_records_frame)
+            empty_frame.pack(fill=tk.X, pady=Spacing.XXL)
+            
+            empty_icon = ttk.Label(
+                empty_frame,
+                text="📭" if query else "📂",
+                font=(LOADED_FONT_FAMILY, 32)
             )
-            empty_label.pack(pady=Spacing.XXL)
+            empty_icon.pack(pady=(0, Spacing.SM))
+            
+            empty_text = tr("history_no_results", "No downloads match your search") if query else tr("history_empty", "No downloads yet")
+            empty_label = ttk.Label(
+                empty_frame,
+                text=empty_text,
+                style="Subtitle.TLabel"
+            )
+            empty_label.pack()
+            
+            if not query:
+                empty_hint = ttk.Label(
+                    empty_frame,
+                    text=tr("history_empty_hint", "Downloaded videos will appear here"),
+                    style="Caption.TLabel"
+                )
+                empty_hint.pack(pady=(Spacing.XS, 0))
             return
         
         # Display records as cards
@@ -7325,7 +7545,8 @@ class EasyCutApp:
     def clear_history(self):
         """Clear download history"""
         tr = self.translator.get
-        if messagebox.askyesno(tr("msg_confirm", "Confirm"), tr("history_clear", "Clear History") + "?"):
+        confirm_msg = tr("history_clear_confirm", "Delete all download records? This action cannot be undone.")
+        if messagebox.askyesno(tr("msg_confirm", "Confirm"), confirm_msg):
             self.config_manager.save_history([])
             self.refresh_history()
     
