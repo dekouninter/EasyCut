@@ -105,6 +105,12 @@ pip install -r requirements.txt
 python main.py
 ```
 
+### Optional: Node.js
+
+Some YouTube videos require Node.js for extraction. If you see "JavaScript interpreter not found" errors:
+- Windows: `winget install OpenJS.NodeJS.LTS`
+- Or download from [nodejs.org](https://nodejs.org/)
+
 ---
 
 ## 🔐 OAuth Setup for Developers
@@ -113,103 +119,26 @@ python main.py
 
 **👨‍💻 Developers:** You NEED this to run from source code.
 
-### OAuth Overview
+### Quick Setup
 
-EasyCut uses Google OAuth 2.0 for secure YouTube authentication:
-- **Scope**: `https://www.googleapis.com/auth/youtube.readonly`
-- **Purpose**: Read-only access to YouTube metadata and authenticated downloads
-- **Files created**:
-  - `config/credentials.json` — Your OAuth client credentials (you create this)
-  - `config/youtube_token.json` — OAuth token cache (auto-created after login)
-  - `config/yt_cookies.txt` — Cookies for yt-dlp (auto-created after login)
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) → Create project → Enable "YouTube Data API v3"
+2. Go to Credentials → Create OAuth client ID → Desktop application
+3. Download JSON → Rename to `credentials.json` → Place in `config/` folder
+4. Run `python main.py` → Click "Sync with YouTube" → Authorize in browser
 
-### Step 1: Create Google Cloud Project
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Sign in with your Google account
-3. Create a new project:
-   - Click on the project dropdown
-   - Click "NEW PROJECT"
-   - Enter a name: `EasyCut` (or any name)
-   - Click "CREATE"
-
-### Step 2: Enable YouTube Data API
-
-1. Search for "YouTube Data API v3" in the search bar
-2. Click on it
-3. Click "ENABLE"
-4. Wait a few seconds for it to enable
-
-### Step 3: Create OAuth Credentials
-
-1. Go to "Credentials" in the left menu
-2. Click "CREATE CREDENTIALS" → "OAuth client ID"
-3. If prompted, configure the OAuth consent screen first:
-   - User type: "External"
-   - Click "CREATE"
-   - Fill in the required fields (app name, user support email, etc.)
-   - Add scope: `https://www.googleapis.com/auth/youtube.readonly`
-   - Click "SAVE & CONTINUE" through all steps
-4. Back to OAuth client ID creation:
-   - Application type: **"Desktop application"**
-   - Name: `EasyCut` (doesn't matter)
-   - Click "CREATE"
-
-### Step 4: Download and Place Credentials
-
-1. A popup appears - click **"DOWNLOAD JSON"**
-2. Rename the file to `credentials.json`
-3. Place it in `config/` folder:
-   ```
-   EasyCut/
-   ├── config/
-   │   └── credentials.json    ← Place here
-   ├── main.py
-   └── ...
-   ```
-
-### Step 5: Authenticate in EasyCut
-
-1. Run EasyCut: `python main.py`
-2. At the top, you'll see a **"YouTube Authentication"** banner
-3. Click **"Sync with YouTube"** button
-4. Browser window opens automatically with Google OAuth screen
-5. Sign in with your Google account
-6. Click **"Allow"** when asked for YouTube read-only permissions
-7. You're redirected back - app shows **"✓ Authenticated! Ready to download"** ✅
-8. Start downloading videos!
-
-**Note**: Your OAuth tokens are saved locally in `config/` directory. You only authenticate once - subsequent launches use the cached token.
+**Files created automatically:**
+- `config/youtube_token.json` — OAuth token cache
+- `config/yt_cookies.txt` — Cookies for yt-dlp
 
 ### OAuth Troubleshooting
 
-#### "credentials.json not found"
-- **Error**: "oauth_manager: credentials not found in config/"
-- **Fix**: Make sure you placed `credentials.json` in `config/` folder
-- **Step**: Restart EasyCut after placing the file
-
-#### "OAuth Error: invalid_grant"
-- **Cause**: Token expired or credentials revoked
-- **Fix**: Click "Logout" in the YouTube Authentication banner, then "Sync with YouTube" again
-
-#### "OAuth Error 403: Access Denied"
-- **Cause**: Your OAuth app is in Testing mode and user isn't added as test user
-- **Fix** (Option 1): In Google Cloud Console, add your Google account as **Test User**
-- **Fix** (Option 2): Publish the OAuth consent screen
-
-#### "Google hasn't verified this app" warning (Testing Mode)
-- **Normal for development** - unverified apps show this warning
-- **Action**: Click "Advanced" → "Go to EasyCut (unsafe)" to proceed
-- **To remove in production**:
-  1. Go to Google Cloud Console → OAuth consent screen
-  2. Fill all required information (app privacy policy, etc.)
-  3. Add yourself as a test user while developing
-  4. Publish the app when ready for production
-
-#### "Browser didn't open automatically"
-- **Cause**: Windows Firewall or antivirus blocking browser launch
-- **Fix**: Manually copy the URL printed to console and paste in browser
-- **Status**: Look for "Opening browser..." message in app window
+| Error | Fix |
+|-------|-----|
+| "credentials.json not found" | Place `credentials.json` in `config/` folder |
+| "invalid_grant" | Click Logout, then Sync again (token expired) |
+| "Access Denied 403" | Add your Google account as Test User in Cloud Console |
+| "App not verified" warning | Click Advanced → "Go to EasyCut (unsafe)" |
+| Browser didn't open | Copy URL from console and paste in browser |
 
 ---
 
@@ -254,7 +183,7 @@ pyinstaller --version
       "redirect_uris": ["http://localhost"]
     }
   },
-  "app_version": "1.9.0",
+  "app_version": "1.10.0",
   "app_name": "EasyCut"
 }
 ```
@@ -319,7 +248,7 @@ That's it! 🎉
 
 3. **Create GitHub Release**:
    - Go to GitHub → Releases → New Release
-   - Tag: `v1.9.0`
+   - Tag: `v1.10.0`
    - Upload: `dist/EasyCut.exe`
    - Write release notes
    - Publish
@@ -621,4 +550,4 @@ Before each release:
 
 **Welcome to EasyCut! 🎉**
 
-*Making downloads simple since 2026*
+*Making downloads simple.*

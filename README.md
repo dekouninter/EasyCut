@@ -1,6 +1,6 @@
 # 🎬 EasyCut - Professional YouTube Downloader & Stream Recorder
 
-![Version](https://img.shields.io/badge/version-1.9.1-blue.svg)
+![Version](https://img.shields.io/badge/version-1.10.0-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 ![Author](https://img.shields.io/badge/author-Deko%20Costa-brightgreen.svg)
@@ -83,12 +83,8 @@
 - One-click logout
 - Persistent authentication across sessions
 
-### 🔌 Advanced Authentication (Optional)
-- **Browser Cookie Extraction**: Alternative auth via Chrome/Firefox/Edge browser profiles
-- Extract cookies directly from installed browsers for custom authentication
-- Manual cookie file import support (`.txt` format)
-- **Note**: OAuth 2.0 is recommended; browser auth is an optional alternative
-- Disabled by default - enable in advanced settings
+### 🔌 Advanced Authentication
+For browser cookie extraction as an alternative to OAuth, see [QUICKSTART.md](QUICKSTART.md#browser-authentication-optional).
 
 ### 🎨 Customization
 - **Theme Switching:** Dark/Light mode with instant reload (Ctrl+T)
@@ -111,9 +107,25 @@
 - **Glass-Morphism UI:** Semi-transparent tooltips, glow borders, depth effects
 - **Windows Mica Backdrop:** Native Windows 11 Mica/Acrylic effect via pywinstyles
 - **OS Theme Detection:** Automatic dark/light detection via darkdetect
-- **16 Custom Components:** ScrollableFrame, SectionHeader, ModernButton, ModernCard, ModernEntry, Badge (9 variants), Tooltip, ToggleSwitch, AnimatedPanel, Separator, InfoBanner, IconLabel, EmptyState, HoverFrame, ProgressRing, AnimatedCounter
+- **16 Custom Components:** Modern UI widgets including cards, buttons, progress indicators, and animated panels
 - **Colored Sidebar Icons:** Each tab has a unique SVG icon with distinct accent color
 - **Gradient Accent Lines:** Section headers and cards feature gradient accent decorations
+
+---
+
+## 🆕 What's New in v1.10.0
+
+### Batch Download Improvements
+- **Individual progress bars** for each video in queue
+- **Global progress bar** showing "Downloading X of Y"
+- **Speed and ETA display** per download
+- **Retry button** for failed items
+- **Friendly error messages** with recovery suggestions
+
+### Coming Soon
+- Improved live stream clipper with seekbar-based cutting
+- Dependency status panel with auto-install options
+- FFmpeg progress bars during conversions
 
 ---
 
@@ -154,67 +166,20 @@
 
 ## 🚀 Installation
 
-### 1. Clone Repository
+### Quick Start
+1. Clone: `git clone https://github.com/dekouninter/EasyCut.git && cd EasyCut`
+2. Create venv: `python -m venv venv`
+3. Activate: `.\venv\Scripts\Activate.ps1` (Windows)
+4. Install: `pip install -r requirements.txt`
+5. Run: `python main.py`
 
-```bash
-git clone https://github.com/dekouninter/EasyCut.git
-cd EasyCut
-```
-
-### 2. Create Virtual Environment (recommended)
-
-```bash
-python -m venv venv
-```
-
-**Activate virtual environment:**
-
-- **Windows (PowerShell):**
-  ```powershell
-  .\venv\Scripts\Activate.ps1
-  ```
-
-- **Windows (CMD):**
-  ```cmd
-  venv\Scripts\activate.bat
-  ```
-
-### 3. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Verify Installation (Optional)
-
-```bash
-python check_installation.py
-```
-
-This checks Python, yt-dlp, OAuth dependencies, Tkinter, and FFmpeg.
-
-### 5. Install FFmpeg (Optional)
-
-**Windows (using Chocolatey):**
-```powershell
-choco install ffmpeg
-```
-
-**Windows (using winget):**
+### FFmpeg (Recommended)
 ```powershell
 winget install FFmpeg
 ```
 
-**Or download manually:** [ffmpeg.org](https://ffmpeg.org/download.html)
-
-### 6. OAuth Setup (Developers Only)
-
-If you're running from source, you need to create OAuth credentials:
-
-1. **Quick Setup**: See `config/credentials_template.json` for the required format to create your own Google OAuth credentials
-2. **Create** `config/credentials.json` with your credentials (see `config/credentials_template.json`)
-
-**Note**: End users who download releases don't need this - OAuth is embedded in the executable.
+### OAuth Setup (Developers)
+See [QUICKSTART.md](QUICKSTART.md#oauth-setup-for-developers) for complete OAuth setup instructions.
 
 ---
 
@@ -301,7 +266,7 @@ This creates `dist/EasyCut.exe` with embedded OAuth credentials - ready to distr
 ## 📚 Documentation
 
 ### User & Quick Start
-- [Getting Started](#getting-started) — Installation and setup
+- [Installation](#installation) — Installation and setup
 - [QUICKSTART.md](QUICKSTART.md) — Quick start guide
 - [ARCHITECTURE.md](ARCHITECTURE.md) — Technical architecture overview
 
@@ -322,9 +287,22 @@ This creates `dist/EasyCut.exe` with embedded OAuth credentials - ready to distr
 
 ---
 
+## 🔧 Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| "FFmpeg not found" | Install FFmpeg: `winget install FFmpeg` |
+| "OAuth 403 Error" | Re-authenticate: Click "Sync with YouTube" |
+| Download stalls | Check internet, try lower quality preset |
+| Live stream won't load | Verify stream is active and public |
+
+For more help, see [QUICKSTART.md](QUICKSTART.md#faq) or open a GitHub issue.
+
+---
+
 **Developed with ❤️ by Deko Costa**
 
-*Download videos. Record live streams. Clip in real-time. Simple, fast, secure.*
+*Making downloads simple.*
 
 **Repository:** [github.com/dekouninter/EasyCut](https://github.com/dekouninter/EasyCut)  
 **Support:** [buymeacoffee.com/dekocosta](https://buymeacoffee.com/dekocosta)  

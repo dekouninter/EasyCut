@@ -1,7 +1,7 @@
 # 📚 EasyCut Documentation Index
 
-**Version**: 1.9.1  
-**Last Updated**: June 2025
+**Version**: 1.10.0  
+**Last Updated**: March 2026
 
 Complete documentation for users and developers.
 
@@ -12,7 +12,7 @@ Complete documentation for users and developers.
 ### 👤 For End Users
 - **Getting Started**: [README.md](README.md) - Features, installation, requirements
 - **Using EasyCut**: [QUICKSTART.md](QUICKSTART.md) - How to download, record, clip, and authenticate
-- **Keyboard Shortcuts**: Ctrl+T (theme), Ctrl+L (logs), Ctrl+O (folder), Ctrl+1-8 (tabs)
+- **Keyboard Shortcuts**: See [QUICKSTART.md](QUICKSTART.md#keyboard-shortcuts) for complete keyboard shortcut reference.
 
 ### 👨‍💻 For Developers
 - **Installation**: [README.md](README.md#-installation) - Setup from source
@@ -32,30 +32,7 @@ Complete documentation for users and developers.
 
 ## 📖 Feature Documentation
 
-### Core Features
-| Feature | Status | Documentation |
-|---------|--------|---------------|
-| Single video download | ✅ Complete | [README.md](README.md#-download-single-videos) |
-| Smart URL Router | ✅ Complete | [README.md](README.md#-download-single-videos) |
-| Time range download | ✅ Complete | [QUICKSTART.md](QUICKSTART.md#download-time-range-extract-clip-from-video) |
-| Audio format conversion | ✅ Complete | [QUICKSTART.md](QUICKSTART.md#download-time-range-extract-clip-from-video) |
-| Batch downloads | ✅ Complete | [README.md](README.md#-batch-download-multiple-videos) |
-| Live stream recording | ✅ Complete | [README.md](README.md#-record-live-streams--live-clipper) |
-| Live Clipper & Preview | ✅ Complete | [README.md](README.md#-record-live-streams--live-clipper) |
-| Embedded Video Player | ✅ Complete | [README.md](README.md#-record-live-streams--live-clipper) |
-| Post-Processing Hub | ✅ Complete | [README.md](README.md#-post-processing-hub) |
-| Channel Monitor | ✅ Complete | [README.md](README.md#-channel-monitor) |
-| Following Tab | ✅ Complete | [README.md](README.md#-following-tab) |
-| Download history | ✅ Complete | [README.md](README.md#-download-history) |
-| OAuth authentication | ✅ Complete | [QUICKSTART.md](QUICKSTART.md#-oauth-setup-for-developers) |
-| Browser auth (optional) | ✅ Complete | [QUICKSTART.md](QUICKSTART.md#-advanced-browser-authentication-optional) |
-| Theme customization | ✅ Complete | [ARCHITECTURE.md](ARCHITECTURE.md#theme-system) |
-| Multi-language (7 langs) | ✅ Complete | [ARCHITECTURE.md](ARCHITECTURE.md#internationalization) |
-| SVG icon rendering (v1.6) | ✅ Complete | [ARCHITECTURE.md](ARCHITECTURE.md#design--theming) |
-| Multi-accent color system (v1.6) | ✅ Complete | [ARCHITECTURE.md](ARCHITECTURE.md#color-palettes) |
-| Gradient effects & glass-morphism (v1.6) | ✅ Complete | [ARCHITECTURE.md](ARCHITECTURE.md#color-palettes) |
-| Windows Mica backdrop (v1.6) | ✅ Complete | [README.md](README.md#-premium-visual-design-v16) |
-| 16 custom UI components (v1.6) | ✅ Complete | [ARCHITECTURE.md](ARCHITECTURE.md#ui-infrastructure) |
+See [README.md](README.md#-key-features) for complete feature list.
 
 ### Common Tasks
 - **Download a YouTube video**: [QUICKSTART.md](QUICKSTART.md#-for-end-users) - 3 steps

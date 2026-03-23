@@ -46,6 +46,28 @@ python build.py
 | `src/icon_renderer.py` | SVG Feather icons → Pillow → PhotoImage (no external SVG deps) |
 | `src/ui_enhanced.py` | ConfigManager, LogWidget, StatusBar utilities |
 
+### Code Examples
+
+#### Threading Pattern (UI-safe updates from background)
+```python
+def download_thread():
+    # Do work in background
+    result = do_download()
+    # Update UI safely
+    self.root.after(0, lambda: self.update_ui(result))
+
+thread = threading.Thread(target=download_thread, daemon=True)
+thread.start()
+```
+
+#### Adding a Translation Key
+```python
+# In src/i18n.py, add to each language section:
+"my_new_key": "My English text",  # en
+"my_new_key": "Meu texto",        # pt
+# ... etc for all 7 languages
+```
+
 ### Key Data Flows
 
 **Downloads**: User action → `EasyCutApp.start_download()` → background thread → `yt_dlp.YoutubeDL().download()` → progress logged to `LogWidget` → saved to `config/history_downloads.json`

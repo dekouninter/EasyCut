@@ -17,4 +17,4 @@ class TestVersion:
             f"Version '{__version__}' does not match X.Y.Z format"
 
     def test_version_current(self):
-        assert __version__ == "1.9.1"
+        assert __version__ == "1.10.0"

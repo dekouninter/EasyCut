@@ -1,7 +1,7 @@
 # 🏗️ EasyCut - Architecture Documentation
 
-**Version**: 1.9.1  
-**Last Updated**: June 2025
+**Version**: 1.10.0  
+**Last Updated**: March 2026
 
 High-level architecture overview for developers working on EasyCut.
 
@@ -32,21 +32,21 @@ All modules are in a flat `src/` directory for simplicity:
 
 | Concern | Module(s) | Lines |
 |---------|-----------|------:|
-| Main orchestrator | `easycut.py` | 6,756 |
-| Translations (7 languages) | `i18n.py` | 4,908 |
+| Main orchestrator | `easycut.py` | 8,080 |
+| Translations (7 languages) | `i18n.py` | 5,183 |
 | Design tokens & palette | `design_system.py` | 1,283 |
 | Custom widgets (16 components) | `modern_components.py` | 1,276 |
 | Embedded video player | `video_player.py` | 846 |
 | UI utilities | `ui_enhanced.py` | 465 |
 | SVG icon renderer | `icon_renderer.py` | 451 |
 | OAuth authentication | `oauth_manager.py` | 389 |
-| Channel monitor | `channel_monitor.py` | 362 |
-| Post-processing hub | `post_processor.py` | 327 |
+| Channel monitor | `channel_monitor.py` | 360 |
+| Post-processing hub | `post_processor.py` | 341 |
 | Icon management | `icon_manager.py` | 297 |
-| Donation UI | `donation_system.py` | 211 |
+| Donation UI | `donation_system.py` | 263 |
 | Font loading | `font_loader.py` | 166 |
 | Version constant | `__version__.py` | 3 |
-| **Total src/** | **14 modules** | **~17,740** |
+| **Total src/** | **14 modules** | **~19,403** |
 
 ### Key Principles
 
@@ -92,7 +92,7 @@ EasyCut supports two authentication methods:
 
 ## 🗂️ Project Structure
 
-### Current Structure (v1.9.1)
+### Current Structure (v1.10.0)
 
 ```
 EasyCut/
@@ -104,21 +104,29 @@ EasyCut/
 ├── run.bat                         # Alternative launcher (checks FFmpeg)
 ├── check_installation.py           # Verifies dependencies and structure
 │
+├── README.md                       # Main documentation (ROOT level)
+├── ARCHITECTURE.md                 # This file
+├── QUICKSTART.md                   # Complete setup guide (OAuth, builds, usage)
+├── DOCUMENTATION.md                # Detailed feature documentation
+├── CREDITS.md                      # Credits and licenses
+├── PRIVACY.md                      # Privacy policy
+├── TERMS.md                        # Terms of service
+│
 ├── src/                            # All application source code (FLAT STRUCTURE)
-│   ├── __version__.py              # Single source of truth for version string - 2 lines
-│   ├── easycut.py                  # Main application class (EasyCutApp) - 6,830 lines
-│   ├── i18n.py                     # Translation engine (7 languages, 509+ keys) - 4,824 lines
-│   ├── design_system.py            # Design tokens, 6 accent palettes, gradients - 1,252 lines
-│   ├── modern_components.py        # 16 custom widgets (buttons, cards, badges, etc.) - 1,220 lines
-│   ├── video_player.py             # Embedded mpv player (subprocess + IPC) - 721 lines
-│   ├── ui_enhanced.py              # ConfigManager, LogWidget, StatusBar - 445 lines
-│   ├── icon_renderer.py            # SVG Feather icon → Pillow renderer, gradients - 427 lines
-│   ├── oauth_manager.py            # OAuth 2.0 authentication manager - 378 lines
-│   ├── channel_monitor.py          # YouTube channel monitoring system - 302 lines
-│   ├── post_processor.py           # Post-download processing hub - 286 lines
-│   ├── icon_manager.py             # Icon loading with emoji fallback - 287 lines
-│   ├── donation_system.py          # Donation window and button - 202 lines
-│   └── font_loader.py              # Loads Inter font via Windows GDI - 154 lines
+│   ├── __version__.py              # Single source of truth for version string - 3 lines
+│   ├── easycut.py                  # Main application class (EasyCutApp) - 8,080 lines
+│   ├── i18n.py                     # Translation engine (7 languages, 509+ keys) - 5,183 lines
+│   ├── design_system.py            # Design tokens, 6 accent palettes, gradients - 1,283 lines
+│   ├── modern_components.py        # 16 custom widgets (buttons, cards, badges, etc.) - 1,276 lines
+│   ├── video_player.py             # Embedded mpv player (subprocess + IPC) - 846 lines
+│   ├── ui_enhanced.py              # ConfigManager, LogWidget, StatusBar - 465 lines
+│   ├── icon_renderer.py            # SVG Feather icon → Pillow renderer, gradients - 451 lines
+│   ├── oauth_manager.py            # OAuth 2.0 authentication manager - 389 lines
+│   ├── channel_monitor.py          # YouTube channel monitoring system - 360 lines
+│   ├── post_processor.py           # Post-download processing hub - 341 lines
+│   ├── icon_manager.py             # Icon loading with emoji fallback - 297 lines
+│   ├── donation_system.py          # Donation window and button - 263 lines
+│   └── font_loader.py              # Loads Inter font via Windows GDI - 166 lines
 │
 ├── assets/                         # Static assets
 │   ├── fonts/Inter/                # Inter Display font files (TTC)
@@ -128,7 +136,7 @@ EasyCut/
 │   ├── config.json                 # User settings (theme, language, paths)
 │   ├── credentials.json            # OAuth credentials (developers only - gitignored)
 │   ├── credentials_template.json   # Template for OAuth credentials
-│   ├── youtube_token.json           # Saved OAuth tokens (gitignored)
+│   ├── youtube_token.json          # Saved OAuth tokens (gitignored)
 │   ├── yt_cookies.txt              # Cookies for yt-dlp (gitignored)
 │   ├── history_downloads.json      # Download history entries
 │   └── app.log                     # Application log file
@@ -142,14 +150,7 @@ EasyCut/
 │   ├── ROADMAP.md                  # Product roadmap
 │   └── README.md                   # Internal docs explanation
 │
-└── docs/                           # Documentation
-    ├── README.md                   # Main documentation
-    ├── QUICKSTART.md               # Complete setup guide (OAuth, builds, usage)
-    ├── DOCUMENTATION.md            # Detailed feature documentation
-    ├── ARCHITECTURE.md             # This file
-    ├── CREDITS.md                  # Credits and licenses
-    ├── PRIVACY.md                  # Privacy policy
-    └── TERMS.md                    # Terms of service
+└── tests/                          # Test suite
 ```
 
 ---
@@ -211,7 +212,7 @@ EasyCut/
 └──────────────────────┬─────────────────────────────┘
                        │
 ┌──────────────────────▼─────────────────────────────┐
-│  easycut.py (Orchestrator — 5,273 lines)           │
+│  easycut.py (Orchestrator — 8,080 lines)           │
 │  ┌─────────────┐ ┌──────────┐ ┌──────────────┐    │
 │  │ Header Bar  │ │ 8 Screens│ │ Business     │    │
 │  │ SVG Icons   │ │ Switcher │ │ Logic:       │    │
@@ -230,23 +231,23 @@ EasyCut/
 ┌──────┐ ┌──────────┐ ┌────────┐ ┌──────────────┐
 │Design│ │Modern    │ │UI      │ │i18n          │
 │System│ │Components│ │Enhanced│ │Translations  │
-│1,252L│ │ 1,214L   │ │ 431L   │ │ 3,949L       │
+│1,283L│ │ 1,276L   │ │ 465L   │ │ 5,183L       │
 └──┬───┘ └──────────┘ └────────┘ └──────────────┘
    │
    ▼
 ┌──────────────┐  ┌───────────┐  ┌───────────┐  ┌──────────────┐
 │Icon Renderer │  │Font       │  │Icon       │  │OAuth         │
-│ 428L (SVG)   │  │Loader 146L│  │Manager 277L│  │Manager 316L  │
+│ 451L (SVG)   │  │Loader 166L│  │Manager 297L│  │Manager 389L  │
 └──────────────┘  └───────────┘  └───────────┘  └──────────────┘
    │
    ▼
 ┌──────────────┐  ┌───────────────┐  ┌───────────────┐
 │Video Player  │  │Post Processor │  │Channel Monitor│
-│ 651L (mpv)   │  │ 237L          │  │ 281L          │
+│ 846L (mpv)   │  │ 341L          │  │ 360L          │
 └──────────────┘  └───────────────┘  └───────────────┘
 ```
 
-### Layer Responsibilities (v1.9.0)
+### Layer Responsibilities (v1.10.0)
 
 | Layer | Files | Responsibility |
 |-------|-------|---------------|
@@ -539,7 +540,7 @@ Themes switch instantly without restart:
 TRANSLATIONS = {
     "en": {
         "app_title": "EasyCut",
-        "version": "1.9.0",
+        "version": "1.10.0",
         "tab_download": "Download",
         "btn_login": "Login",
         "msg_success": "Success!",
@@ -704,7 +705,7 @@ python internal/run_tests.py
 - Error messages
 - i18n (509+ keys, 7-language parity)
 - OAuth configuration
-- Version consistency (1.9.0)
+- Version consistency (1.10.0)
 - Asset files (fonts, icons)
 
 **Total**: 697 automated checks

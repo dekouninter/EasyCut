@@ -5,7 +5,7 @@ Professional Desktop Application using Tkinter
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
-Version: 1.9.1
+Version: 1.10.0
 License: GPL-3.0
 
 Features:
