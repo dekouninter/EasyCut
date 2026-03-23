@@ -240,13 +240,27 @@ class PostProcessor:
                 audio_codec = stream.get('codec_name')
         if not video_codec or not audio_codec:
             return False
-        # allow common Premiere-friendly codecs
-        if video_codec.lower() in ('h264', 'prores', 'hevc') and audio_codec.lower() in ('aac', 'mp3', 'pcm_s16le', 'flac'):
+        # allow common Premiere-friendly codecs.  Some containers report
+        # H.264 as 'avc1' so treat it as equivalent to 'h264'.
+        video_codec = video_codec.lower()
+        audio_codec = audio_codec.lower()
+        if video_codec == 'avc1':
+            video_codec = 'h264'
+        if video_codec in ('h264', 'prores', 'hevc') and audio_codec in (
+                'aac', 'mp3', 'pcm_s16le', 'flac'):
             return True
         return False
 
     def convert_for_premiere(self, input_path: str, callback: Callable = None) -> Optional[str]:
         """Convert any media file to MP4/H264 + AAC for Premiere compatibility."""
+        # If the file is already compatible there's no need to run ffmpeg
+        # again; callers (download, batch, etc.) normally check this, but
+        # protecting the converter here prevents redundant work in case of
+        # a mismatched lookup or client invocation.  Return the original
+        # path so post-processing chains can continue gracefully.
+        if self.is_premiere_compatible(input_path):
+            return input_path
+
         output = self._build_output_path(input_path, "premiere", ".mp4")
         args = [
             "-i", str(input_path),

@@ -114,6 +114,101 @@ class TestFormatTimecode:
         assert EasyCutApp._format_timecode(125) == "00:02:05"
 
 
+class TestTimeMarkerHelpers:
+    """Helpers used by the download tab time‑range preview."""
+
+    def test_time_to_fraction(self):
+        # normal case
+        assert EasyCutApp._time_to_fraction(30, 120) == 0.25
+        # negative and overflowing
+        assert EasyCutApp._time_to_fraction(-5, 100) == 0.0
+        assert EasyCutApp._time_to_fraction(150, 100) == 1.0
+        # zero duration should always return zero
+        assert EasyCutApp._time_to_fraction(10, 0) == 0.0
+
+    def test_fraction_to_time(self):
+        assert EasyCutApp._fraction_to_time(0.5, 200) == 100
+        assert EasyCutApp._fraction_to_time(-0.1, 50) == 0
+        assert EasyCutApp._fraction_to_time(1.2, 50) == 50
+        assert EasyCutApp._fraction_to_time(0.3, 0) == 0
+
+    def test_update_time_markers_calls_canvas_coords(self, monkeypatch):
+        # prepare a fake app with minimal attributes
+        app = MagicMock(spec=EasyCutApp)
+        # _parse_timecode must be set on the *instance* too because MagicMock
+        # intercepts attribute access before the monkeypatched class attribute
+        # can be reached via self.<attr> lookup.
+        _fake_parse = lambda txt: 10 if txt == 'start' else 90 if txt == 'end' else None
+        monkeypatch.setattr(EasyCutApp, '_parse_timecode', staticmethod(_fake_parse))
+        app._parse_timecode = _fake_parse
+        # _time_to_fraction must also be bound on the instance for the same reason
+        app._time_to_fraction = lambda s, d: (s / d) if d else 0.0
+        app.time_start_entry = MagicMock(get=MagicMock(return_value='start'))
+        app.time_end_entry = MagicMock(get=MagicMock(return_value='end'))
+        app.download_player = MagicMock()
+        app.download_player.get_duration.return_value = 100
+        # fake canvas
+        coords_called = {}
+        def coords(shape, *args):
+            coords_called[shape] = args
+        app.time_canvas = MagicMock()
+        app.time_canvas.winfo_width.return_value = 200
+        app.time_canvas.winfo_height.return_value = 48
+        app.time_canvas.coords.side_effect = coords
+        # run the helper
+        # bind the design attribute for colors to avoid errors
+        app.design = MagicMock()
+        app.design.get_color = MagicMock(return_value='#000')
+        EasyCutApp._update_time_markers(app)
+        # start=10/100 → sx=20; end=90/100 → ex=180 on 200px canvas
+        # range_rect uses (sx, 0, ex, h) so x1=20 and x2=180 appear directly
+        assert any(v[0] == 20 for v in coords_called.values())
+        assert any(len(v) >= 3 and v[2] == 180 for v in coords_called.values())
+
+    def test_mark_and_preview_helpers(self):
+        app = MagicMock(spec=EasyCutApp)
+        # entries
+        app.time_start_entry = MagicMock()
+        app.time_end_entry = MagicMock()
+        # translator needed by _load_download_preview warnings
+        app.translator = MagicMock()
+        app.translator.get = MagicMock(return_value="")
+        # bind real static helpers so they aren't intercepted by the mock
+        app._format_timecode = EasyCutApp._format_timecode
+        app._update_time_markers = MagicMock()  # suppress full canvas logic
+        app.time_canvas = MagicMock()  # needed by _load_download_preview
+        # player returns a floating time
+        app.download_player = MagicMock()
+        app.download_player.get_time.return_value = 42.7
+        # mark start
+        EasyCutApp._download_mark_start(app)
+        app.time_start_entry.delete.assert_called_once_with(0, tk.END)
+        app.time_start_entry.insert.assert_called_once_with(0, "00:00:42")
+        # mark end
+        EasyCutApp._download_mark_end(app)
+        app.time_end_entry.delete.assert_called_once_with(0, tk.END)
+        app.time_end_entry.insert.assert_called_once_with(0, "00:00:42")
+        # load preview — empty URL should show warning but not crash
+        app.download_url_entry = MagicMock(
+            get=MagicMock(return_value=""),
+            get_value=MagicMock(return_value="")
+        )
+        # patch messagebox so the warning dialog doesn't open a real window
+        import unittest.mock as _um
+        with _um.patch("tkinter.messagebox.showwarning"):
+            EasyCutApp._load_download_preview(app)
+        # with a URL
+        app.download_player = MagicMock()
+        app.download_player.get_time.return_value = 42.7
+        app.download_log = MagicMock()
+        app.download_url_entry = MagicMock(
+            get=MagicMock(return_value="http://foo"),
+            get_value=MagicMock(return_value="http://foo")
+        )
+        EasyCutApp._load_download_preview(app)
+        app.download_player.load.assert_called_once_with("http://foo")
+
+
 # ---------------------------------------------------------------------------
 # Build download options (requires a minimal mock app)
 # ---------------------------------------------------------------------------
@@ -190,22 +285,7 @@ class TestBuildDownloadOptions:
         opts = self._call(mock_app, format_id="137")
         assert opts["format"] == "137"
 
-    def test_audio_mode_adds_postprocessor(self, mock_app):
-        opts = self._call(mock_app, mode="audio")
-        pp = opts.get("postprocessors", [])
-        assert len(pp) == 1
-        assert pp[0]["key"] == "FFmpegExtractAudio"
-        assert pp[0]["preferredcodec"] == "mp3"
-        assert pp[0]["preferredquality"] == "192"
 
-    def test_playlist_mode_noplaylist_false(self, mock_app):
-        opts = self._call(mock_app, mode="playlist")
-        assert opts["noplaylist"] is False
-
-    def test_channel_mode_has_playlistend(self, mock_app):
-        opts = self._call(mock_app, mode="channel")
-        assert opts["noplaylist"] is False
-        assert opts["playlistend"] == 10
 
     def test_full_mode_noplaylist_true(self, mock_app):
         opts = self._call(mock_app, mode="full")

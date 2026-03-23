@@ -137,7 +137,7 @@ _VLC_AVAILABLE = False
 _vlc_module = None
 
 try:
-    import vlc as _vlc_mod
+    import vlc as _vlc_mod  # type: ignore[import-unresolved]
     _vlc_module = _vlc_mod
     _VLC_AVAILABLE = True
 except (ImportError, OSError):

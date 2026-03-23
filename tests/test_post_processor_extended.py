@@ -135,6 +135,24 @@ class TestPremiereCompatibility:
         assert "-c:v" in args
         assert "libx264" in args
 
+    def test_convert_for_premiere_skips_if_compatible(self, pp, monkeypatch):
+        monkeypatch.setattr(pp, 'is_premiere_compatible', lambda p: True)
+        with patch.object(pp, "_run_ffmpeg") as mock_ff:
+            result = pp.convert_for_premiere("/tmp/video.mp4")
+        assert result == "/tmp/video.mp4"
+        mock_ff.assert_not_called()
+
+    def test_is_premiere_compatible_recognizes_avc1(self, pp, monkeypatch):
+        info = {
+            "format": {"format_name": "mov,mp4"},
+            "streams": [
+                {"codec_type": "video", "codec_name": "avc1"},
+                {"codec_type": "audio", "codec_name": "aac"},
+            ],
+        }
+        monkeypatch.setattr(pp, "get_media_info", lambda p: info)
+        assert pp.is_premiere_compatible("foo.mp4")
+
     def test_convert_for_premiere_failure(self, pp):
         with patch.object(pp, "_run_ffmpeg", return_value=False):
             result = pp.convert_for_premiere("/tmp/video.webm")

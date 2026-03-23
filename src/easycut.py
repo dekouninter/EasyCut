@@ -5,7 +5,7 @@ Professional Desktop Application using Tkinter
 
 Author: Deko Costa
 Repository: https://github.com/dekouninter/EasyCut
-Version: 1.9.0
+Version: 1.9.1
 License: GPL-3.0
 
 Features:
@@ -182,7 +182,8 @@ class EasyCutApp:
         self._channel_limit_var = None  # Channel video limit spinbox variable
         self._thumbnail_cache = {}  # video_id -> PhotoImage for history
         self._download_queue = []  # List of {url, status, title} for batch queue
-        self.download_quality_var = tk.StringVar(value="best")  # Quality preset for downloads
+        # quality preset is stored in settings; default to config value
+        self.download_quality_var = tk.StringVar(value=self.config_manager.get("download_quality", "best"))
 
         # Complete remaining initialization (paths, post-processor, UI setup etc.)
         self._finish_init()
@@ -213,6 +214,8 @@ class EasyCutApp:
 
     def _install_js_runtime_dialog(self, parent_win) -> None:
         """Attempt to run `npm install -g ejs` and notify the user of result."""
+        if self is None:
+            return
         tr = self.translator.get
         try:
             from tkinter import messagebox
@@ -469,10 +472,6 @@ class EasyCutApp:
         self.status_bar.pack(fill=tk.X)
         self.update_login_status()
         
-        # --- DONATION BUTTON ---
-        donation_btn = DonationButton(self.root)
-        donation_btn.create_floating_button(root_frame)
-        
         # --- KEYBOARD SHORTCUTS ---
         self._bind_shortcuts()
     
@@ -664,6 +663,12 @@ class EasyCutApp:
         select_icon_lbl.bind("<Enter>", lambda e: select_icon_lbl.config(bg=hover_bg))
         select_icon_lbl.bind("<Leave>", lambda e: select_icon_lbl.config(bg=bg))
 
+        # Support Development button
+        self._donation_btn_instance = DonationButton(self.root)
+        _support_data = self._donation_btn_instance.create_sidebar_button(
+            footer, bg=bg, fg=fg_sec, accent=accent, hover_bg=hover_bg
+        )
+
         # Version label  
         version_lbl = tk.Label(
             footer, text=f"v{tr('version', APP_VERSION)}", bg=bg,
@@ -683,6 +688,7 @@ class EasyCutApp:
                 "icon_label": select_icon_lbl,
                 "text": select_label
             },
+            "support": _support_data,
             "version": version_lbl,
         }
     
@@ -759,6 +765,12 @@ class EasyCutApp:
             for data in ("open", "select"):
                 self.footer_buttons[data]["button"].pack(fill=tk.X)
                 self.footer_buttons[data]["icon_label"].pack_forget()
+            # Support button: show text label
+            if "support" in self.footer_buttons:
+                try:
+                    self.footer_buttons["support"]["text_label"].grid()
+                except Exception:
+                    pass
 
             self.footer_buttons["version"].pack_configure(anchor="w")
         else:
@@ -783,6 +795,12 @@ class EasyCutApp:
             for data in ("open", "select"):
                 self.footer_buttons[data]["button"].pack_forget()
                 self.footer_buttons[data]["icon_label"].pack(pady=Spacing.XS, anchor="center")
+            # Support button: hide text label
+            if "support" in self.footer_buttons:
+                try:
+                    self.footer_buttons["support"]["text_label"].grid_remove()
+                except Exception:
+                    pass
 
             self.footer_buttons["version"].pack_configure(anchor="center")
     
@@ -1285,7 +1303,14 @@ class EasyCutApp:
         frame = ttk.Frame(self.section_container)
         frame.grid(row=0, column=0, sticky="nsew")
         
-        # Scrollable container
+        # Sticky bottom action bar — always visible regardless of scroll position
+        _bar_bg = self.design.get_color("bg_secondary")
+        bottom_bar = tk.Frame(frame, bg=_bar_bg)
+        bottom_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        tk.Frame(bottom_bar, bg=self.design.get_color("border"), height=1).pack(fill=tk.X)
+        self._download_float_frame = bottom_bar  # referenced later to add the toggle button
+
+        # Scrollable container — packs after bottom_bar so it fills remaining space
         scroll = ScrollableFrame(frame, design=self.design)
         scroll.pack(fill=tk.BOTH, expand=True)
         main = scroll.interior
@@ -1361,46 +1386,119 @@ class EasyCutApp:
         )
         verify_btn.pack(side=tk.LEFT)
         Tooltip(verify_btn, text=tr("tooltip_verify", "Verify URL and fetch video metadata"), design=self.design)
-        
+
+        # Paste & Fetch — paste clipboard content and immediately verify
+        paste_verify_btn = ModernButton(
+            url_container,
+            text=tr("paste_verify_btn", "Paste & Fetch"),
+            icon_name="clipboard",
+            command=self._paste_and_verify,
+            variant="secondary",
+            size="sm",
+            width=13
+        )
+        paste_verify_btn.pack(side=tk.LEFT, padx=(Spacing.SM, 0))
+        Tooltip(paste_verify_btn,
+                text=tr("tooltip_paste_verify", "Paste URL from clipboard and verify automatically"),
+                design=self.design)
+
         # === VIDEO INFO CARD (Metadata + Thumbnail) ===
         info_card = ModernCard(main, title=tr("download_info", "Video Information"), design=self.design, hoverable=True)
         info_card.pack(fill=tk.X, pady=(0, Spacing.MD))
-        
-        info_row = ttk.Frame(info_card.body)
-        info_row.pack(fill=tk.X)
-        
-        # Left: metadata grid
-        info_grid = ttk.Frame(info_row)
-        info_grid.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        
-        # Title row
-        ttk.Label(info_grid, text=f"{tr('download_title', 'Title')}:", style="Subtitle.TLabel").grid(
-            row=0, column=0, sticky=tk.W, padx=(0, Spacing.MD), pady=Spacing.XS
+
+        # Skeleton loader — shown while fetching metadata, hidden after
+        self._info_skeleton_frame = ttk.Frame(info_card.body)
+        for _sk_pct in [0.72, 0.50, 0.38]:
+            sk_bar = tk.Frame(
+                self._info_skeleton_frame,
+                bg=self.design.get_color("bg_tertiary"),
+                height=12,
+            )
+            sk_bar.pack(fill=tk.X, pady=2, padx=(0, int((1 - _sk_pct) * 320)))
+
+        # Content row (thumbnail LEFT, metadata RIGHT)
+        self._info_row = ttk.Frame(info_card.body)
+        self._info_row.pack(fill=tk.X)
+        info_row = self._info_row  # alias for code below
+
+        # ── LEFT COLUMN: thumbnail + badges ──────────────────────
+        left_col = ttk.Frame(info_row)
+        left_col.pack(side=tk.LEFT, padx=(0, Spacing.MD))
+
+        # Thumbnail placeholder (320×180, fixed size, 16:9)
+        self.thumbnail_frame = tk.Frame(
+            left_col,
+            bg=self.design.get_color("bg_tertiary"),
+            width=320, height=180,
         )
-        self.download_title_label = ttk.Label(info_grid, text="-", style="Caption.TLabel", wraplength=350)
-        self.download_title_label.grid(row=0, column=1, sticky=tk.W, pady=Spacing.XS)
-        
-        # Duration row
-        ttk.Label(info_grid, text=f"{tr('download_duration', 'Duration')}:", style="Subtitle.TLabel").grid(
-            row=1, column=0, sticky=tk.W, padx=(0, Spacing.MD), pady=Spacing.XS
+        self.thumbnail_frame.pack()
+        self.thumbnail_frame.pack_propagate(False)
+
+        self.thumbnail_label = tk.Label(
+            self.thumbnail_frame,
+            text="🖼",
+            bg=self.design.get_color("bg_tertiary"),
+            fg=self.design.get_color("fg_tertiary"),
+            font=("Segoe UI Emoji", 32),
+            relief=tk.FLAT,
         )
-        self.download_duration_label = ttk.Label(info_grid, text="-", style="Caption.TLabel")
-        self.download_duration_label.grid(row=1, column=1, sticky=tk.W, pady=Spacing.XS)
-        
-        # Uploader row
-        ttk.Label(info_grid, text=f"{tr('meta_uploader', 'Uploader')}:", style="Subtitle.TLabel").grid(
-            row=2, column=0, sticky=tk.W, padx=(0, Spacing.MD), pady=Spacing.XS
+        self.thumbnail_label.place(relx=0.5, rely=0.45, anchor="center")
+
+        # Duration overlay — bottom-right corner of thumbnail (shown after verify)
+        self._duration_overlay = tk.Label(
+            self.thumbnail_frame,
+            text="",
+            bg="#000000",
+            fg="#ffffff",
+            font=("Segoe UI", 9, "bold"),
+            padx=4, pady=1,
         )
-        self.download_uploader_label = ttk.Label(info_grid, text="-", style="Caption.TLabel")
-        self.download_uploader_label.grid(row=2, column=1, sticky=tk.W, pady=Spacing.XS)
-        # Follow Channel button — hidden until verify populates uploader (Issue #19)
+
+        # Content-type badge row (below thumbnail)
+        self._badge_row = tk.Frame(left_col, bg=self.design.get_color("bg_secondary"))
+        self._badge_row.pack(fill=tk.X, pady=(Spacing.XS, 0))
+
+        self._badge_live = tk.Label(
+            self._badge_row, text="🔴 LIVE",
+            bg="#dc2626", fg="#ffffff",
+            font=("Segoe UI", 8, "bold"), padx=5, pady=2,
+        )
+        self._badge_short = tk.Label(
+            self._badge_row, text="📱 SHORT",
+            bg="#ea580c", fg="#ffffff",
+            font=("Segoe UI", 8, "bold"), padx=5, pady=2,
+        )
+        self._badge_hq = tk.Label(
+            self._badge_row, text="",
+            bg="#2563eb", fg="#ffffff",
+            font=("Segoe UI", 8, "bold"), padx=5, pady=2,
+        )
+        # Badges start hidden; _update_info_badges() shows them after verify
+
+        # ── RIGHT COLUMN: metadata ─────────────────────────────────
+        right_col = ttk.Frame(info_row)
+        right_col.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        # Title
+        self.download_title_label = ttk.Label(
+            right_col, text="-", style="Body.TLabel", wraplength=300,
+        )
+        self.download_title_label.pack(anchor=tk.W, pady=(0, Spacing.XS))
+
+        # Uploader row + Follow button
+        uploader_row = ttk.Frame(right_col)
+        uploader_row.pack(anchor=tk.W, fill=tk.X, pady=(0, Spacing.XS))
+        ttk.Label(uploader_row, text="📺 ", style="Caption.TLabel").pack(side=tk.LEFT)
+        self.download_uploader_label = ttk.Label(uploader_row, text="-", style="Caption.TLabel")
+        self.download_uploader_label.pack(side=tk.LEFT)
+        # Follow Channel button — hidden until verify_thread provides uploader_url (Issue #19)
         self._follow_channel_btn = ModernButton(
-            info_grid,
+            uploader_row,
             text=f"\u2795 {tr('follow_channel_btn', 'Follow')}",
             command=self._follow_channel_from_download,
             variant="ghost",
             size="sm",
-            width=8
+            width=8,
         )
         Tooltip(self._follow_channel_btn,
                 text=tr("tooltip_follow_channel", "Add this channel to Following list"),
@@ -1408,33 +1506,38 @@ class EasyCutApp:
         # Initially hidden; shown by verify_thread when uploader_url is available
 
         # Views row
-        ttk.Label(info_grid, text=f"{tr('meta_views', 'Views')}:", style="Subtitle.TLabel").grid(
-            row=3, column=0, sticky=tk.W, padx=(0, Spacing.MD), pady=Spacing.XS
-        )
-        self.download_views_label = ttk.Label(info_grid, text="-", style="Caption.TLabel")
-        self.download_views_label.grid(row=3, column=1, sticky=tk.W, pady=Spacing.XS)
-        
+        views_row = ttk.Frame(right_col)
+        views_row.pack(anchor=tk.W, fill=tk.X, pady=(0, Spacing.XS))
+        ttk.Label(views_row, text="👁 ", style="Caption.TLabel").pack(side=tk.LEFT)
+        self.download_views_label = ttk.Label(views_row, text="-", style="Caption.TLabel")
+        self.download_views_label.pack(side=tk.LEFT)
+
         # Upload date row
-        ttk.Label(info_grid, text=f"{tr('meta_upload_date', 'Upload Date')}:", style="Subtitle.TLabel").grid(
-            row=4, column=0, sticky=tk.W, padx=(0, Spacing.MD), pady=Spacing.XS
+        date_row = ttk.Frame(right_col)
+        date_row.pack(anchor=tk.W, fill=tk.X, pady=(0, Spacing.XS))
+        ttk.Label(date_row, text="📅 ", style="Caption.TLabel").pack(side=tk.LEFT)
+        self.download_date_label = ttk.Label(date_row, text="-", style="Caption.TLabel")
+        self.download_date_label.pack(side=tk.LEFT)
+
+        # Duration row
+        dur_row = ttk.Frame(right_col)
+        dur_row.pack(anchor=tk.W, fill=tk.X, pady=(0, Spacing.XS))
+        ttk.Label(dur_row, text="⏱ ", style="Caption.TLabel").pack(side=tk.LEFT)
+        self.download_duration_label = ttk.Label(dur_row, text="-", style="Caption.TLabel")
+        self.download_duration_label.pack(side=tk.LEFT)
+
+        # Open in browser button — hidden until video_id is known
+        self._open_video_btn = ModernButton(
+            right_col,
+            text=tr("open_in_browser", "Open in Browser"),
+            icon_name="external-link",
+            command=self._open_video_in_browser,
+            variant="ghost",
+            size="sm",
         )
-        self.download_date_label = ttk.Label(info_grid, text="-", style="Caption.TLabel")
-        self.download_date_label.grid(row=4, column=1, sticky=tk.W, pady=Spacing.XS)
-        
-        # Right: thumbnail placeholder
-        self.thumbnail_frame = ttk.Frame(info_row)
-        self.thumbnail_frame.pack(side=tk.RIGHT, padx=(Spacing.MD, 0))
-        
-        self.thumbnail_label = tk.Label(
-            self.thumbnail_frame,
-            text="🖼",
-            width=20, height=6,
-            bg=self.design.get_color("bg_tertiary"),
-            fg=self.design.get_color("fg_tertiary"),
-            font=("Segoe UI Emoji", 24),
-            relief=tk.FLAT
-        )
-        self.thumbnail_label.pack()
+        Tooltip(self._open_video_btn,
+                text=tr("tooltip_open_browser", "Open this video in your browser"),
+                design=self.design)
         
         # === UNIFIED FORMAT & QUALITY CARD (merged from two cards — Fix #20) ===
         format_card = ModernCard(main, title=tr("format_quality_title", "Format & Quality"), design=self.design, hoverable=True)
@@ -1442,25 +1545,10 @@ class EasyCutApp:
         # keep reference for later hiding/showing quality block
         self.format_card = format_card
 
-        # --- Quality presets row ---
-        quality_frame = ttk.Frame(format_card.body)
-        quality_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
-        ttk.Label(quality_frame, text=f"{tr('quality_label', 'Quality')}:", style="Caption.TLabel").pack(
-            side=tk.LEFT, padx=(0, Spacing.SM)
-        )
-        self._quality_radios = []
-        for qval, qlabel in [
-            ("best", tr("quality_best", "Best")),
-            ("1080", "1080p"),
-            ("720", "720p"),
-            ("mp4", "MP4"),
-            ("audio", tr("quality_audio", "Audio")),
-        ]:
-            rb = ttk.Radiobutton(quality_frame, text=qlabel, variable=self.download_quality_var, value=qval)
-            rb.pack(side=tk.LEFT, padx=(0, Spacing.SM))
-            self._quality_radios.append(rb)
+        # *** quality presets moved to Settings; not shown here ***
 
         # --- Specific format (populated after Verify — advanced override) ---
+        # first entry will be "Preset" which uses the value from Settings
         Separator(format_card.body, design=self.design).pack(fill=tk.X, pady=(Spacing.SM, Spacing.SM))
 
         format_container = ttk.Frame(format_card.body)
@@ -1477,14 +1565,14 @@ class EasyCutApp:
             state="readonly",
             width=55
         )
-        self.format_combo['values'] = [tr("format_auto", "Auto (Best)")]
+        self.format_combo['values'] = [tr("format_preset", "Preset")]
         self.format_combo.current(0)
         self.format_combo.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, Spacing.SM))
         # wire up interactions so choosing a specific format disables the
         # quality presets and vice-versa
         self.format_combo.bind('<<ComboboxSelected>>', self._on_format_selected)
         # still trace quality changes for config persistence
-        self.download_quality_var.trace_add('write', lambda *args: self._on_quality_change())
+        # quality_var is now updated by Settings; no trace required here
 
         self.format_status_label = ttk.Label(format_card.body,
             text=tr("format_status_hint", "Verify a URL above to see available formats"),
@@ -1495,207 +1583,424 @@ class EasyCutApp:
         mode_card = ModernCard(main, title=tr("download_mode", "Download Mode"), design=self.design, hoverable=True)
         mode_card.pack(fill=tk.X, pady=(0, Spacing.MD))
         
-        self.download_mode_var = tk.StringVar(value="full")
+        self.download_mode_var = tk.StringVar(value="full")  # default selection
+        # hide/show time card when mode changes
+        self.download_mode_var.trace_add('write', lambda *args: self._update_download_mode_ui())
         
-        modes = [
-            ("full", tr("download_mode_full", "Complete Video")),
-            ("range", tr("download_mode_range", "Time Range")),
-            ("until", tr("download_mode_until", "Until Time")),
-            ("audio", tr("download_mode_audio", "Audio Only")),
-            ("playlist", tr("download_mode_playlist", "Full Playlist")),
-            ("channel", tr("download_mode_channel", "Channel Videos"))
+        modes_data = [
+            ("full",  tr("download_mode_full", "Complete Video"),
+             tr("mode_full_desc", "Download the full video"), "▶"),
+            ("range", tr("download_mode_range", "Time Range"),
+             tr("mode_range_desc", "Download a specific segment"), "✂"),
         ]
-        
-        mode_grid = ttk.Frame(mode_card.body)
+
+        mode_grid = tk.Frame(mode_card.body, bg=self.design.get_color("bg_primary"))
         mode_grid.pack(fill=tk.X)
-        
-        for i, (value, text) in enumerate(modes):
-            ttk.Radiobutton(
+        mode_grid.columnconfigure(0, weight=1)
+        mode_grid.columnconfigure(1, weight=1)
+
+        self._mode_btn_frames: dict = {}
+
+        def _apply_mode_highlight(selected: str):
+            accent = self.design.get_color("accent_primary")
+            bg_off  = self.design.get_color("bg_tertiary")
+            fg_on   = self.design.get_color("fg_on_accent")
+            fg_off  = self.design.get_color("fg_primary")
+            fd_off  = self.design.get_color("fg_secondary")
+            for _v, (_f, _t, _d) in self._mode_btn_frames.items():
+                on = _v == selected
+                bg = accent if on else bg_off
+                _f.configure(bg=bg,
+                             highlightbackground=accent if on else self.design.get_color("border"),
+                             highlightthickness=2 if on else 1)
+                _t.configure(bg=bg, fg=fg_on if on else fg_off)
+                _d.configure(bg=bg, fg=fg_on if on else fd_off)
+
+        for i, (val, label, desc, icon) in enumerate(modes_data):
+            pad_l, pad_r = (0, Spacing.XS) if i == 0 else (Spacing.XS, 0)
+            outer = tk.Frame(
                 mode_grid,
-                text=text,
-                variable=self.download_mode_var,
-                value=value
-            ).grid(row=i // 2, column=i % 2, sticky=tk.W, padx=Spacing.SM, pady=Spacing.XS)
-        
+                bg=self.design.get_color("bg_tertiary"),
+                highlightbackground=self.design.get_color("border"),
+                highlightthickness=1,
+                cursor="hand2"
+            )
+            outer.grid(row=0, column=i, sticky="nsew",
+                       padx=(pad_l, pad_r), pady=Spacing.XS,
+                       ipadx=Spacing.SM, ipady=Spacing.SM)
+
+            title_lbl = tk.Label(
+                outer,
+                text=f"{icon}  {label}",
+                bg=self.design.get_color("bg_tertiary"),
+                fg=self.design.get_color("fg_primary"),
+                font=(Typography.FONT_FAMILY, Typography.SIZE_MD, "bold"),
+                anchor="w"
+            )
+            title_lbl.pack(fill=tk.X, padx=Spacing.SM, pady=(Spacing.SM, Spacing.XXS))
+
+            desc_lbl = tk.Label(
+                outer,
+                text=desc,
+                bg=self.design.get_color("bg_tertiary"),
+                fg=self.design.get_color("fg_secondary"),
+                font=(Typography.FONT_FAMILY, Typography.SIZE_SM),
+                anchor="w"
+            )
+            desc_lbl.pack(fill=tk.X, padx=Spacing.SM, pady=(0, Spacing.SM))
+
+            self._mode_btn_frames[val] = (outer, title_lbl, desc_lbl)
+
+            def _click(e, v=val):
+                self.download_mode_var.set(v)
+                _apply_mode_highlight(v)
+
+            for w in (outer, title_lbl, desc_lbl):
+                w.bind("<Button-1>", _click)
+
+        _apply_mode_highlight(self.download_mode_var.get())
+
         # Channel limit control (shown below mode grid)
-        channel_limit_frame = ttk.Frame(mode_card.body)
-        channel_limit_frame.pack(fill=tk.X, pady=(Spacing.SM, 0))
-        
-        ttk.Label(
-            channel_limit_frame,
-            text=f"{tr('channel_limit', 'Latest videos')}:",
-            style="Caption.TLabel"
-        ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        
-        self._channel_limit_var = tk.IntVar(value=10)
-        channel_spinbox = ttk.Spinbox(
-            channel_limit_frame,
-            from_=1, to=500,
-            textvariable=self._channel_limit_var,
-            width=6
-        )
-        channel_spinbox.pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        
-        ttk.Label(
-            channel_limit_frame,
-            text=tr('channel_limit_help', 'Number of latest videos to download (1-500)'),
-            style="Caption.TLabel"
-        ).pack(side=tk.LEFT)
-        
+
         # === TIME RANGE CARD ===
-        time_card = ModernCard(main, title=tr("download_time_range", "Time Range"), design=self.design)
-        time_card.pack(fill=tk.X, pady=(0, Spacing.MD))
-        
-        time_grid = ttk.Frame(time_card.body)
-        time_grid.pack(fill=tk.X)
-        
-        # Start time
-        ttk.Label(time_grid, text=f"{tr('download_start_time', 'Start Time')}:").grid(
-            row=0, column=0, sticky=tk.W, padx=(0, Spacing.SM), pady=Spacing.XS
+        time_card = ModernCard(
+            main,
+            title=tr("download_time_range", "✂  Time Range"),
+            design=self.design,
         )
-        self.time_start_entry = ttk.Entry(time_grid, width=12)
+        self.time_card = time_card
+        self._time_card_packed = False
+        # NOT packed here — _update_download_mode_ui shows/hides it
+
+        # ── row 1: Start / End entries side-by-side ───────────────────────
+        entries_row = ttk.Frame(time_card.body)
+        entries_row.pack(fill=tk.X, pady=(0, Spacing.XS))
+
+        # Start column
+        start_col = ttk.Frame(entries_row)
+        start_col.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, Spacing.MD))
+        ttk.Label(start_col,
+                  text=f"▶  {tr('download_start_time', 'Start')}",
+                  style="Subtitle.TLabel").pack(anchor=tk.W)
+        self.time_start_entry = ttk.Entry(
+            start_col, width=12,
+            font=(getattr(Typography, 'FONT_MONO', 'Consolas'), 11)
+        )
         self.time_start_entry.insert(0, "00:00:00")
-        self.time_start_entry.grid(row=0, column=1, sticky=tk.W, padx=(0, Spacing.XL), pady=Spacing.XS)
-        
-        # End time
-        ttk.Label(time_grid, text=f"{tr('download_end_time', 'End Time')}:").grid(
-            row=0, column=2, sticky=tk.W, padx=(0, Spacing.SM), pady=Spacing.XS
+        self.time_start_entry.pack(fill=tk.X, pady=(Spacing.XXS, 0))
+        self._start_hint_lbl = ttk.Label(start_col, text="", style="Caption.TLabel")
+        self._start_hint_lbl.pack(anchor=tk.W)
+
+        # End column
+        end_col = ttk.Frame(entries_row)
+        end_col.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Label(end_col,
+                  text=f"■  {tr('download_end_time', 'End')}",
+                  style="Subtitle.TLabel").pack(anchor=tk.W)
+        self.time_end_entry = ttk.Entry(
+            end_col, width=12,
+            font=(getattr(Typography, 'FONT_MONO', 'Consolas'), 11)
         )
-        self.time_end_entry = ttk.Entry(time_grid, width=12)
         self.time_end_entry.insert(0, "00:00:00")
-        self.time_end_entry.grid(row=0, column=3, sticky=tk.W, pady=Spacing.XS)
-        
-        # Help text
+        self.time_end_entry.pack(fill=tk.X, pady=(Spacing.XXS, 0))
+        self._end_hint_lbl = ttk.Label(end_col, text="", style="Caption.TLabel")
+        self._end_hint_lbl.pack(anchor=tk.W)
+
         ttk.Label(
             time_card.body,
-            text=tr("download_time_help", "Format: HH:MM:SS or MM:SS"),
+            text=tr("download_time_help",
+                    "Format: HH:MM:SS  |  MM:SS  |  plain seconds  (e.g. 90 = 1:30)"),
             style="Caption.TLabel"
-        ).pack(anchor=tk.W, pady=(Spacing.SM, 0))
-        
-        # === AUDIO FORMAT CARD (applies when mode = Audio Only) ===
-        audio_card = ModernCard(main, title=f"{tr('audio_format', 'Audio Format')} — {tr('download_mode_audio', 'Audio Only')}", design=self.design)
-        audio_card.pack(fill=tk.X, pady=(0, Spacing.MD))
-        
-        # Format selection
-        self.audio_format_var = tk.StringVar(value="mp3")
-        
-        fmt_frame = ttk.Frame(audio_card.body)
-        fmt_frame.pack(fill=tk.X, pady=(0, Spacing.MD))
-        
-        formats = [("mp3", "MP3"), ("wav", "WAV"), ("m4a", "M4A"), ("opus", "OPUS")]
-        for value, text in formats:
-            ttk.Radiobutton(
-                fmt_frame,
-                text=text,
-                variable=self.audio_format_var,
-                value=value
-            ).pack(side=tk.LEFT, padx=(0, Spacing.LG))
-        
-        # Bitrate selection
-        ttk.Label(audio_card.body, text=f"{tr('audio_bitrate', 'Bitrate')}:", style="Subtitle.TLabel").pack(
-            anchor=tk.W, pady=(Spacing.SM, Spacing.XS)
+        ).pack(anchor=tk.W, pady=(0, Spacing.SM))
+
+        # keep entries in sync with timeline on every keystroke / focus-out
+        for _e in (self.time_start_entry, self.time_end_entry):
+            _e.bind("<FocusOut>",   lambda e: self._update_time_markers())
+            _e.bind("<KeyRelease>", lambda e: self._update_time_markers())
+
+        # ── row 2: timeline canvas ─────────────────────────────────────────
+        self.time_canvas = tk.Canvas(
+            time_card.body,
+            height=48,
+            bg=self.design.get_color("bg_secondary"),
+            highlightbackground=self.design.get_color("border"),
+            highlightthickness=1,
+            cursor="crosshair",
         )
-        
-        self.audio_bitrate_var = tk.StringVar(value="320")
-        
-        bitrate_frame = ttk.Frame(audio_card.body)
-        bitrate_frame.pack(fill=tk.X)
-        
-        for br in ["128", "192", "256", "320"]:
-            ttk.Radiobutton(
-                bitrate_frame,
-                text=f"{br} kbps",
-                variable=self.audio_bitrate_var,
-                value=br
-            ).pack(side=tk.LEFT, padx=(0, Spacing.LG))
-        
+        self.time_canvas.pack(fill=tk.X, pady=(0, Spacing.XXS))
+        self.time_canvas.bind("<Button-1>",        self._on_timeline_click)
+        self.time_canvas.bind("<B1-Motion>",       self._on_timeline_drag)
+        self.time_canvas.bind("<ButtonRelease-1>", lambda e: setattr(self, '_active_marker', None))
+        self.time_canvas.bind("<Motion>",          self._on_timeline_hover)
+        self.time_canvas.bind("<Leave>",           lambda e: self._on_timeline_hover_leave())
+        # Hover position label — shows timecode under the mouse cursor
+        self._canvas_hover_lbl = ttk.Label(time_card.body, text="", style="Caption.TLabel")
+        self._canvas_hover_lbl.pack(anchor=tk.W, pady=(0, Spacing.SM))
+
+        # ── row 3: preview header with action buttons ──────────────────────
+        preview_header = ttk.Frame(time_card.body)
+        preview_header.pack(fill=tk.X, pady=(0, Spacing.XS))
+
+        ttk.Label(preview_header,
+                  text=f"🎬  {tr('player_load_preview', 'Preview')}",
+                  style="Subtitle.TLabel").pack(side=tk.LEFT)
+
+        btn_group = ttk.Frame(preview_header)
+        btn_group.pack(side=tk.RIGHT)
+
+        self._download_preview_btn = ModernButton(
+            btn_group,
+            text=tr("player_load_preview", "Load"),
+            command=self._load_download_preview,
+            variant="outline",
+            size="sm",
+            width=8,
+        )
+        self._download_preview_btn.pack(side=tk.LEFT, padx=(0, Spacing.XS))
+        Tooltip(self._download_preview_btn,
+                text=tr("tooltip_load_preview", "Load the URL into the preview player"),
+                design=self.design)
+
+        self._download_mark_start_btn = ModernButton(
+            btn_group,
+            text=f"▶ {tr('clipper_mark_start', 'Mark Start')}",
+            command=self._download_mark_start,
+            variant="success",
+            size="sm",
+            width=12,
+        )
+        self._download_mark_start_btn.pack(side=tk.LEFT, padx=(0, Spacing.XS))
+        Tooltip(self._download_mark_start_btn,
+                text=tr("tooltip_mark_start", "Set Start to the player's current position"),
+                design=self.design)
+
+        self._download_mark_end_btn = ModernButton(
+            btn_group,
+            text=f"■ {tr('clipper_mark_end', 'Mark End')}",
+            command=self._download_mark_end,
+            variant="danger",
+            size="sm",
+            width=10,
+        )
+        self._download_mark_end_btn.pack(side=tk.LEFT)
+        Tooltip(self._download_mark_end_btn,
+                text=tr("tooltip_mark_end", "Set End to the player's current position"),
+                design=self.design)
+
+        # ── row 4: embedded player (responsive 16:9 height) ───────────────
+        preview_frame = tk.Frame(
+            time_card.body,
+            bg=self.design.get_color("border"),
+            height=282,   # initial 16:9 at ~500 px wide; resizes via <Configure>
+        )
+        preview_frame.pack(fill=tk.X, pady=(0, Spacing.MD))
+        preview_frame.pack_propagate(False)   # must not shrink
+        self._preview_frame = preview_frame
+
+        # Responsive 16:9 height whenever the card body is resized
+        def _on_timecard_resize(event, _f=preview_frame):
+            new_h = max(120, int(event.width * 9 // 16) + 1)
+            _f.config(height=new_h)
+        time_card.body.bind("<Configure>", _on_timecard_resize)
+
+        _player_bg = "#0a0a14" if self.dark_mode else "#f0f0f0"
+
+        if is_player_available():
+            self.download_player = EmbeddedPlayer(
+                preview_frame,
+                dark_mode=self.dark_mode,
+                height=280,
+                on_time_update=self._download_preview_time_update,
+            )
+            self.download_player.pack(fill=tk.BOTH, expand=True, padx=1, pady=1)
+            try:
+                self.download_player.video_frame.bind(
+                    "<Button-1>", lambda e: self._download_mark_start())
+                self.download_player.video_frame.bind(
+                    "<Button-3>", lambda e: self._download_mark_end())
+            except Exception:
+                pass
+        else:
+            ph_fg = self.design.get_color("fg_tertiary")
+            ph_inner = tk.Frame(preview_frame, bg=_player_bg)
+            ph_inner.pack(fill=tk.BOTH, expand=True, padx=1, pady=1)
+            # Centered placeholder with branded install buttons
+            ph_container = tk.Frame(ph_inner, bg=_player_bg)
+            ph_container.place(relx=0.5, rely=0.5, anchor="center")
+            tk.Label(
+                ph_container, text="🎬",
+                bg=_player_bg, fg=ph_fg,
+                font=(Typography.FONT_FAMILY, 28),
+            ).pack()
+            tk.Label(
+                ph_container,
+                text=f"{tr('player_no_backend', 'No video player found')}",
+                bg=_player_bg, fg=ph_fg,
+                font=(Typography.FONT_FAMILY, Typography.SIZE_BODY, "bold"),
+            ).pack(pady=(Spacing.XS, Spacing.MD))
+            _ph_btn_row = tk.Frame(ph_container, bg=_player_bg)
+            _ph_btn_row.pack()
+            ModernButton(
+                _ph_btn_row,
+                text=f"\u2193  {tr('player_install_mpv', 'Install mpv')}",
+                command=lambda: __import__('webbrowser').open("https://mpv.io/installation/"),
+                variant="primary", size="sm",
+            ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
+            ModernButton(
+                _ph_btn_row,
+                text=f"\u2193  {tr('player_install_vlc', 'Install VLC')}",
+                command=lambda: __import__('webbrowser').open("https://www.videolan.org/vlc/"),
+                variant="outline", size="sm",
+            ).pack(side=tk.LEFT)
+
         # === SUBTITLE CARD ===
         sub_card = ModernCard(main, title=tr("sub_title", "Subtitles"), design=self.design)
         sub_card.pack(fill=tk.X, pady=(0, Spacing.MD))
-        
-        # Enable subtitles checkbox
+
+        # Row 1: Enable + Embed side-by-side ----------------------------------
+        toggle_row = ttk.Frame(sub_card.body)
+        toggle_row.pack(fill=tk.X, pady=(0, Spacing.SM))
+        self._sub_toggle_row = toggle_row  # stored for pack(after=)
+
         self.sub_enable_var = tk.BooleanVar(value=False)
+        self.sub_embed_var  = tk.BooleanVar(value=False)
+
         ttk.Checkbutton(
-            sub_card.body,
+            toggle_row,
             text=tr("sub_enable", "Download Subtitles"),
-            variable=self.sub_enable_var
-        ).pack(anchor=tk.W, pady=(0, Spacing.SM))
-        
-        # Transcript download button (TXT with timestamps)
-        tr_btn = ModernButton(
-            sub_card.body,
-            text=tr("download_transcript_btn", "Download Transcript"),
+            variable=self.sub_enable_var,
+            command=self._update_sub_ui
+        ).pack(side=tk.LEFT, padx=(0, Spacing.XL))
+        # _sub_embed_cb lives inside _sub_details_frame — only shown when subs are enabled
+        self.sub_embed_var.trace_add('write', lambda *_: self._refresh_sub_embed_hint())
+
+        # Collapsible details body (hidden until subs are enabled) -------------
+        self._sub_details_frame = ttk.Frame(sub_card.body)
+        self._sub_details_packed = False  # track visibility
+
+        # Embed checkbox — first item inside the collapsible block
+        embed_toggle_row = ttk.Frame(self._sub_details_frame)
+        embed_toggle_row.pack(fill=tk.X, pady=(0, Spacing.SM))
+        self._sub_embed_cb = ttk.Checkbutton(
+            embed_toggle_row,
+            text=tr("sub_embed", "Embed in video"),
+            variable=self.sub_embed_var,
+        )
+        self._sub_embed_cb.pack(side=tk.LEFT)
+
+        # Source type
+        sub_src_row = ttk.Frame(self._sub_details_frame)
+        sub_src_row.pack(fill=tk.X, pady=(0, Spacing.XS))
+        ttk.Label(sub_src_row, text=f"{tr('sub_source', 'Source')}:", style="Caption.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self.sub_type_var = tk.StringVar(value="auto")
+        for _val, _lbl in [("auto", tr("sub_auto", "Auto-generated")), ("manual", tr("sub_manual", "Manual")), ("both", tr("sub_both", "Both"))]:
+            ttk.Radiobutton(sub_src_row, text=_lbl, variable=self.sub_type_var, value=_val).pack(side=tk.LEFT, padx=(0, Spacing.MD))
+
+        # Language chips -------------------------------------------------------
+        ttk.Label(self._sub_details_frame, text=f"{tr('sub_language', 'Language')}:", style="Caption.TLabel").pack(anchor=tk.W, pady=(Spacing.XS, Spacing.XXS))
+
+        _sub_chip_codes = [("en","EN"),("pt","PT"),("es","ES"),("fr","FR"),("de","DE"),("ja","JA"),("it","IT")]
+        self._sub_selected_langs: set = {"en"}
+
+        chip_row = tk.Frame(self._sub_details_frame, bg=self.design.get_color("bg_primary"))
+        chip_row.pack(fill=tk.X, pady=(0, Spacing.XS))
+        self._sub_chips: dict = {}
+
+        def _refresh_sub_chips():
+            accent = self.design.get_color("accent_primary")
+            bg_off = self.design.get_color("bg_tertiary")
+            fg_off = self.design.get_color("fg_secondary")
+            for code, chip in self._sub_chips.items():
+                on = code in self._sub_selected_langs
+                chip.config(bg=accent if on else bg_off, fg="#ffffff" if on else fg_off)
+
+        def _sync_sub_lang_entry():
+            preset_codes = {c for c, _ in _sub_chip_codes}
+            existing = [c.strip() for c in self.sub_lang_entry.get().split(",") if c.strip() and c.strip() not in preset_codes]
+            all_codes = sorted(self._sub_selected_langs) + existing
+            self.sub_lang_entry.delete(0, tk.END)
+            self.sub_lang_entry.insert(0, ", ".join(all_codes))
+            self._refresh_sub_embed_hint()
+
+        def _toggle_sub_chip(code):
+            if code in self._sub_selected_langs:
+                self._sub_selected_langs.discard(code)
+            else:
+                self._sub_selected_langs.add(code)
+            _refresh_sub_chips()
+            _sync_sub_lang_entry()
+
+        for _code, _label in _sub_chip_codes:
+            _is_on = _code in self._sub_selected_langs
+            _chip = tk.Label(
+                chip_row, text=_label, cursor="hand2",
+                font=(Typography.FONT_FAMILY, Typography.SIZE_SM, "bold"),
+                bg=self.design.get_color("accent_primary") if _is_on else self.design.get_color("bg_tertiary"),
+                fg="#ffffff" if _is_on else self.design.get_color("fg_secondary"),
+                padx=Spacing.SM, pady=Spacing.XXS, relief="flat"
+            )
+            _chip.pack(side=tk.LEFT, padx=(0, Spacing.XXS))
+            _chip.bind("<Button-1>", lambda e, c=_code: _toggle_sub_chip(c))
+            # subtle hover
+            _chip.bind("<Enter>", lambda e, c=_code, w=_chip: w.config(
+                bg=self.design.get_color("accent_hover") if c in self._sub_selected_langs else self.design.get_color("bg_hover")))
+            _chip.bind("<Leave>", lambda e: _refresh_sub_chips())
+            self._sub_chips[_code] = _chip
+
+        # Custom / extra language codes
+        custom_lang_row = ttk.Frame(self._sub_details_frame)
+        custom_lang_row.pack(fill=tk.X, pady=(0, Spacing.SM))
+        ttk.Label(custom_lang_row, text=f"+ {tr('sub_custom_lang', 'Custom')}:", style="Caption.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self.sub_lang_entry = ttk.Entry(custom_lang_row, width=26)
+        self.sub_lang_entry.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        ttk.Label(custom_lang_row, text=tr("sub_help", "e.g. zh, ar, ko"), style="Caption.TLabel").pack(side=tk.LEFT)
+        self.sub_lang_entry.bind("<FocusOut>", lambda e: self._refresh_sub_embed_hint())
+
+        # Initialise entry from chips
+        _sync_sub_lang_entry()
+
+        # Format + embed-hint row
+        fmt_embed_row = ttk.Frame(self._sub_details_frame)
+        fmt_embed_row.pack(fill=tk.X, pady=(0, Spacing.SM))
+        ttk.Label(fmt_embed_row, text=f"{tr('sub_format', 'Format')}:", style="Caption.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        self.sub_format_var = tk.StringVar(value="srt")
+        self.sub_format_var.trace_add('write', lambda *_: self._refresh_sub_output_preview())
+        ttk.Combobox(fmt_embed_row, textvariable=self.sub_format_var,
+                     values=["srt", "vtt", "ass", "json3"], width=7, state="readonly").pack(side=tk.LEFT, padx=(0, Spacing.LG))
+        self._sub_embed_hint_lbl = ttk.Label(fmt_embed_row, text="", style="Caption.TLabel")
+        self._sub_embed_hint_lbl.pack(side=tk.LEFT)
+
+        # Output file preview -------------------------------------------------
+        _sub_out_row = ttk.Frame(self._sub_details_frame)
+        _sub_out_row.pack(fill=tk.X, pady=(Spacing.XXS, Spacing.XS))
+        self._sub_output_preview_lbl = ttk.Label(_sub_out_row, text="", style="Caption.TLabel")
+        self._sub_output_preview_lbl.pack(anchor=tk.W)
+
+        # Bottom action buttons (inside collapsible) ----------------------------
+        Separator(self._sub_details_frame, design=self.design).pack(fill=tk.X, pady=(Spacing.SM, Spacing.SM))
+        sub_actions_row = ttk.Frame(self._sub_details_frame)
+        sub_actions_row.pack(fill=tk.X)
+
+        subs_only_btn = ModernButton(
+            sub_actions_row,
+            text=tr("download_subtitles_only_btn", "Subtitles Only"),
+            command=self._download_subtitles_only,
+            variant="outline",
+            size="sm"
+        )
+        subs_only_btn.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+        Tooltip(subs_only_btn, text=tr("tooltip_subtitles_only", "Download subtitle files without video"), design=self.design)
+
+        transcript_btn = ModernButton(
+            sub_actions_row,
+            text=tr("download_transcript_only_btn", "Transcript Only"),
             command=self.download_transcript,
             variant="outline",
             size="sm"
         )
-        tr_btn.pack(anchor=tk.W, pady=(Spacing.SM, 0))
-        Tooltip(tr_btn, text=tr("tooltip_download_transcript", "Download subtitle transcript with timestamps (TXT)"), design=self.design)
-        
-        # Subtitle type
-        sub_type_frame = ttk.Frame(sub_card.body)
-        sub_type_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
-        
-        self.sub_type_var = tk.StringVar(value="auto")
-        for value, text in [("auto", tr("sub_auto", "Auto-generated")), ("manual", tr("sub_manual", "Manual")), ("both", tr("sub_both", "Both"))]:
-            ttk.Radiobutton(sub_type_frame, text=text, variable=self.sub_type_var, value=value).pack(side=tk.LEFT, padx=(0, Spacing.LG))
-        
-        # Language selection — common presets as checkbuttons + custom free text
-        lang_frame = ttk.Frame(sub_card.body)
-        lang_frame.pack(fill=tk.X, pady=(0, Spacing.XS))
-        ttk.Label(lang_frame, text=f"{tr('sub_language', 'Language')}:", style="Subtitle.TLabel").pack(anchor=tk.W, pady=(0, Spacing.XS))
+        transcript_btn.pack(side=tk.LEFT)
+        Tooltip(transcript_btn, text=tr("tooltip_download_transcript", "Download subtitle transcript with timestamps (TXT)"), design=self.design)
 
-        # Quick preset row
-        sub_lang_presets = [
-            ("en", "English"), ("pt", "Português"), ("es", "Español"),
-            ("fr", "Français"), ("de", "Deutsch"), ("ja", "日本語"),
-        ]
-        self._sub_lang_vars = {code: tk.BooleanVar(value=(code == "en")) for code, _ in sub_lang_presets}
-
-        def _update_sub_lang_entry():
-            selected = [code for code, var in self._sub_lang_vars.items() if var.get()]
-            custom = self.sub_lang_entry.get().strip()
-            # Remove preset codes from custom field, then merge
-            custom_codes = [c.strip() for c in custom.split(",") if c.strip() and c.strip() not in self._sub_lang_vars]
-            all_codes = selected + custom_codes
-            self.sub_lang_entry.delete(0, tk.END)
-            self.sub_lang_entry.insert(0, ", ".join(all_codes))
-
-        preset_row = ttk.Frame(lang_frame)
-        preset_row.pack(fill=tk.X, pady=(0, Spacing.XS))
-        for code, name in sub_lang_presets:
-            ttk.Checkbutton(
-                preset_row, text=f"{name} ({code})",
-                variable=self._sub_lang_vars[code],
-                command=_update_sub_lang_entry
-            ).pack(side=tk.LEFT, padx=(0, Spacing.SM))
-
-        # Manual override entry (advanced)
-        custom_row = ttk.Frame(lang_frame)
-        custom_row.pack(fill=tk.X, pady=(0, Spacing.XS))
-        ttk.Label(custom_row, text=tr("sub_custom_lang", "Custom:"), style="Caption.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        self.sub_lang_entry = ttk.Entry(custom_row, width=24)
-        self.sub_lang_entry.insert(0, "en")
-        self.sub_lang_entry.pack(side=tk.LEFT)
-        ttk.Label(custom_row, text=tr("sub_help", "e.g., en, pt, es"), style="Caption.TLabel").pack(side=tk.LEFT, padx=(Spacing.SM, 0))
-        
-        # Subtitle format
-        fmt_sub_frame = ttk.Frame(sub_card.body)
-        fmt_sub_frame.pack(fill=tk.X, pady=(0, Spacing.SM))
-        
-        ttk.Label(fmt_sub_frame, text=f"{tr('sub_format', 'Format')}:", style="Subtitle.TLabel").pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        self.sub_format_var = tk.StringVar(value="srt")
-        sub_format_combo = ttk.Combobox(fmt_sub_frame, textvariable=self.sub_format_var, values=["srt", "vtt", "ass", "json3"], width=8, state="readonly")
-        sub_format_combo.pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        
-        # Embed in video
-        self.sub_embed_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(
-            sub_card.body,
-            text=tr("sub_embed", "Embed in video"),
-            variable=self.sub_embed_var
-        ).pack(anchor=tk.W)
-        
         # === CHAPTERS CARD (shown/hidden dynamically after verify) ===
         self._chapters_card_frame = ttk.Frame(main)
         # Not packed by default — shown only when chapters detected
@@ -1729,40 +2034,52 @@ class EasyCutApp:
             width=22
         ).pack(anchor=tk.W)
         
-        # === ACTION BUTTONS ===
-        Separator(main, design=self.design).pack(fill=tk.X, pady=Spacing.MD)
-        
-        action_frame = ttk.Frame(main)
-        action_frame.pack(fill=tk.X, pady=(0, Spacing.MD))
-        
-        dl_btn = ModernButton(
-            action_frame,
-            text=tr("download_btn", "Download"),
-            icon_name="download",
-            command=self.start_download,
-            variant="primary",
-            size="lg",
-            width=14
+        # === DOWNLOAD PROGRESS CARD (shown only while downloading) ===
+        self._progress_card = ModernCard(
+            main, title=tr("progress_card_title", "Download Progress"), design=self.design
         )
-        dl_btn.pack(side=tk.LEFT, padx=(0, Spacing.SM))
-        Tooltip(dl_btn, text=tr("tooltip_download", "Start downloading the verified video"), design=self.design)
-        
-        stop_btn = ModernButton(
-            action_frame,
-            text=tr("download_stop", "Stop"),
-            icon_name="stop",
-            command=self.stop_download,
-            variant="danger",
-            size="lg",
-            width=14
+        # NOT packed yet — appears automatically when a download starts
+        prog_bar_row = ttk.Frame(self._progress_card.body)
+        prog_bar_row.pack(fill=tk.X)
+        self._download_progress_bar = ttk.Progressbar(
+            prog_bar_row, mode='determinate', length=400
         )
-        stop_btn.pack(side=tk.LEFT)
-        Tooltip(stop_btn, text=tr("tooltip_stop", "Cancel current download"), design=self.design)
+        self._download_progress_bar.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, Spacing.SM))
+        self._download_pct_label = ttk.Label(prog_bar_row, text="", style="Caption.TLabel", width=7)
+        self._download_pct_label.pack(side=tk.LEFT)
+        self._download_detail_label = ttk.Label(
+            self._progress_card.body, text="", style="Caption.TLabel"
+        )
+        self._download_detail_label.pack(anchor=tk.W, pady=(Spacing.XS, 0))
 
-        # progress label next to the buttons; use helper for consistency
-        self._make_progress_label(action_frame, attr="download_progress_label")
+        # Spacer at the bottom of the scrollable content
+        self._action_separator = Separator(main, design=self.design)
+        self._action_separator.pack(fill=tk.X, pady=Spacing.MD)
+        # Download/Stop toggle is in the sticky bottom bar created above
 
-        # make sure radios/format combo are consistent on first show
+        # --- Sticky bottom bar: Download/Stop toggle only (Support removed from here) ---
+        if hasattr(self, '_download_float_frame'):
+            _bar = self._download_float_frame
+            _inner = tk.Frame(_bar, bg=_bar.cget("bg"))
+            _inner.pack(side=tk.RIGHT, padx=Spacing.MD, pady=Spacing.SM)
+
+            # Single Download ⇔ Stop toggle button
+            self._dl_toggle_btn = ModernButton(
+                _inner,
+                text=f"⬇️  {tr('download_btn', 'Download')}",
+                icon_name="download",
+                command=self._toggle_download,
+                variant="primary",
+                size="md",
+                width=18
+            )
+            self._dl_toggle_btn.pack(side=tk.RIGHT)
+            Tooltip(self._dl_toggle_btn, text=tr("tooltip_download", "Start downloading the verified video"), design=self.design)
+
+            # Progress label to the left of the toggle
+            self._make_progress_label(_inner, attr="download_progress_label")
+
+        # make sure combo state is consistent on first show
         self._on_format_selected()
 
         return frame
@@ -1929,6 +2246,32 @@ class EasyCutApp:
         # === DOWNLOAD QUEUE CARD ===
         queue_card = ModernCard(main, title=tr("queue_title", "Download Queue"), design=self.design)
         queue_card.pack(fill=tk.BOTH, expand=True, pady=(0, Spacing.MD))
+        
+        # === GLOBAL PROGRESS SECTION ===
+        global_progress_frame = ttk.Frame(queue_card.body)
+        global_progress_frame.pack(fill=tk.X, pady=(0, Spacing.MD))
+
+        # Progress text: "Downloading 3 of 10"
+        self._batch_global_label = ttk.Label(
+            global_progress_frame,
+            text=tr("batch_downloading_item", "Downloading {current} of {total}").format(current=0, total=0),
+            style="Body.TLabel"
+        )
+        self._batch_global_label.pack(anchor=tk.W)
+
+        # Progress bar
+        self._batch_global_bar = ttk.Progressbar(
+            global_progress_frame, mode='determinate', length=400
+        )
+        self._batch_global_bar.pack(fill=tk.X, pady=(Spacing.XS, 0))
+
+        # Time remaining estimate
+        self._batch_time_label = ttk.Label(
+            global_progress_frame,
+            text="",
+            style="Caption.TLabel"
+        )
+        self._batch_time_label.pack(anchor=tk.W, pady=(Spacing.XS, 0))
         
         # Queue status bar
         queue_status_frame = ttk.Frame(queue_card.body)
@@ -2461,6 +2804,17 @@ class EasyCutApp:
                 ))
 
         threading.Thread(target=add_thread, daemon=True).start()
+
+    def _send_to_batch(self, urls: list):
+        """Populate batch tab with URLs and switch to it."""
+        try:
+            self.batch_text.delete("1.0", tk.END)
+            self.batch_text.insert(tk.END, "\n".join(urls))
+            if hasattr(self, '_update_batch_url_count'):
+                self._update_batch_url_count()
+        except Exception:
+            pass
+        self._switch_section("batch")
 
     def _following_add_channel(self):
         """Add a new channel to follow"""
@@ -3183,11 +3537,45 @@ class EasyCutApp:
         quality_settings_grid.pack(fill=tk.X)
         quality_settings_grid.columnconfigure(1, weight=1)
         
-        quality_opts = ["best", "1080", "720", "480", "audio"]
+        quality_opts = ["best", "1080", "720", "480", "mp4"]
+        
+        # Download quality preset (moved from download tab)
+        ttk.Label(quality_settings_grid, text=f"\U0001f3b0 {tr('settings_download_quality', 'Download Quality')}:", style="Subtitle.TLabel").grid(
+            row=0, column=0, sticky=tk.W, pady=(0, Spacing.XS), padx=(0, Spacing.SM)
+        )
+        self.download_quality_var = tk.StringVar(value=self.config_manager.get("download_quality", "best"))
+        download_q_combo = ttk.Combobox(
+            quality_settings_grid,
+            textvariable=self.download_quality_var,
+            values=quality_opts,
+            state="readonly",
+            width=10
+        )
+        download_q_combo.grid(row=0, column=1, sticky=tk.W, pady=(0, Spacing.XS))
+        ttk.Label(quality_settings_grid, text=tr("settings_download_quality_help", "Quality used when preset is selected"), style="Caption.TLabel").grid(
+            row=1, column=0, columnspan=2, sticky=tk.W, pady=(0, Spacing.SM)
+        )
+        
+        # Audio format selection
+        ttk.Label(quality_settings_grid, text=f"\U0001F3A7 {tr('settings_audio_format', 'Audio Format')}:", style="Subtitle.TLabel").grid(
+            row=2, column=0, sticky=tk.W, pady=(0, Spacing.XS), padx=(0, Spacing.SM)
+        )
+        self.audio_format_var = tk.StringVar(value=self.config_manager.get("audio_format", "mp3"))
+        audio_fmt_combo = ttk.Combobox(
+            quality_settings_grid,
+            textvariable=self.audio_format_var,
+            values=["mp3", "wav", "m4a", "opus"],
+            state="readonly",
+            width=10
+        )
+        audio_fmt_combo.grid(row=2, column=1, sticky=tk.W, pady=(0, Spacing.XS))
+        ttk.Label(quality_settings_grid, text=tr("settings_audio_format_help", "Format used for audio extraction"), style="Caption.TLabel").grid(
+            row=3, column=0, columnspan=2, sticky=tk.W, pady=(0, Spacing.SM)
+        )
         
         # Live recording quality (Issue #51)
         ttk.Label(quality_settings_grid, text=f"\U0001f534 {tr('settings_live_quality', 'Live Recording Quality')}:", style="Subtitle.TLabel").grid(
-            row=0, column=0, sticky=tk.W, pady=(0, Spacing.XS), padx=(0, Spacing.SM)
+            row=4, column=0, sticky=tk.W, pady=(0, Spacing.XS), padx=(0, Spacing.SM)
         )
         self.live_quality_var = tk.StringVar(value=self.config_manager.get("live_quality", "best"))
         live_q_combo = ttk.Combobox(
@@ -3197,14 +3585,14 @@ class EasyCutApp:
             state="readonly",
             width=10
         )
-        live_q_combo.grid(row=0, column=1, sticky=tk.W, pady=(0, Spacing.XS))
+        live_q_combo.grid(row=4, column=1, sticky=tk.W, pady=(0, Spacing.XS))
         ttk.Label(quality_settings_grid, text=tr("settings_live_quality_help", "Default quality for live stream recording"), style="Caption.TLabel").grid(
-            row=1, column=0, columnspan=2, sticky=tk.W, pady=(0, Spacing.SM)
+            row=5, column=0, columnspan=2, sticky=tk.W, pady=(0, Spacing.SM)
         )
         
         # Following auto-download quality (Issue #61)
         ttk.Label(quality_settings_grid, text=f"\U0001f4fa {tr('settings_following_quality', 'Following Auto-Download Quality')}:", style="Subtitle.TLabel").grid(
-            row=2, column=0, sticky=tk.W, pady=(0, Spacing.XS), padx=(0, Spacing.SM)
+            row=6, column=0, sticky=tk.W, pady=(0, Spacing.XS), padx=(0, Spacing.SM)
         )
         self.following_quality_var = tk.StringVar(value=self.channel_monitor.get_auto_quality())
         following_q_combo = ttk.Combobox(
@@ -3214,9 +3602,9 @@ class EasyCutApp:
             state="readonly",
             width=10
         )
-        following_q_combo.grid(row=2, column=1, sticky=tk.W, pady=(0, Spacing.XS))
+        following_q_combo.grid(row=6, column=1, sticky=tk.W, pady=(0, Spacing.XS))
         ttk.Label(quality_settings_grid, text=tr("settings_following_quality_help", "Default quality for auto-downloaded channel videos"), style="Caption.TLabel").grid(
-            row=3, column=0, columnspan=2, sticky=tk.W
+            row=7, column=0, columnspan=2, sticky=tk.W
         )
         
         # === ARCHIVE CARD ===
@@ -3400,6 +3788,9 @@ class EasyCutApp:
         self.config_manager.set("max_retries", self._settings_retries_var.get())
         self.config_manager.set("cookies_file", self._settings_cookie_entry.get().strip())
         self.config_manager.set("archive_enabled", self._settings_archive_var.get())
+        # new download-specific preferences
+        self.config_manager.set("download_quality", self.download_quality_var.get())
+        self.config_manager.set("audio_format", self.audio_format_var.get())
         # when the folder changes we must update dependent components
         self.post_processor.output_dir = self.output_dir
         self.channel_monitor.output_dir = str(self.output_dir)
@@ -4421,7 +4812,13 @@ class EasyCutApp:
         self.download_uploader_label.config(text="...")
         self.download_views_label.config(text="...")
         self.download_date_label.config(text="...")
-        
+        self._duration_overlay.config(text="")
+        self._duration_overlay.place_forget()
+        self._follow_channel_btn.pack_forget()
+        self._open_video_btn.pack_forget()
+        self._update_info_badges(False, False, 0)
+        self._show_info_skeleton()
+
         def verify_thread():
             if not YT_DLP_AVAILABLE:
                 self.download_log.add_log(tr("msg_error", "Error") + ": yt-dlp", "ERROR")
@@ -4478,36 +4875,86 @@ class EasyCutApp:
                 self.root.after(0, lambda: self.download_views_label.config(text=views_str))
                 self.root.after(0, lambda: self.download_date_label.config(text=date_str))
 
+                # Duration overlay — bottom-right corner of thumbnail
+                if dur_str and dur_str != "-":
+                    self.root.after(0, lambda d=dur_str: (
+                        self._duration_overlay.config(text=d),
+                        self._duration_overlay.place(relx=1.0, rely=1.0, anchor="se", x=-4, y=-4),
+                    ))
+
+                # Hide skeleton now that metadata is ready
+                self.root.after(0, self._hide_info_skeleton)
+
                 # Follow Channel button — show after verify if uploader URL is available (Issue #19)
                 uploader_url = info.get('uploader_url', info.get('channel_url', ''))
                 self._cached_uploader_url = uploader_url
                 if uploader_url:
-                    self.root.after(0, lambda: self._follow_channel_btn.grid(
-                        row=2, column=2, padx=(Spacing.SM, 0), pady=Spacing.XS
+                    self.root.after(0, lambda: self._follow_channel_btn.pack(
+                        side=tk.LEFT, padx=(Spacing.SM, 0)
                     ))
                 else:
-                    self.root.after(0, lambda: self._follow_channel_btn.grid_remove())
+                    self.root.after(0, lambda: self._follow_channel_btn.pack_forget())
+
+                # Open in browser button — show once we have the video_id
+                if video_id:
+                    self._cached_video_id = video_id
+                    self.root.after(0, lambda: self._open_video_btn.pack(
+                        anchor=tk.W, pady=(Spacing.XS, 0)
+                    ))
 
                 # --- Playlist / Channel info ---
                 entries = info.get('entries', None)
                 if entries:
-                    # This is a playlist/channel — show aggregate info
+                    # This is a playlist/channel — ask user whether to handle full list
                     entry_list = list(entries) if not isinstance(entries, list) else entries
                     n_videos = len(entry_list)
                     total_dur = sum(e.get('duration', 0) or 0 for e in entry_list if isinstance(e, dict))
-                    if total_dur:
-                        t_h, t_rem = divmod(int(total_dur), 3600)
-                        t_m, t_s = divmod(t_rem, 60)
-                        total_dur_str = f"{t_h}h {t_m:02d}m" if t_h else f"{t_m}m {t_s:02d}s"
-                    else:
-                        total_dur_str = "-"
-                    
-                    playlist_msg = tr("playlist_info", "Playlist: {} videos").format(n_videos)
-                    dur_msg = tr("playlist_duration", "Total duration: {}").format(total_dur_str)
-                    self.root.after(0, lambda: self.download_log.add_log(
-                        f"📋 {playlist_msg} | {dur_msg}"
-                    ))
-                    # Update duration label with total playlist duration
+                    # prompt user
+                    ask = messagebox.askyesno(
+                        tr("playlist_prompt", "Playlist detected"),
+                        tr("playlist_prompt_detail", "The URL points to a playlist with {} videos.\nDownload entire playlist?").format(n_videos)
+                    )
+                    if ask:
+                        # send all URLs to batch tab and abort single verify
+                        urls = [e.get('webpage_url') or e.get('url', '') for e in entry_list]
+                        self.root.after(0, lambda u=urls: self._send_to_batch(u))
+                        return
+                    # otherwise fall through and treat first entry as info
+                    if entry_list:
+                        info = entry_list[0]
+                        # recompute metadata from first entry
+                        title = info.get('title', 'Unknown')
+                        duration = info.get('duration', 0)
+                        uploader = info.get('uploader', info.get('channel', '-'))
+                        view_count = info.get('view_count', 0)
+                        upload_date = info.get('upload_date', '')
+                        video_id = info.get('id', '')
+                        # format these as above
+                        if duration:
+                            hours, remainder = divmod(int(duration), 3600)
+                            mins, secs = divmod(remainder, 60)
+                            dur_str = f"{hours}:{mins:02d}:{secs:02d}" if hours else f"{mins}:{secs:02d}"
+                        else:
+                            dur_str = "-"
+                        if view_count:
+                            if view_count >= 1_000_000:
+                                views_str = f"{view_count / 1_000_000:.1f}M"
+                            elif view_count >= 1_000:
+                                views_str = f"{view_count / 1_000:.1f}K"
+                            else:
+                                views_str = str(view_count)
+                        else:
+                            views_str = "-"
+                        if upload_date and len(upload_date) == 8:
+                            date_str = f"{upload_date[6:8]}/{upload_date[4:6]}/{upload_date[:4]}"
+                        else:
+                            date_str = "-"
+                        self.root.after(0, lambda: self.download_title_label.config(text=title[:80]))
+                        self.root.after(0, lambda: self.download_duration_label.config(text=dur_str))
+                        self.root.after(0, lambda: self.download_uploader_label.config(text=uploader[:50]))
+                        self.root.after(0, lambda: self.download_views_label.config(text=views_str))
+                        self.root.after(0, lambda: self.download_date_label.config(text=date_str))
+                    # continue as if single video
                     self.root.after(0, lambda: self.download_duration_label.config(
                         text=f"{n_videos} videos • {total_dur_str}"
                     ))
@@ -4579,7 +5026,16 @@ class EasyCutApp:
                     self.root.after(0, lambda: self.download_log.add_log(
                         f"📱 {tr('shorts_detected', 'YouTube Short detected')} ({dur_str})"
                     ))
-                
+
+                # --- Content-type + Quality Badges ---
+                _max_height = max(
+                    (f.get('height', 0) or 0 for f in formats if f.get('height')),
+                    default=0
+                )
+                self.root.after(0, lambda l=bool(is_live), s=bool(is_short), h=_max_height:
+                    self._update_info_badges(l, s, h)
+                )
+
                 # --- YouTube Chapters ---
                 chapters = info.get('chapters', []) or []
                 self._chapters_info = chapters
@@ -4619,36 +5075,74 @@ class EasyCutApp:
         thread.start()
     
     def _load_thumbnail(self, url: str):
-        """Load thumbnail from URL and display in UI"""
+        """Load thumbnail from URL and display in UI (320×180, 16:9)"""
         try:
             import urllib.request
             import io
             from PIL import Image, ImageTk
-            
+
             # Download thumbnail
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data = resp.read()
-            
-            # Resize to fit UI (160x90 = 16:9)
+
+            # Resize to 320×180 (16:9) — matches new thumbnail_frame dimensions
             img = Image.open(io.BytesIO(data))
-            img = img.resize((160, 90), Image.LANCZOS)
+            img = img.resize((320, 180), Image.LANCZOS)
             photo = ImageTk.PhotoImage(img)
-            
+
             def update_ui():
-                self.thumbnail_label.config(image=photo, text="", width=160, height=90)
+                self.thumbnail_label.config(image=photo, text="")
                 self.thumbnail_label.image = photo  # Keep reference
-            
+                self.thumbnail_label.place(x=0, y=0, width=320, height=180)
+
             self.root.after(0, update_ui)
         except Exception as e:
             self.logger.debug(f"Thumbnail load failed: {e}")
-    
+
+    def _show_info_skeleton(self):
+        """Show animated skeleton loader in the Video Information card while fetching metadata."""
+        self._info_skeleton_frame.pack(fill=tk.X, pady=(0, Spacing.SM), before=self._info_row)
+
+    def _hide_info_skeleton(self):
+        """Hide the skeleton loader once metadata has been populated."""
+        self._info_skeleton_frame.pack_forget()
+
+    def _update_info_badges(self, is_live: bool, is_short: bool, max_height: int):
+        """Show / hide content-type and quality badges in the Video Information card."""
+        # Reset all badges
+        self._badge_live.pack_forget()
+        self._badge_short.pack_forget()
+        self._badge_hq.pack_forget()
+        # Show relevant badges
+        if is_live:
+            self._badge_live.pack(side=tk.LEFT, padx=(0, Spacing.XS))
+        if is_short:
+            self._badge_short.pack(side=tk.LEFT, padx=(0, Spacing.XS))
+        if max_height >= 2160:
+            self._badge_hq.config(text="🎬 4K")
+            self._badge_hq.pack(side=tk.LEFT, padx=(0, Spacing.XS))
+        elif max_height >= 1440:
+            self._badge_hq.config(text="🎬 1440p")
+            self._badge_hq.pack(side=tk.LEFT, padx=(0, Spacing.XS))
+        elif max_height >= 1080:
+            self._badge_hq.config(text="🎬 1080p")
+            self._badge_hq.pack(side=tk.LEFT, padx=(0, Spacing.XS))
+
+    def _open_video_in_browser(self):
+        """Open the currently verified video in the default web browser."""
+        import webbrowser
+        video_id = getattr(self, '_cached_video_id', '')
+        if video_id:
+            webbrowser.open(f"https://www.youtube.com/watch?v={video_id}")
+
     def _populate_format_combo(self, formats: list):
         """Populate the format selection combobox with available formats"""
         tr = self.translator.get
         
-        format_options = [tr("format_auto", "Auto (Best)")]
-        self._format_id_map = {0: None}  # Maps display index to format_id
+        # first item uses the user-selected preset from Settings
+        format_options = [tr("format_preset", "Preset")]
+        self._format_id_map = {0: None}  # index‑to‑format_id (None means preset/auto)
         
         # Categorize and sort formats
         video_audio = []
@@ -4774,19 +5268,11 @@ class EasyCutApp:
     def _on_format_selected(self, event=None):
         """Callback when user picks an item from the format combobox.
 
-        When a specific format is selected (not Auto and not a separator),
-        dim the quality preset radios to signal they won't take effect.
-        When Auto is re-selected, restore the quality radios.
-        """
-        if not hasattr(self, 'format_combo'):
-            return
-        fmt_id = self._get_selected_format_id()
-        if fmt_id is not None:
-            # A real format was selected — disable quality presets
-            self._set_quality_radios_state('disabled')
-        else:
-            # Auto or separator — quality presets are in charge
-            self._set_quality_radios_state('normal')
+        After the refactor the combo no longer interacts with quality radios;
+        this stub remains for compatibility and future logic (e.g. presets
+        vs explicit formats)."""
+        # nothing to do for now
+        pass
 
     def _on_quality_change(self):
         """Called when the quality radio variable changes.
@@ -4805,6 +5291,364 @@ class EasyCutApp:
                 rb.config(state=state)
             except Exception:
                 pass
+
+    # ------------------------------------------------------------------
+    # Time‑range preview helpers
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _time_to_fraction(time_sec: float, duration: float) -> float:
+        """Convert a time (seconds) to a normalized fraction (0.0‑1.0).
+
+        Clamps against the duration so callers can safely compute canvas
+        coordinates even when user input is out of bounds.
+        """
+        if duration <= 0:
+            return 0.0
+        return max(0.0, min(time_sec / duration, 1.0))
+
+    @staticmethod
+    def _fraction_to_time(frac: float, duration: float) -> float:
+        """Convert a normalized fraction back into seconds.
+
+        Fraction values outside [0,1] are clamped.  If duration is zero
+        the result is always 0.
+        """
+        if duration <= 0:
+            return 0.0
+        return max(0.0, min(frac, 1.0)) * duration
+
+    def _update_time_markers(self):
+        """Refresh the timeline canvas markers based on entry values.
+
+        This method is responsible for creating the canvas shapes on the
+        first call and for keeping them in sync whenever the start/end
+        entries or the video duration change.  It is invoked from several
+        places (entry callbacks, preview time updates, after loading a
+        video) so it must be resilient to being called before the canvas
+        has a proper width.
+        """
+        if not hasattr(self, 'time_canvas'):
+            return
+
+        # ensure we have a valid width before doing calculations
+        w = self.time_canvas.winfo_width()
+        if w <= 1:
+            # not packed/rendered yet; try again shortly
+            self.time_canvas.after(100, self._update_time_markers)
+            return
+
+        # duration may change as soon as the player has loaded
+        duration = 0.0
+        if hasattr(self, 'download_player'):
+            try:
+                duration = float(self.download_player.get_duration() or 0.0)
+            except Exception:
+                duration = 0.0
+
+        # parse entry texts (fall back gracefully on invalid input)
+        start_sec = self._parse_timecode(self.time_start_entry.get().strip()) or 0
+        end_sec = self._parse_timecode(self.time_end_entry.get().strip())
+        if end_sec is None:
+            end_sec = duration
+
+        # clamp values
+        start_sec = max(0, min(start_sec, duration))
+        end_sec = max(start_sec, min(end_sec, duration))
+
+        start_frac = self._time_to_fraction(start_sec, duration)
+        end_frac = self._time_to_fraction(end_sec, duration)
+
+        # create shapes lazily
+        if not hasattr(self, '_start_marker'):
+            _ch = self.time_canvas.winfo_height() or 48
+            _mid = _ch // 2
+            _r = 8
+            try:
+                _region_col = self.design.get_color('accent_secondary')
+            except Exception:
+                _region_col = "#5A9FF9"
+            # rectangle first (drawn below handles)
+            self._range_rect = self.time_canvas.create_rectangle(
+                0, 0, 0, _ch, fill=_region_col, outline="")
+            # duration text centred in region
+            self._range_text = self.time_canvas.create_text(
+                0, _mid, text="", fill="#ffffff",
+                font=(Typography.FONT_FAMILY, 8, "bold"), state='hidden')
+            # oval handles drawn on top
+            self._start_marker = self.time_canvas.create_oval(
+                -_r, _mid - _r, _r, _mid + _r,
+                fill=self.design.get_color('success'), outline="#ffffff", width=2)
+            self._end_marker = self.time_canvas.create_oval(
+                w - _r, _mid - _r, w + _r, _mid + _r,
+                fill=self.design.get_color('danger'), outline="#ffffff", width=2)
+
+        _h = self.time_canvas.winfo_height() or 48
+        _my = _h // 2
+        _hr = 8
+        sx = int(start_frac * w)
+        ex = int(end_frac * w)
+        # update filled region
+        self.time_canvas.coords(self._range_rect, sx, 0, ex, _h)
+        # update oval handles
+        self.time_canvas.coords(self._start_marker, sx - _hr, _my - _hr, sx + _hr, _my + _hr)
+        self.time_canvas.coords(self._end_marker,   ex - _hr, _my - _hr, ex + _hr, _my + _hr)
+        # update duration text in centre of region
+        if hasattr(self, '_range_text'):
+            if ex - sx >= 40:
+                sel_dur = end_sec - start_sec
+                self.time_canvas.coords(self._range_text, (sx + ex) // 2, _my)
+                self.time_canvas.itemconfig(self._range_text,
+                                            text=self._format_duration_hint(int(sel_dur)),
+                                            state='normal')
+            else:
+                self.time_canvas.itemconfig(self._range_text, state='hidden')
+
+        # update time-entry hint labels with validation feedback
+        if hasattr(self, '_start_hint_lbl'):
+            try:
+                tr = self.translator.get
+                danger = self.design.get_color('danger')
+                start_raw = self.time_start_entry.get().strip()
+                end_raw   = self.time_end_entry.get().strip()
+                if start_raw and self._parse_timecode(start_raw) is None:
+                    self._start_hint_lbl.config(
+                        text=f"⚠ {tr('time_invalid_format', 'formato inválido')}",
+                        foreground=danger)
+                else:
+                    self._start_hint_lbl.config(
+                        text=f"= {self._format_duration_hint(start_sec)}",
+                        foreground=self.design.get_color('fg_tertiary'))
+                if end_raw and self._parse_timecode(end_raw) is None:
+                    self._end_hint_lbl.config(
+                        text=f"⚠ {tr('time_invalid_format', 'formato inválido')}",
+                        foreground=danger)
+                else:
+                    self._end_hint_lbl.config(
+                        text=f"= {self._format_duration_hint(end_sec)}",
+                        foreground=self.design.get_color('fg_tertiary'))
+            except Exception:
+                pass
+
+    def _on_timeline_click(self, event):
+        """Begin dragging the nearest marker (±12 px handle tolerance)."""
+        w = self.time_canvas.winfo_width() or 1
+        TOLERANCE = 12
+        duration = self.download_player.get_duration() if hasattr(self, 'download_player') else 0
+        start_frac = self._time_to_fraction(
+            self._parse_timecode(self.time_start_entry.get().strip()) or 0,
+            duration
+        )
+        end_frac = self._time_to_fraction(
+            (self._parse_timecode(self.time_end_entry.get().strip()) or duration),
+            duration
+        )
+        sx = int(start_frac * w)
+        ex = int(end_frac * w)
+        dist_start = abs(event.x - sx)
+        dist_end   = abs(event.x - ex)
+        if dist_start <= TOLERANCE or dist_end <= TOLERANCE:
+            self._active_marker = 'start' if dist_start <= dist_end else 'end'
+        else:
+            self._active_marker = 'start' if dist_start <= dist_end else 'end'
+        self._on_timeline_drag(event)
+
+    def _on_timeline_drag(self, event):
+        """Handle dragging of a marker (Button-1 motion)."""
+        if not getattr(self, '_active_marker', None):
+            return
+        w = self.time_canvas.winfo_width() or 1
+        frac = max(0.0, min(event.x / w, 1.0))
+        duration = self.download_player.get_duration() if hasattr(self, 'download_player') else 0
+        sec = int(self._fraction_to_time(frac, duration))
+        tc = self._format_timecode(sec)
+        if self._active_marker == 'start':
+            self.time_start_entry.delete(0, tk.END)
+            self.time_start_entry.insert(0, tc)
+        else:
+            self.time_end_entry.delete(0, tk.END)
+            self.time_end_entry.insert(0, tc)
+        self._update_time_markers()
+
+    def _on_timeline_hover(self, event):
+        """Show timecode under mouse pointer on the hover label."""
+        if not hasattr(self, '_canvas_hover_lbl'):
+            return
+        w = self.time_canvas.winfo_width() or 1
+        duration = 0.0
+        if hasattr(self, 'download_player'):
+            try:
+                duration = float(self.download_player.get_duration() or 0.0)
+            except Exception:
+                duration = 0.0
+        frac = max(0.0, min(event.x / w, 1.0))
+        sec = self._fraction_to_time(frac, duration) if duration > 0 else 0
+        self._canvas_hover_lbl.config(text=f"⌛ {self._format_timecode(int(sec))}")
+
+    def _on_timeline_hover_leave(self):
+        """Clear the hover timecode label when mouse leaves the canvas."""
+        if hasattr(self, '_canvas_hover_lbl'):
+            self._canvas_hover_lbl.config(text="")
+
+    def _download_mark_start(self):
+        """Set the start entry from current preview position."""
+        if hasattr(self, 'download_player'):
+            sec = int(self.download_player.get_time() or 0)
+            self.time_start_entry.delete(0, tk.END)
+            self.time_start_entry.insert(0, self._format_timecode(sec))
+            self._update_time_markers()
+
+    def _download_mark_end(self):
+        """Set the end entry from current preview position."""
+        if hasattr(self, 'download_player'):
+            sec = int(self.download_player.get_time() or 0)
+            self.time_end_entry.delete(0, tk.END)
+            self.time_end_entry.insert(0, self._format_timecode(sec))
+            self._update_time_markers()
+
+    def _load_download_preview(self):
+        """Load the URL from the download field into the embedded player."""
+        tr = self.translator.get
+        if not hasattr(self, 'download_player'):
+            messagebox.showinfo(
+                tr("msg_info", "Info"),
+                tr("player_no_backend",
+                   "No video player found.\nInstall mpv: winget install mpv")
+            )
+            return
+        try:
+            url = self.download_url_entry.get_value().strip()
+        except AttributeError:
+            url = self.download_url_entry.get().strip()
+        if not url:
+            messagebox.showwarning(
+                tr("msg_warning", "Warning"),
+                tr("download_invalid_url", "Enter a URL first.")
+            )
+            return
+        try:
+            self.download_player.load(url)
+            self.download_log.add_log(
+                f"▶ {tr('player_loading', 'Loading preview...')}")
+        except Exception as exc:
+            self.download_log.add_log(f"⚠ Preview failed: {exc}", "WARNING")
+        # redraw markers after the player has had time to report a duration
+        self.time_canvas.after(800, self._update_time_markers)
+
+    def _download_preview_time_update(self, current: float):
+        """Callback from the player; keep markers in sync as playback moves."""
+        self._update_time_markers()
+
+    def _update_sub_ui(self):
+        """Show/hide subtitle details (embed cb is inside the collapsible block)."""
+        enabled = self.sub_enable_var.get()
+        if enabled:
+            if not getattr(self, '_sub_details_packed', False):
+                # insert details right after the toggle row
+                self._sub_details_frame.pack(fill=tk.X, after=self._sub_toggle_row)
+                self._sub_details_packed = True
+        else:
+            if getattr(self, '_sub_details_packed', False):
+                self._sub_details_frame.pack_forget()
+                self._sub_details_packed = False
+            self.sub_embed_var.set(False)
+        self._refresh_sub_embed_hint()
+
+    def _refresh_sub_embed_hint(self):
+        """Update the 'Will embed: <lang>' caption and chip visual indicator."""
+        if not hasattr(self, '_sub_embed_hint_lbl'):
+            return
+        tr = self.translator.get
+        if not getattr(self, 'sub_embed_var', None) or not self.sub_embed_var.get():
+            self._sub_embed_hint_lbl.config(text="")
+            # Clear chip embed indicator
+            if hasattr(self, '_sub_chips'):
+                for chip in self._sub_chips.values():
+                    try:
+                        chip.config(highlightthickness=0)
+                    except Exception:
+                        pass
+            self._refresh_sub_output_preview()
+            return
+        langs_raw = self.sub_lang_entry.get() if hasattr(self, 'sub_lang_entry') else ""
+        langs = [c.strip() for c in langs_raw.split(",") if c.strip()]
+        first = langs[0] if langs else "—"
+        self._sub_embed_hint_lbl.config(text=f"↳ {tr('sub_embed_hint', 'Will embed')}: {first}")
+        # Chip embed indicator: highlight the first embed target
+        if hasattr(self, '_sub_chips'):
+            success_col = self.design.get_color('success')
+            for code, chip in self._sub_chips.items():
+                try:
+                    if code == first and code in getattr(self, '_sub_selected_langs', set()):
+                        chip.config(highlightthickness=2, highlightbackground=success_col)
+                    else:
+                        chip.config(highlightthickness=0)
+                except Exception:
+                    pass
+        self._refresh_sub_output_preview()
+
+    def _refresh_sub_output_preview(self):
+        """Update the subtitle output filename preview label."""
+        if not hasattr(self, '_sub_output_preview_lbl'):
+            return
+        if not getattr(self, 'sub_enable_var', None) or not self.sub_enable_var.get():
+            self._sub_output_preview_lbl.config(text="")
+            return
+        # Get title from cache or use placeholder
+        title = "video"
+        if getattr(self, '_video_info_cache', None):
+            raw = self._video_info_cache.get('title', '') or ''
+            sanitized = raw[:28].replace(' ', '_').replace('/', '_') or 'video'
+            title = sanitized
+        lang = "en"
+        if hasattr(self, 'sub_lang_entry'):
+            raw_lang = self.sub_lang_entry.get().strip()
+            lang = raw_lang.split(',')[0].strip() or 'en'
+        fmt = self.sub_format_var.get() if hasattr(self, 'sub_format_var') else 'srt'
+        self._sub_output_preview_lbl.config(text=f"\u2192  {title}.{lang}.{fmt}")
+
+    def _download_subtitles_only(self):
+        """Download subtitle files for the current URL without video."""
+        tr = self.translator.get
+        url = self.download_url_entry.get().strip()
+        if not url:
+            messagebox.showwarning(tr("msg_warning", "Warning"), tr("download_invalid_url", "Please enter a valid URL first."))
+            return
+        sub_lang = (self.sub_lang_entry.get().strip() if hasattr(self, 'sub_lang_entry') else "en") or "en"
+        sub_fmt  = self.sub_format_var.get() if hasattr(self, 'sub_format_var') else "srt"
+        ydl_opts = {
+            'skip_download': True,
+            'writesubtitles': True,
+            'writeautomaticsub': True,
+            'subtitleslangs': [sub_lang],
+            'subtitlesformat': sub_fmt,
+            'outtmpl': str(self.output_dir / "%(title)s.%(ext)s"),
+            'quiet': True,
+        }
+        self.download_log.add_log(f"↓ {tr('sub_downloading', 'Downloading subtitles...')}")
+        def _run():
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([url])
+                self.root.after(0, lambda: self.download_log.add_log(
+                    f"✓ {tr('sub_download_done', 'Subtitles downloaded')}", "SUCCESS"))
+            except Exception as exc:
+                self.root.after(0, lambda msg=str(exc): self.download_log.add_log(
+                    f"❌ {tr('msg_error', 'Error')}: {msg}", "ERROR"))
+        threading.Thread(target=_run, daemon=True).start()
+
+    def _update_download_mode_ui(self):
+        """Show/hide time-range card based on download mode."""
+        mode = self.download_mode_var.get()
+        if mode == 'range':
+            if hasattr(self, 'time_card') and not getattr(self, '_time_card_packed', False):
+                self.time_card.pack(fill=tk.X, pady=(0, Spacing.MD))
+                self._time_card_packed = True
+                # Wait for the card to render so the canvas has a valid width
+                self.time_card.after(150, self._update_time_markers)
+        else:
+            if hasattr(self, 'time_card') and getattr(self, '_time_card_packed', False):
+                self.time_card.pack_forget()
+                self._time_card_packed = False
 
     def _make_progress_label(self, parent, attr: str = 'download_progress_label'):
         """Utility to create a styled progress label attached to a parent frame.
@@ -4840,15 +5684,30 @@ class EasyCutApp:
 
     @staticmethod
     def _parse_timecode(time_text: str):
-        """Parse HH:MM:SS or MM:SS into total seconds."""
+        """Parse a timecode string into total seconds.
+
+        Accepts:
+          - Plain integer total-seconds: ``"90"`` → 90, ``"3661"`` → 3661
+          - MM:SS:  ``"1:30"`` → 90
+          - HH:MM:SS: ``"1:00:00"`` → 3600
+
+        Returns ``None`` on invalid or empty input.
+        """
+        if not time_text or not isinstance(time_text, str):
+            return None
+        time_text = time_text.strip()
+        if not time_text:
+            return None
         parts = time_text.split(":")
-        if not parts or len(parts) > 3:
+        if len(parts) > 3:
             return None
         if any(not p.isdigit() for p in parts):
             return None
         nums = [int(p) for p in parts]
         if len(nums) == 1:
-            hours, minutes, seconds = 0, 0, nums[0]
+            # A bare number is treated as total seconds with no upper limit
+            # so the user can type  "90" for 1 min 30 s, "3600" for 1 h, etc.
+            return nums[0]
         elif len(nums) == 2:
             hours, minutes, seconds = 0, nums[0], nums[1]
         else:
@@ -4883,6 +5742,27 @@ class EasyCutApp:
         seconds = total_seconds % 60
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
+    @staticmethod
+    def _validate_time_entry(self, value: str) -> bool:
+        """Return True if *value* is a parseable timecode, False otherwise."""
+        if not value or not value.strip():
+            return True  # empty is treated as valid (defaults apply)
+        return self._parse_timecode(value.strip()) is not None
+
+    @staticmethod
+    def _format_duration_hint(seconds: int) -> str:
+        """Compact human-readable duration: '42s', '1m 30s', '1h 5m', etc."""
+        if seconds < 60:
+            return f"{seconds}s"
+        if seconds < 3600:
+            m, s = divmod(seconds, 60)
+            return f"{m}m {s:02d}s" if s else f"{m}m"
+        h, rem = divmod(seconds, 3600)
+        m, s = divmod(rem, 60)
+        if s:
+            return f"{h}h {m}m {s:02d}s"
+        return f"{h}h {m}m" if m else f"{h}h"
+
     def _build_download_section(self, mode: str):
         """Build yt-dlp download section for range/until modes."""
         if mode not in ("range", "until"):
@@ -4915,17 +5795,39 @@ class EasyCutApp:
             # return webm, so replace that with a non-webm fallback.
             tr = self.translator.get
             exclude_webm = "[ext!=webm]" if self.config_manager.get("premiere_compat", False) else ""
+            # Priority: separate high-quality mp4 video + m4a audio merged by ffmpeg
+            # This avoids low-quality combined DASH streams that yt-dlp's 'best' may pick.
+            ew = exclude_webm  # shorthand
             format_map = {
-                # exclude webm in every part unless explicit mp4
-                'best': f'bestvideo{exclude_webm}+bestaudio{exclude_webm}/best{exclude_webm}',
-                # mp4 preset is strict: only mp4 video+audio, no fallback to webm at
-                # higher bitrate/resolution
-                'mp4': f'bestvideo[ext=mp4]{exclude_webm}+bestaudio[ext=mp4]{exclude_webm}/best[ext=mp4]{exclude_webm}',
-                '1080': f'bestvideo[height<=1080]{exclude_webm}+bestaudio{exclude_webm}/best[height<=1080]{exclude_webm}',
-                '720': f'bestvideo[height<=720]{exclude_webm}+bestaudio{exclude_webm}/best[height<=720]{exclude_webm}',
-                'audio': f'bestaudio{exclude_webm}/best{exclude_webm}'
+                # best: prefer separate video+audio merge (vastly better quality than combined)
+                'best': (
+                    f'bestvideo[ext=mp4]{ew}+bestaudio[ext=m4a]{ew}'
+                    f'/bestvideo[ext=mp4]{ew}+bestaudio{ew}'
+                    f'/bestvideo{ew}+bestaudio{ew}'
+                    f'/best{ew}'
+                ),
+                # mp4: strict mp4 container, still prefer highest quality separate streams
+                'mp4': (
+                    f'bestvideo[ext=mp4]{ew}+bestaudio[ext=m4a]{ew}'
+                    f'/bestvideo[ext=mp4]{ew}+bestaudio{ew}'
+                    f'/best[ext=mp4]{ew}'
+                ),
+                '1080': (
+                    f'bestvideo[ext=mp4][height<=1080]{ew}+bestaudio[ext=m4a]{ew}'
+                    f'/bestvideo[height<=1080]{ew}+bestaudio{ew}'
+                    f'/best[height<=1080]{ew}'
+                ),
+                '720': (
+                    f'bestvideo[ext=mp4][height<=720]{ew}+bestaudio[ext=m4a]{ew}'
+                    f'/bestvideo[height<=720]{ew}+bestaudio{ew}'
+                    f'/best[height<=720]{ew}'
+                ),
             }
-            format_str = format_map.get(quality, f'bestvideo{exclude_webm}+bestaudio{exclude_webm}/best{exclude_webm}')
+            format_str = format_map.get(
+                quality,
+                f'bestvideo[ext=mp4]{ew}+bestaudio[ext=m4a]{ew}'
+                f'/bestvideo{ew}+bestaudio{ew}/best{ew}'
+            )
 
 
         base_opts = {
@@ -4936,17 +5838,11 @@ class EasyCutApp:
             'logger': _YTLogger(),        # custom logger filters non-critical warnings (Issue #23)
             'progress_hooks': [self.download_progress_hook],
         }
+        # When merging separate streams, output to mp4 so ffmpeg always produces a
+        # playable file regardless of which container the best audio stream uses.
+        if not format_id:
+            base_opts['merge_output_format'] = 'mp4'
 
-        # Audio mode: add FFmpeg postprocessor so the user's format/bitrate
-        # selection (mp3, wav, m4a, opus) is actually honoured.
-        if mode == 'audio':
-            audio_fmt = self.audio_format_var.get()   # mp3 / wav / m4a / opus
-            audio_br = self.audio_bitrate_var.get()   # 128 / 192 / 256 / 320
-            base_opts['postprocessors'] = [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': audio_fmt,
-                'preferredquality': audio_br,
-            }]
 
         # Playlist / channel handling
         if mode in ('playlist', 'channel'):
@@ -5090,7 +5986,7 @@ class EasyCutApp:
         return info
     
     def download_progress_hook(self, d):
-        """Progress hook for yt-dlp — updates download progress label in the UI.
+        """Progress hook for yt-dlp — updates download progress label and bar in the UI.
         
         Also checks the is_downloading flag to support cancellation via stop_download().
         When is_downloading is False, raises an exception to abort yt-dlp.
@@ -5099,9 +5995,7 @@ class EasyCutApp:
         # provides a responsive stop mechanism
         if not self.is_downloading:
             raise Exception("Download cancelled by user")
-        
-        if not hasattr(self, 'download_progress_label'):
-            return
+
         status = d.get('status')
         if status == 'downloading':
             percent = d.get('_percent_str', '').strip()
@@ -5115,11 +6009,25 @@ class EasyCutApp:
                     parts.append(f"ETA {eta}")
                 display = '  '.join(parts)
                 # update whichever labels are present so user sees progress
-                def _upd(p=display):
+                def _upd(p=display, raw=percent, spd=speed, et=eta):
                     if hasattr(self, 'download_progress_label'):
                         self.download_progress_label.config(text=p)
                     if hasattr(self, 'batch_progress_label'):
                         self.batch_progress_label.config(text=p)
+                    # update progress bar
+                    if hasattr(self, '_download_progress_bar'):
+                        try:
+                            pct_val = float(raw.replace('%', '').strip())
+                            self._download_progress_bar['value'] = pct_val
+                            self._download_pct_label.config(text=f"{pct_val:.0f}%")
+                            detail_parts = []
+                            if spd and spd != 'Unknown B/s':
+                                detail_parts.append(spd)
+                            if et and et != 'Unknown':
+                                detail_parts.append(f"ETA {et}")
+                            self._download_detail_label.config(text="  ".join(detail_parts))
+                        except (ValueError, AttributeError):
+                            pass
                 self.root.after(0, _upd)
         elif status == 'finished':
             def _done():
@@ -5128,6 +6036,11 @@ class EasyCutApp:
                     self.download_progress_label.config(text=txt)
                 if hasattr(self, 'batch_progress_label'):
                     self.batch_progress_label.config(text=txt)
+                if hasattr(self, '_download_progress_bar'):
+                    self._download_progress_bar['value'] = 100
+                    self._download_pct_label.config(text="100%")
+                    self._download_detail_label.config(text=txt)
+                    self.root.after(2500, self._hide_progress_card)
             self.root.after(0, _done)
         elif status == 'error':
             def _err():
@@ -5136,6 +6049,10 @@ class EasyCutApp:
                     self.download_progress_label.config(text=txt)
                 if hasattr(self, 'batch_progress_label'):
                     self.batch_progress_label.config(text=txt)
+                if hasattr(self, '_download_progress_bar'):
+                    self._download_pct_label.config(text=txt)
+                    self._download_detail_label.config(text="")
+                    self.root.after(3500, self._hide_progress_card)
             self.root.after(0, _err)
 
     def start_download(self):
@@ -5176,11 +6093,21 @@ class EasyCutApp:
         self.channel_monitor.output_dir = str(self.output_dir)
 
         self.is_downloading = True
+        # Update button IMMEDIATELY after setting the flag (use after to avoid
+        # calling widget methods from a non-main thread context)
+        self.root.after(0, self._update_dl_btn_state)
         # Clear progress label(s) for the new download
         if hasattr(self, 'download_progress_label'):
             self.download_progress_label.config(text="")
         if hasattr(self, 'batch_progress_label'):
             self.batch_progress_label.config(text="")
+        # Show and reset the progress card
+        if hasattr(self, '_progress_card') and hasattr(self, '_download_progress_bar'):
+            self._download_progress_bar['value'] = 0
+            self._download_pct_label.config(text="0%")
+            self._download_detail_label.config(text="")
+            self._progress_card.pack(fill=tk.X, pady=(0, Spacing.MD),
+                                     before=self._action_separator)
         self.download_log.add_log(f"{tr('log_downloading', 'Downloading video from')} {url}")
         
         quality = self.download_quality_var.get()
@@ -5190,22 +6117,16 @@ class EasyCutApp:
         self.logger.info(f"Download started: {url}")
         self.logger.info(f"  Quality: {quality}, Mode: {mode}")
 
-        if mode == "audio" and not shutil.which("ffmpeg"):
-            messagebox.showerror(
-                tr("msg_error", "Error"),
-                tr("log_ffmpeg_not_found", "FFmpeg not found. Audio conversion may not work.")
-            )
-            self.is_downloading = False
-            return
 
         # Build time range section (not applicable for playlist mode)
         section = None
-        if mode in ("range", "until"):
+        if mode == "range":
             try:
                 section = self._build_download_section(mode)
             except ValueError as exc:
                 messagebox.showerror(tr("msg_error", "Error"), str(exc))
                 self.is_downloading = False
+                self.root.after(0, self._update_dl_btn_state)
                 return
         
         def download_thread():
@@ -5282,21 +6203,97 @@ class EasyCutApp:
             
             finally:
                 self.is_downloading = False
-        
+                self.root.after(0, self._update_dl_btn_state)
+
         thread = threading.Thread(target=download_thread, daemon=True)
         thread.start()
     
     def stop_download(self):
-        """Stop current download by setting cancellation flag.
-        
-        The progress hook checks is_downloading and raises an exception
-        to abort the yt-dlp download when the flag is cleared.
-        """
+        """Stop current download by setting cancellation flag."""
         tr = self.translator.get
         self.is_downloading = False
+        self.root.after(0, self._update_dl_btn_state)
         self.download_log.add_log(tr("download_stop", "Download cancelled"))
         self.logger.info("Download cancelled by user")
-    
+        # hide progress card after stopping
+        self.root.after(1500, self._hide_progress_card)
+
+    def _hide_progress_card(self):
+        """Hide the inline progress bar card (called after download finishes/fails/cancels)."""
+        if hasattr(self, '_progress_card'):
+            try:
+                self._progress_card.pack_forget()
+            except Exception:
+                pass
+        # reset toggle button when download ends — always from main thread
+        self.root.after(0, self._update_dl_btn_state)
+
+    def _toggle_download(self):
+        """Start a download if idle, cancel it if one is in progress."""
+        if getattr(self, 'is_downloading', False):
+            self.stop_download()
+        else:
+            # Validate URL before even touching is_downloading
+            try:
+                url = self.download_url_entry.get_value().strip()
+            except AttributeError:
+                url = self.download_url_entry.get().strip()
+            if not url or not self.is_valid_youtube_url(url):
+                tr = self.translator.get
+                messagebox.showerror(
+                    tr("msg_error", "Error"),
+                    tr("download_invalid_url", "Invalid YouTube URL")
+                )
+                return
+            self.start_download()
+
+    def _update_dl_btn_state(self):
+        """Flip the Download/Stop toggle button label to match is_downloading."""
+        if not hasattr(self, '_dl_toggle_btn'):
+            return
+        tr = self.translator.get
+        downloading = bool(getattr(self, 'is_downloading', False))
+        try:
+            if downloading:
+                self._dl_toggle_btn.config(text=f"■  {tr('download_stop', 'Stop')}")
+            else:
+                self._dl_toggle_btn.config(text=f"⬇️  {tr('download_btn', 'Download')}")
+        except tk.TclError:
+            pass  # widget destroyed during theme reload
+
+    def _paste_and_verify(self):
+        """Paste URL from clipboard into the URL entry and immediately verify it."""
+        try:
+            text = self.root.clipboard_get().strip()
+        except tk.TclError:
+            return
+        if text:
+            self.download_url_entry.delete(0, tk.END)
+            self.download_url_entry.insert(0, text)
+            self.verify_video()
+
+    def _add_current_to_batch(self):
+        """Append the current URL entry to the Batch tab queue and switch to Batch tab."""
+        tr = self.translator.get
+        url = self.download_url_entry.get_value().strip()
+        if not url:
+            return
+        if not hasattr(self, 'batch_text'):
+            return
+        existing = self.batch_text.get("1.0", tk.END).strip()
+        if url in existing.splitlines():
+            # already present — just navigate
+            self._switch_section("batch")
+            return
+        if existing:
+            self.batch_text.insert(tk.END, "\n" + url)
+        else:
+            self.batch_text.insert(tk.END, url)
+        self.download_log.add_log(
+            f"✚ {tr('added_to_batch', 'Added to batch queue')}: {url[:60]}"
+        )
+        self._switch_section("batch")
+
     def _get_friendly_error(self, error_msg: str) -> str:
         """Map common yt-dlp errors to user-friendly translated messages"""
         tr = self.translator.get
@@ -5452,17 +6449,9 @@ class EasyCutApp:
         mode = self.download_mode_var.get()
         self.logger.info(f"Batch selected quality={quality} mode={mode}")
         
-        # Check FFmpeg for audio mode before starting batch
-        if mode == "audio" and not shutil.which("ffmpeg"):
-            messagebox.showerror(
-                tr("msg_error", "Error"),
-                tr("log_ffmpeg_not_found", "FFmpeg not found. Audio conversion may not work.")
-            )
-            return
-        
         # Build time range section if needed
         section = None
-        if mode in ("range", "until"):
+        if mode == "range":
             try:
                 section = self._build_download_section(mode)
             except ValueError as exc:
@@ -5477,6 +6466,12 @@ class EasyCutApp:
                 "url": url,
                 "status": "queued",
                 "title": url[:50],
+                "progress": 0.0,        # 0.0 to 1.0
+                "speed": "",            # e.g., "2.5 MB/s"
+                "eta": "",              # e.g., "1:23"
+                "error_msg": "",        # friendly error message
+                "downloaded_bytes": 0,
+                "total_bytes": 0,
             })
         self._refresh_queue_ui()
         
@@ -5498,12 +6493,29 @@ class EasyCutApp:
                 if d.get("status") == "downloading":
                     pct = d.get("_percent_str", "").strip()
                     spd = d.get("_speed_str", "").strip()
-                    eta = d.get("eta", "")
+                    eta_raw = d.get("eta")
+                    
+                    # Update queue item with progress tracking fields
+                    item = self._download_queue[idx]
+                    item["downloaded_bytes"] = d.get("downloaded_bytes", 0)
+                    item["total_bytes"] = d.get("total_bytes") or d.get("total_bytes_estimate", 0)
+                    if item["total_bytes"] > 0:
+                        item["progress"] = item["downloaded_bytes"] / item["total_bytes"]
+                    else:
+                        item["progress"] = 0.0
+                    item["speed"] = spd
+                    # Format ETA as MM:SS
+                    if eta_raw is not None and isinstance(eta_raw, (int, float)):
+                        mins, secs = divmod(int(eta_raw), 60)
+                        item["eta"] = f"{mins}:{secs:02d}"
+                    else:
+                        item["eta"] = str(eta_raw) if eta_raw else ""
+                    
                     msg = f"[{idx+1}/{_total}] {pct}"
                     if spd:
                         msg += f" | {spd}"
-                    if eta:
-                        msg += f" | ETA {eta}s"
+                    if item["eta"]:
+                        msg += f" | ETA {item['eta']}"
                     def _upd(m=msg):
                         if hasattr(self, "batch_progress_label"):
                             try:
@@ -5511,6 +6523,38 @@ class EasyCutApp:
                             except tk.TclError:
                                 pass
                     self.root.after(0, _upd)
+                    
+                    # Estimate total remaining time for batch
+                    def _update_batch_time(eta_raw=eta_raw, idx=idx):
+                        if hasattr(self, '_batch_time_label'):
+                            try:
+                                remaining_items = _total - idx - 1
+                                current_eta = eta_raw if isinstance(eta_raw, (int, float)) else 0
+                                # Estimate remaining items time based on average
+                                # Use current item's total time as estimate for remaining items
+                                item = self._download_queue[idx]
+                                if item["progress"] > 0 and current_eta:
+                                    # Estimate full item time from current progress and ETA
+                                    estimated_item_time = current_eta / (1 - item["progress"]) if item["progress"] < 1 else current_eta
+                                    total_remaining = current_eta + (remaining_items * estimated_item_time)
+                                else:
+                                    total_remaining = current_eta
+                                
+                                if total_remaining > 0:
+                                    mins, secs = divmod(int(total_remaining), 60)
+                                    time_str = f"{mins}:{secs:02d}"
+                                    tr = self.translator.get
+                                    self._batch_time_label.config(
+                                        text=tr("batch_time_remaining", "Time remaining: ~{time}").format(time=time_str)
+                                    )
+                                else:
+                                    self._batch_time_label.config(text="")
+                            except tk.TclError:
+                                pass
+                    self.root.after(0, _update_batch_time)
+                    
+                    # Use partial update for progress (avoids flickering)
+                    self.root.after(0, lambda idx=idx: self._update_queue_item_ui(idx))
 
             for i, item in enumerate(self._download_queue):
                 # Check if stopped
@@ -5561,6 +6605,7 @@ class EasyCutApp:
                         )
                     success += 1
                     item["status"] = "completed"
+                    item["progress"] = 1.0
                     item["title"] = info.get('title', 'Video')[:50]
                     self.root.after(0, self._refresh_queue_ui)
                     self.batch_log.add_log(f"[{i+1}/{len(self._download_queue)}] ✓ {item['title'][:30]}")
@@ -5579,6 +6624,7 @@ class EasyCutApp:
                     error_msg = str(e)
                     friendly = self._get_friendly_error(error_msg)
                     item["status"] = "failed"
+                    item["error_msg"] = friendly
                     self.root.after(0, self._refresh_queue_ui)
                     self.batch_log.add_log(f"[{i+1}/{len(self._download_queue)}] ✗ {friendly[:80]}", "ERROR")
                     
@@ -5602,6 +6648,21 @@ class EasyCutApp:
                         self.batch_progress_label.config(text="")
                     except tk.TclError:
                         pass
+                if hasattr(self, '_batch_global_bar'):
+                    try:
+                        self._batch_global_bar['value'] = 0
+                    except tk.TclError:
+                        pass
+                if hasattr(self, '_batch_global_label'):
+                    try:
+                        self._batch_global_label.config(text="")
+                    except tk.TclError:
+                        pass
+                if hasattr(self, '_batch_time_label'):
+                    try:
+                        self._batch_time_label.config(text="")
+                    except tk.TclError:
+                        pass
             self.root.after(0, _clear_batch_progress)
             self.root.after(0, self._refresh_queue_ui)
             self.refresh_history()
@@ -5618,6 +6679,9 @@ class EasyCutApp:
         
         for widget in self.queue_list_frame.winfo_children():
             widget.destroy()
+        
+        # Clear widget references for partial updates
+        self._queue_item_widgets = []
         
         status_emoji = {
             "queued": "⏳",
@@ -5640,41 +6704,237 @@ class EasyCutApp:
             text=tr("queue_progress", "{} of {} completed").format(completed, total)
         )
         
-        for i, item in enumerate(self._download_queue):
-            row_frame = tk.Frame(
-                self.queue_list_frame,
-                bg=self.design.get_color("bg_tertiary"),
+        # Update global progress bar
+        if hasattr(self, '_batch_global_bar'):
+            progress_pct = (completed / total * 100) if total > 0 else 0
+            self._batch_global_bar['value'] = progress_pct
+            
+        if hasattr(self, '_batch_global_label'):
+            # Find currently downloading item
+            downloading = sum(1 for item in self._download_queue if item["status"] == "downloading")
+            current = completed + downloading
+            self._batch_global_label.config(
+                text=tr("batch_downloading_item", "Downloading {current} of {total}").format(
+                    current=current, total=total
+                )
             )
-            row_frame.pack(fill=tk.X, pady=1, padx=Spacing.XS)
+        
+        for i, item in enumerate(self._download_queue):
+            # Track widgets for partial updates
+            item_widgets = {
+                'frame': None,
+                'status_label': None,
+                'badge_label': None,
+                'progress_bar': None,
+                'pct_label': None,
+                'detail_label': None,
+                'retry_btn': None,
+            }
+            
+            # Main item container with subtle background
+            item_frame = tk.Frame(
+                self.queue_list_frame,
+                bg=self.design.get_color("bg_secondary"),
+            )
+            item_frame.pack(fill=tk.X, pady=2, padx=Spacing.XS)
+            item_widgets['frame'] = item_frame
+            
+            # Row 1: Status emoji + Title + Status badge
+            row1 = tk.Frame(item_frame, bg=self.design.get_color("bg_secondary"))
+            row1.pack(fill=tk.X, padx=Spacing.SM, pady=(Spacing.SM, 0))
             
             # Status emoji
-            tk.Label(
-                row_frame,
+            status_label = tk.Label(
+                row1,
                 text=status_emoji.get(item["status"], "❓"),
-                font=("Segoe UI Emoji", 11),
-                bg=self.design.get_color("bg_tertiary"),
+                font=("Segoe UI Emoji", 12),
+                bg=self.design.get_color("bg_secondary"),
                 fg=status_color.get(item["status"], self.design.get_color("fg_primary")),
-            ).pack(side=tk.LEFT, padx=(Spacing.SM, Spacing.XS))
+            )
+            status_label.pack(side=tk.LEFT, padx=(0, Spacing.SM))
+            item_widgets['status_label'] = status_label
             
-            # Title / URL
+            # Title
             tk.Label(
-                row_frame,
-                text=f"{i+1}. {item['title'][:55]}",
-                font=(LOADED_FONT_FAMILY, Typography.SIZE_SM),
-                bg=self.design.get_color("bg_tertiary"),
+                row1,
+                text=f"{i+1}. {item['title'][:50]}",
+                font=(LOADED_FONT_FAMILY, Typography.SIZE_BODY),
+                bg=self.design.get_color("bg_secondary"),
                 fg=self.design.get_color("fg_primary"),
                 anchor="w",
             ).pack(side=tk.LEFT, fill=tk.X, expand=True)
             
-            # Status text
-            status_text = tr(f"queue_{item['status']}", item["status"].title())
-            tk.Label(
-                row_frame,
+            # Status badge
+            status_text = tr(f"batch_item_{item['status']}", item["status"].title())
+            badge_label = tk.Label(
+                row1,
                 text=status_text,
-                font=(LOADED_FONT_FAMILY, Typography.SIZE_TINY),
-                bg=self.design.get_color("bg_tertiary"),
-                fg=status_color.get(item["status"], self.design.get_color("fg_secondary")),
-            ).pack(side=tk.RIGHT, padx=Spacing.SM)
+                font=(LOADED_FONT_FAMILY, Typography.SIZE_TINY, "bold"),
+                bg=status_color.get(item["status"], self.design.get_color("fg_secondary")),
+                fg=self.design.get_color("fg_on_accent") if item["status"] in ["downloading", "completed"] else self.design.get_color("bg_primary"),
+                padx=6, pady=2,
+            )
+            badge_label.pack(side=tk.RIGHT)
+            item_widgets['badge_label'] = badge_label
+            
+            # Row 2: Progress bar + Speed + ETA (only for downloading/completed items)
+            if item["status"] in ["downloading", "completed"]:
+                row2 = tk.Frame(item_frame, bg=self.design.get_color("bg_secondary"))
+                row2.pack(fill=tk.X, padx=Spacing.SM, pady=(Spacing.XS, Spacing.SM))
+                
+                # Progress bar
+                progress_bar = ttk.Progressbar(row2, mode='determinate', length=200)
+                progress_bar['value'] = item.get("progress", 0) * 100
+                progress_bar.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, Spacing.SM))
+                item_widgets['progress_bar'] = progress_bar
+                
+                # Percentage
+                pct_text = f"{int(item.get('progress', 0) * 100)}%"
+                pct_label = tk.Label(
+                    row2,
+                    text=pct_text,
+                    font=(LOADED_FONT_FAMILY, Typography.SIZE_CAPTION),
+                    bg=self.design.get_color("bg_secondary"),
+                    fg=self.design.get_color("fg_secondary"),
+                    width=5,
+                )
+                pct_label.pack(side=tk.LEFT)
+                item_widgets['pct_label'] = pct_label
+                
+                # Speed and ETA (if downloading)
+                if item["status"] == "downloading":
+                    speed = item.get("speed", "")
+                    eta = item.get("eta", "")
+                    detail_text = f"{speed}" if speed else ""
+                    if eta:
+                        detail_text += f"  •  {eta}" if detail_text else eta
+                    detail_label = tk.Label(
+                        row2,
+                        text=detail_text,
+                        font=(LOADED_FONT_FAMILY, Typography.SIZE_CAPTION),
+                        bg=self.design.get_color("bg_secondary"),
+                        fg=self.design.get_color("fg_tertiary"),
+                    )
+                    detail_label.pack(side=tk.LEFT, padx=(Spacing.SM, 0))
+                    item_widgets['detail_label'] = detail_label
+            
+            # Row 2 for failed items: Error message + Retry button
+            elif item["status"] == "failed":
+                row2 = tk.Frame(item_frame, bg=self.design.get_color("bg_secondary"))
+                row2.pack(fill=tk.X, padx=Spacing.SM, pady=(Spacing.XS, Spacing.SM))
+                
+                # Error message
+                error_msg = item.get("error_msg", tr("batch_item_failed", "Failed"))
+                tk.Label(
+                    row2,
+                    text=f"⚠️ {error_msg[:60]}",
+                    font=(LOADED_FONT_FAMILY, Typography.SIZE_CAPTION),
+                    bg=self.design.get_color("bg_secondary"),
+                    fg=self.design.get_color("error"),
+                    anchor="w",
+                ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+                
+                # Retry button
+                def make_retry_handler(url=item["url"], index=i):
+                    def handler():
+                        self._retry_batch_item(url, index)
+                    return handler
+                
+                retry_btn = tk.Button(
+                    row2,
+                    text=f"🔄 {tr('batch_retry', 'Retry')}",
+                    font=(LOADED_FONT_FAMILY, Typography.SIZE_CAPTION),
+                    bg=self.design.get_color("accent_primary"),
+                    fg=self.design.get_color("fg_on_accent"),
+                    activebackground=self.design.get_color("accent_hover"),
+                    activeforeground=self.design.get_color("fg_on_accent"),
+                    bd=0,
+                    padx=8,
+                    pady=2,
+                    cursor="hand2",
+                    command=make_retry_handler(),
+                )
+                retry_btn.pack(side=tk.RIGHT, padx=(Spacing.SM, 0))
+                item_widgets['retry_btn'] = retry_btn
+            
+            # Bottom padding for queued/paused items
+            elif item["status"] in ["queued", "paused"]:
+                tk.Frame(item_frame, bg=self.design.get_color("bg_secondary"), height=Spacing.SM).pack()
+            
+            # Store widget references for partial updates
+            self._queue_item_widgets.append(item_widgets)
+    
+    def _update_queue_item_ui(self, idx: int):
+        """Update a single queue item's UI without rebuilding entire list.
+        
+        This is called frequently during downloads to update progress/speed/eta.
+        """
+        if not hasattr(self, '_queue_item_widgets') or idx >= len(self._queue_item_widgets):
+            # Fall back to full refresh if widgets not tracked
+            self._refresh_queue_ui()
+            return
+        
+        item = self._download_queue[idx]
+        widgets = self._queue_item_widgets[idx]
+        
+        try:
+            # Update progress bar if exists
+            if 'progress_bar' in widgets and widgets['progress_bar']:
+                widgets['progress_bar']['value'] = item.get("progress", 0) * 100
+            
+            # Update percentage label
+            if 'pct_label' in widgets and widgets['pct_label']:
+                pct_text = f"{int(item.get('progress', 0) * 100)}%"
+                widgets['pct_label'].config(text=pct_text)
+            
+            # Update speed/eta label
+            if 'detail_label' in widgets and widgets['detail_label']:
+                speed = item.get("speed", "")
+                eta = item.get("eta", "")
+                detail_text = f"{speed}" if speed else ""
+                if eta:
+                    detail_text += f"  •  {eta}" if detail_text else eta
+                widgets['detail_label'].config(text=detail_text)
+            
+            # Update status emoji if status changed
+            if 'status_label' in widgets and widgets['status_label']:
+                status_emoji = {"queued": "⏳", "downloading": "⬇️", "completed": "✅", "failed": "❌", "paused": "⏸️"}
+                widgets['status_label'].config(text=status_emoji.get(item["status"], "❓"))
+            
+            # Update status badge
+            if 'badge_label' in widgets and widgets['badge_label']:
+                tr = self.translator.get
+                status_text = tr(f"batch_item_{item['status']}", item["status"].title())
+                widgets['badge_label'].config(text=status_text)
+                
+        except tk.TclError:
+            # Widget was destroyed, do full refresh
+            self._refresh_queue_ui()
+    
+    def _retry_batch_item(self, url: str, index: int):
+        """Retry a failed batch download item."""
+        tr = self.translator.get
+        
+        if index >= len(self._download_queue):
+            return
+        
+        # Reset item status
+        item = self._download_queue[index]
+        item["status"] = "queued"
+        item["progress"] = 0.0
+        item["speed"] = ""
+        item["eta"] = ""
+        item["error_msg"] = ""
+        item["downloaded_bytes"] = 0
+        item["total_bytes"] = 0
+        
+        self._refresh_queue_ui()
+        self.batch_log.add_log(f"🔄 {tr('batch_retry', 'Retry')}: {item['title'][:40]}")
+        
+        # If not currently downloading, start the batch again
+        if not self.is_downloading:
+            # Re-trigger batch download for remaining items
+            self.start_batch_download()
     
     def _queue_toggle_pause(self):
         """Toggle pause/resume for the download queue"""
@@ -6754,3 +8014,67 @@ class EasyCutApp:
         for i, c in enumerate(self._clip_markers, 1):
             c["index"] = i
         self._refresh_clip_list()
+
+    def _clipper_save_all(self):
+        """Batch-download every marked clip in sequence."""
+        tr = self.translator.get
+        if not self._clip_markers:
+            messagebox.showinfo(tr("msg_info", "Info"),
+                                tr("clipper_no_clips", "No clips to save."))
+            return
+        for clip in list(self._clip_markers):
+            try:
+                self._clipper_download_marked()
+            except Exception:
+                pass
+
+    def create_browser_auth_banner(self, parent):
+        """Browser-based authentication banner — delegates to create_login_banner."""
+        return self.create_login_banner(parent)
+
+    def open_login_popup(self):
+        """Open an OAuth login popup window."""
+        tr = self.translator.get
+        try:
+            if self.oauth_manager.is_authenticated():
+                messagebox.showinfo(tr("msg_info", "Info"),
+                                    tr("yt_auth_already", "Already authenticated with YouTube."))
+            else:
+                self.oauth_manager.authenticate()
+                self.update_login_status()
+        except Exception as exc:
+            messagebox.showerror(tr("msg_error", "Error"), str(exc))
+
+    def check_saved_credentials(self) -> bool:
+        """Return True if saved OAuth credentials exist and are valid."""
+        try:
+            return self.oauth_manager.is_authenticated()
+        except Exception:
+            return False
+
+    def convert_for_premiere(self, path: str) -> str:
+        """Delegate to PostProcessor.convert_for_premiere."""
+        return self.post_processor.convert_for_premiere(path)
+
+    def is_premiere_compatible(self, path: str) -> bool:
+        """Delegate to PostProcessor.is_premiere_compatible."""
+        return self.post_processor.is_premiere_compatible(path)
+
+    def _on_mousewheel(self, event):
+        """Generic mousewheel scroll handler for canvas/listbox/text widgets."""
+        widget = event.widget
+        try:
+            if event.num == 4:
+                widget.yview_scroll(-1, "units")
+            elif event.num == 5:
+                widget.yview_scroll(1, "units")
+            else:
+                widget.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        except Exception:
+            pass
+
+    def enable_mousewheel_scroll(self, widget):
+        """Bind mousewheel events to any scrollable widget."""
+        widget.bind("<MouseWheel>", self._on_mousewheel)
+        widget.bind("<Button-4>", self._on_mousewheel)   # Linux scroll-up
+        widget.bind("<Button-5>", self._on_mousewheel)   # Linux scroll-down

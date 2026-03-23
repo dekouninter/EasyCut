@@ -29,8 +29,14 @@ class TestParseTimecode:
         assert EasyCutApp._parse_timecode("59") == 59
 
     def test_large_single_number(self):
-        # Bare number >= 60 is rejected (seconds must be 0-59)
-        assert EasyCutApp._parse_timecode("120") is None
+        # Bare number is treated as total seconds with no upper limit
+        assert EasyCutApp._parse_timecode("120") == 120
+
+    def test_bare_total_seconds_large(self):
+        # Common shorthand: type "90" to mean 1 min 30 s
+        assert EasyCutApp._parse_timecode("90") == 90
+        assert EasyCutApp._parse_timecode("3600") == 3600
+        assert EasyCutApp._parse_timecode("7200") == 7200
 
     def test_empty_string(self):
         assert EasyCutApp._parse_timecode("") is None

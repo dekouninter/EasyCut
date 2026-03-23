@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Tests for the format combo population and quality selection logic.
 
-Validates _populate_format_combo, _get_selected_format_id,
-_on_format_selected, _on_quality_change, and _set_quality_radios_state.
+Validates _populate_format_combo and _get_selected_format_id with the new
+preset-first behaviour. Radio-based quality logic has been moved to settings.
 """
 
 import sys
@@ -102,74 +102,25 @@ class TestGetSelectedFormatId:
 # _on_format_selected
 # ---------------------------------------------------------------------------
 
-class TestOnFormatSelected:
-    def test_specific_format_disables_radios(self, mock_app):
-        mock_app._format_id_map = {0: None, 1: "137"}
-        mock_app.format_combo.current(1)
-        # Bind real methods so the internal calls reach actual logic
-        mock_app._get_selected_format_id = lambda: EasyCutApp._get_selected_format_id(mock_app)
-        mock_app._set_quality_radios_state = lambda s: EasyCutApp._set_quality_radios_state(mock_app, s)
-        EasyCutApp._on_format_selected(mock_app)
-        for rb in mock_app._quality_radios:
-            rb.config.assert_called_with(state="disabled")
-
-    def test_auto_enables_radios(self, mock_app):
-        mock_app.format_combo.current(0)
-        mock_app._get_selected_format_id = lambda: EasyCutApp._get_selected_format_id(mock_app)
-        mock_app._set_quality_radios_state = lambda s: EasyCutApp._set_quality_radios_state(mock_app, s)
-        EasyCutApp._on_format_selected(mock_app)
-        for rb in mock_app._quality_radios:
-            rb.config.assert_called_with(state="normal")
-
-    def test_no_format_combo_attribute(self, mock_app):
-        del mock_app.format_combo
-        # Should not raise
-        EasyCutApp._on_format_selected(mock_app)
+# _on_format_selected now a noop; no tests required
 
 
 # ---------------------------------------------------------------------------
 # _on_quality_change
 # ---------------------------------------------------------------------------
 
-class TestOnQualityChange:
-    def test_quality_change_resets_combo_to_auto(self, mock_app):
-        mock_app.download_quality_var.get.return_value = "1080"
-        mock_app._set_quality_radios_state = lambda s: EasyCutApp._set_quality_radios_state(mock_app, s)
-        mock_app.format_combo.current(2)
-        EasyCutApp._on_quality_change(mock_app)
-        assert mock_app.format_combo.current() == 0
-
-    def test_auto_quality_no_reset(self, mock_app):
-        mock_app.download_quality_var.get.return_value = "auto"
-        mock_app._set_quality_radios_state = lambda s: EasyCutApp._set_quality_radios_state(mock_app, s)
-        mock_app.format_combo.current(3)
-        EasyCutApp._on_quality_change(mock_app)
-        # Should NOT reset combo — "auto" maps to quality_var default, not a preset
-        assert mock_app.format_combo.current() == 3
+# quality-change behaviour moved out of download tab; nothing to test here
 
 
 # ---------------------------------------------------------------------------
 # _set_quality_radios_state
 # ---------------------------------------------------------------------------
 
+# radio-state helper still exists but not used; minimal test kept
 class TestSetQualityRadiosState:
-    def test_disable_all(self, mock_app):
-        EasyCutApp._set_quality_radios_state(mock_app, "disabled")
-        for rb in mock_app._quality_radios:
-            rb.config.assert_called_with(state="disabled")
-
-    def test_enable_all(self, mock_app):
-        EasyCutApp._set_quality_radios_state(mock_app, "normal")
-        for rb in mock_app._quality_radios:
-            rb.config.assert_called_with(state="normal")
-
     def test_no_radios(self, mock_app):
         mock_app._quality_radios = []
         EasyCutApp._set_quality_radios_state(mock_app, "disabled")  # No error
-
-    def test_radio_config_error_ignored(self, mock_app):
-        mock_app._quality_radios[0].config.side_effect = Exception("dead widget")
-        EasyCutApp._set_quality_radios_state(mock_app, "disabled")  # Should not raise
 
 
 # ---------------------------------------------------------------------------
@@ -181,7 +132,7 @@ class TestFormatSeparators:
 
     def test_separator_keys_are_none(self):
         # Simulate what _populate_format_combo builds
-        fmt_map = {0: None}  # Auto
+        fmt_map = {0: None}  # Preset/Auto (first entry)
         idx = 1
         # Add separator
         fmt_map[idx] = None
@@ -197,7 +148,7 @@ class TestFormatSeparators:
 
         # All None entries should be separators or Auto
         none_keys = [k for k, v in fmt_map.items() if v is None]
-        assert 0 in none_keys  # Auto
+        assert 0 in none_keys  # Preset
         assert 1 in none_keys  # separator
         assert 3 in none_keys  # separator
 

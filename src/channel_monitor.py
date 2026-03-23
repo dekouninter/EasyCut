@@ -166,11 +166,9 @@ class ChannelMonitor:
         if url.startswith("@"):
             return f"https://www.youtube.com/{url}"
 
-        # If it's a bare username without @ (e.g. "mkbhd" or "LinusTechTips")
-        # Only treat as handle if it looks like a plain word (no slashes, dots after first char)
-        if re.fullmatch(r'[\w][\w\-\.]*', url) and not url.startswith("http"):
-            return f"https://www.youtube.com/@{url}"
-
+        # Deliberately do NOT convert bare words (e.g. "invalid", "test") to
+        # YouTube handles — that produces unexpected URLs.  Only @handle and
+        # proper YouTube URLs are accepted.
         return None
 
     def _fetch_channel_info(self, url: str) -> Optional[Dict]:
